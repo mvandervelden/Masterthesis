@@ -64,7 +64,7 @@ def get_descriptors(files, params):
     
     descriptors = [np.array(0) for i in range(no_files)]
     for i, f in enumerate(files):
-        print "generating descriptors for %s"% f
+        print "generating descriptors for {}".format(f)
         pathless = f.split('/')[-1]
         o = outputbase+pathless[:-4]+outputext
         run_args= ['colorDescriptor', f] + dopts + [o]
@@ -72,7 +72,7 @@ def get_descriptors(files, params):
         #print type(run_args)
         res = call(run_args)
         if res == 1:
-            raise Exception("ColDescriptor run failed. Did not make output for %s" % f)
+            raise Exception("ColDescriptor run failed. Did not make output for {}".format(f))
         else:
             # read descriptors:
             _, descriptors[i] = DescriptorIO.readDescriptors(o)
@@ -101,10 +101,10 @@ def get_class(nns, dssize, no_files):
         c_hat[i] = np.argmin(nsum)
     return c_hat
 
-def get_performance(c, ch):
-    print type(c), type(ch)
-    print 'Classes       : ', c
-    print 'Classification: ', ch
+def get_performance(c, ch, params):
+    if params.verbose:
+        print 'Classes       : ', c
+        print 'Classification: ', ch
     
     err = c-ch
     tp = sum((c==ch) & (c==1))
@@ -112,13 +112,31 @@ def get_performance(c, ch):
     fp = sum((c!=ch) & (c==0))
     fn = sum((c!=ch) & (c==1))
     
-
-    print 'Errors        : ',abs(err)
+    if params.verbose:
+        print 'Errors        : ',abs(err)
     
-    print ''
-    print 'Confusion matrix: predicted:'
-    print ' actual :       : %d   %d'% (tp, fn)
-    print '                  %d   %d'% (fp, tn)
+        print ''
+        print 'Confusion matrix: predicted:'
+        print ' actual :       : {}   {}'.format(tp, fn)
+        print '                  {}   {}'.format(fp, tn)
+    
+    f = open(params.resultsfile,'w')
+    
+    f.write('[Parameters]\n')
+    for k,v in vars(params).items():
+        f.write('{}: {}\n'.format(k,v))
+        if isinstance(v, Parameters):
+            for kk,vv in vars(v).items():
+                f.write('  {}: {}\n'.format(kk,vv))
+    f.write('\n[Results]\n')
+    f.write('Truth:          {}\n'.format(c))
+    f.write('Classification: {}\n\n'.format(ch))
+    f.write('conf: | cht | chf \n')
+    f.write('  ----+-----|-----\n')
+    f.write('   ct | {0:3d} | {1:3d} \n'.format(tp,fn))
+    f.write('   cf | {0:3d} | {1:3d} \n'.format(fp,tn))
+    f.close()
+    
     
 if __name__ == '__main__':
     import ConfigParser, argparse
@@ -133,6 +151,7 @@ if __name__ == '__main__':
     params = Parameters()
         
     params.verbose = config.getboolean('General', 'verbose')
+    params.resultsfile = config.get('General', 'resultsfile')
     params.test = config.get('Data', 'test')
     
     params.data = Parameters()
@@ -162,6 +181,6 @@ if __name__ == '__main__':
         #idxes = make_indexes(train_descr, params.flann)
         nns[:,i] = find_nn(train_descr, test_descr, params.flann)
     c_hat = get_class(nns, dssize, params.data.testsize*no_classes)
-    get_performance(classification, c_hat)
+    get_performance(classification, c_hat, params)
     
     
