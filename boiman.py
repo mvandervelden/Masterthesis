@@ -48,8 +48,8 @@ def select_files(path, sz):
     return files
 
 def get_descriptors(files, params):
+    from subprocess import Popen, PIPE
     
-    from subprocess import call
     no_files = len(files)
     if not 'descriptors' in os.listdir('.'):
         os.mkdir('descriptors')
@@ -70,9 +70,10 @@ def get_descriptors(files, params):
         run_args= ['colorDescriptor', f] + dopts + [o]
         #print run_args
         #print type(run_args)
-        res = call(run_args)
-        if res == 1:
-            raise Exception("ColDescriptor run failed. Did not make output for {}".format(f))
+        p = Popen(run_args,stdout=PIPE, stderr=PIPE)
+        _,err = p.communicate()
+        if not err == '':
+            raise Exception("ColDescriptor run failed.\n Message: {}\n Did not make output for {}".format(err, f))
         else:
             # read descriptors:
             _, descriptors[i] = DescriptorIO.readDescriptors(o)
@@ -106,14 +107,16 @@ def get_performance(c, ch, params):
         print 'Classes       : ', c
         print 'Classification: ', ch
     
-    err = c-ch
-    tp = sum((c==ch) & (c==1))
-    tn = sum((c==ch) & (c==0))
-    fp = sum((c!=ch) & (c==0))
-    fn = sum((c!=ch) & (c==1))
+    sumdirection = 1
+    if len(c.shape) == 1:
+        sumdirection = 0
+    
+    tp = ((c==ch) & (c==0)).sum(sumdirection).mean()
+    tn = ((c==ch) & (c==1)).sum(sumdirection).mean()
+    fp = ((c!=ch) & (c==1)).sum(sumdirection).mean()
+    fn = ((c!=ch) & (c==0)).sum(sumdirection).mean()
     
     if params.verbose:
-        print 'Errors        : ',abs(err)
     
         print ''
         print 'Confusion matrix: predicted:'
@@ -133,8 +136,8 @@ def get_performance(c, ch, params):
     f.write('Classification: {}\n\n'.format(ch))
     f.write('conf: | cht | chf \n')
     f.write('  ----+-----|-----\n')
-    f.write('   ct | {0:3d} | {1:3d} \n'.format(tp,fn))
-    f.write('   cf | {0:3d} | {1:3d} \n'.format(fp,tn))
+    f.write('   ct |{0:4.1f} |{1:4.1f} \n'.format(tp,fn))
+    f.write('   cf |{0:4.1f} |{1:4.1f} \n'.format(fp,tn))
     f.close()
     
     
@@ -152,6 +155,7 @@ if __name__ == '__main__':
         
     params.verbose = config.getboolean('General', 'verbose')
     params.resultsfile = config.get('General', 'resultsfile')
+    params.iterations = config.getint('General', 'iterations')
     params.test = config.get('Data', 'test')
     
     params.data = Parameters()
@@ -169,18 +173,29 @@ if __name__ == '__main__':
     if params.verbose:
         print params.test
     
-    trainfiles, testfiles, classification = select_data(params.test, params.data)
-    no_classes = trainfiles.shape[0]
-    print no_classes
-    test_descr, dssize = get_descriptors(testfiles, params.descr)
-    print ''
-    nns = np.zeros([test_descr.shape[0],no_classes])
-    for i,clf in enumerate(trainfiles):
-        train_descr, _ = get_descriptors(clf, params.descr)
-        print ''
-        #idxes = make_indexes(train_descr, params.flann)
-        nns[:,i] = find_nn(train_descr, test_descr, params.flann)
-    c_hat = get_class(nns, dssize, params.data.testsize*no_classes)
-    get_performance(classification, c_hat, params)
+    c_hats = np.array(0)
+    classes = np.array(0)
+    
+    for it in range(params.iterations):
+        trainfiles, testfiles, classification = select_data(params.test, params.data)
+        no_classes = trainfiles.shape[0]
+        if classes.shape == ():
+            c_hats = np.zeros([params.iterations, no_classes*params.data.testsize])
+            classes = np.zeros([params.iterations, no_classes*params.data.testsize])
+        print 'Getting test descriptors'
+        test_descr, dssize = get_descriptors(testfiles, params.descr)
+        print '\n'
+        nns = np.zeros([test_descr.shape[0],no_classes])
+        for i,clf in enumerate(trainfiles):
+            print 'Get training descriptors for class {}'.format(i)
+            train_descr, _ = get_descriptors(clf, params.descr)
+            print '  Find NN'
+            #idxes = make_indexes(train_descr, params.flann)
+            nns[:,i] = find_nn(train_descr, test_descr, params.flann)
+        print 'Calculate c_hat'
+        c_hat = get_class(nns, dssize, params.data.testsize*no_classes)
+        classes[it,:] = classification
+        c_hats[it,:] = c_hat
+    get_performance(classes, c_hats, params)
     
     
