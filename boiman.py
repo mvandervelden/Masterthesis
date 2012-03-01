@@ -62,11 +62,15 @@ def get_descriptors(files, params):
         dopts = ["--detector", params.detector, "--descriptor", params.descriptor,"--output"]
         outputext = '.dtxt'
     
-    descriptors = [np.array(0) for i in range(no_files)]
+    descriptors = [np.array(0) for i in range(no_files*params.scale_levels)]
+    
+    if params.scale_levels > 1:
+        import cv
+    
     for i, f in enumerate(files):
         print "generating descriptors for {}".format(f)
-        pathless = f.split('/')[-1]
-        o = outputbase+pathless[:-4]+outputext
+        pathlist = f.split('/')
+        o = outputbase+pathlist[-1][:-4]+outputext
         run_args= ['colorDescriptor', f] + dopts + [o]
         #print run_args
         #print type(run_args)
@@ -76,10 +80,41 @@ def get_descriptors(files, params):
             raise Exception("ColDescriptor run failed.\n Message: {}\n Did not make output for {}".format(err, f))
         else:
             # read descriptors:
-            _, descriptors[i] = DescriptorIO.readDescriptors(o)
+            _, descriptors[i*params.scale_levels] = DescriptorIO.readDescriptors(o)
+            #print [d.shape for d in descriptors]
             os.remove(o)
-
-    dssize = [d.shape[0] for d in descriptors]
+        
+        if params.scale_levels > 1:
+            print "  scaling:",
+            filebase = f[:-4]
+            filext = f[-4:]
+            fnew = f
+            im1 = cv.LoadImageM(fnew)
+            for scale in range(1,params.scale_levels):
+                print scale,
+                im2 = cv.CreateMat(im1.rows/2,im1.cols/2,im1.type)
+                cv.PyrDown(im1, im2)
+                fnew = filebase+str(scale)+filext
+                cv.SaveImage(fnew,im2)
+                
+                pathlist = fnew.split('/')
+                o = outputbase+pathlist[-1][:-4]+outputext
+                run_args= ['colorDescriptor', fnew] + dopts + [o]
+                #print run_args
+                #print type(run_args)
+                p = Popen(run_args,stdout=PIPE, stderr=PIPE)
+                _,err = p.communicate()
+                if not err == '':
+                    raise Exception("ColDescriptor run failed.\n Message: {}\n Did not make output for {}".format(err, fnew))
+                else:
+                    # read descriptors:
+                    _, descriptors[i*params.scale_levels+scale] = DescriptorIO.readDescriptors(o)
+                    #print [d.shape for d in descriptors]
+                    os.remove(o)
+                os.remove(fnew)
+                im1 = im2
+            print '' 
+    dssize = np.array([d.shape[0] for d in descriptors]).reshape(params.scale_levels,no_files).sum(0)
     descriptors = np.vstack(descriptors)
     return descriptors, dssize
 
@@ -93,8 +128,8 @@ def get_class(nns, dssize, no_files):
     # nns is a n x m array, where n=number of classes, m=numbr of test descriptors
     # dssize = no of features per image
     # testsz = no of test images
-
     starts = np.hstack([0, np.cumsum(dssize)])
+    #print dssize, starts,nns.shape
     c_hat = np.zeros(no_files,int)
     for i in xrange(no_files):
         nfile = nns[starts[i]:starts[i+1],:]
@@ -140,7 +175,6 @@ def get_performance(c, ch, params):
     f.write('   cf |{0:4.1f} |{1:4.1f} \n'.format(fp,tn))
     f.close()
     
-    
 if __name__ == '__main__':
     import ConfigParser, argparse
 
@@ -166,6 +200,7 @@ if __name__ == '__main__':
     params.descr.descriptor = config.get('Descriptors', 'descriptor')
     params.descr.detector = config.get('Descriptors', 'detector')
     params.descr.binary = config.getboolean('Descriptors', 'save_binary')
+    params.descr.scale_levels = config.getint('Descriptors', 'scale_levels')
     
     params.flann = Parameters()
     params.flann.k = config.getint('Flann', 'k')
