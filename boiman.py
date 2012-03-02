@@ -65,7 +65,7 @@ def get_descriptors(files, params, ID):
     descriptors = [np.array(0) for i in range(no_files*params.scale_levels)]
     
     if params.scale_levels > 1:
-        import cv
+        import cv2.cv as cv
     
     for i, f in enumerate(files):
         print "generating descriptors for {}".format(f)
