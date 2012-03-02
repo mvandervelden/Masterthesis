@@ -68,7 +68,7 @@ def get_descriptors(files, params, ID):
         import cv2.cv as cv
     
     for i, f in enumerate(files):
-        print "generating descriptors for {}".format(f)
+        print "generating descriptors for {0}".format(f)
         
         filename = f.split('/')[-1]
         o = tmp_dir+outputbase+filename[:-4]+outputext
@@ -78,7 +78,7 @@ def get_descriptors(files, params, ID):
         p = Popen(run_args,stdout=PIPE, stderr=PIPE)
         _,err = p.communicate()
         if not err == '':
-            raise Exception("ColDescriptor run failed.\n Message: {}\n Did not make output for {}".format(err, f))
+            raise Exception("ColDescriptor run failed.\n Message: {0}\n Did not make output for {1}".format(err, f))
         else:
             # read descriptors:
             _, descriptors[i*params.scale_levels] = DescriptorIO.readDescriptors(o)
@@ -105,7 +105,7 @@ def get_descriptors(files, params, ID):
                 p = Popen(run_args,stdout=PIPE, stderr=PIPE)
                 _,err = p.communicate()
                 if not err == '':
-                    raise Exception("ColDescriptor run failed.\n Message: {}\n Did not make output for {}".format(err, fnew))
+                    raise Exception("ColDescriptor run failed.\n Message: {0}\n Did not make output for {1}".format(err, fnew))
                 else:
                     # read descriptors:
                     _, descriptors[i*params.scale_levels+scale] = DescriptorIO.readDescriptors(o)
@@ -155,20 +155,20 @@ def get_performance(c, ch, params):
     
         print ''
         print 'Confusion matrix: predicted:'
-        print ' actual :       : {}   {}'.format(tp, fn)
-        print '                  {}   {}'.format(fp, tn)
+        print ' actual :       : {0}   {1}'.format(tp, fn)
+        print '                  {0}   {1}'.format(fp, tn)
     
     f = open(params.resultsfile,'w')
     
     f.write('[Parameters]\n')
     for k,v in vars(params).items():
-        f.write('{}: {}\n'.format(k,v))
+        f.write('{0}: {1}\n'.format(k,v))
         if isinstance(v, Parameters):
             for kk,vv in vars(v).items():
-                f.write('  {}: {}\n'.format(kk,vv))
+                f.write('  {0}: {1}\n'.format(kk,vv))
     f.write('\n[Results]\n')
-    f.write('Truth:          {}\n'.format(c))
-    f.write('Classification: {}\n\n'.format(ch))
+    f.write('Truth:          {0}\n'.format(c))
+    f.write('Classification: {0}\n\n'.format(ch))
     f.write('conf: | cht | chf \n')
     f.write('  ----+-----|-----\n')
     f.write('   ct |{0:4.1f} |{1:4.1f} \n'.format(tp,fn))
@@ -224,7 +224,7 @@ if __name__ == '__main__':
         print '\n'
         nns = np.zeros([test_descr.shape[0],no_classes])
         for i,clf in enumerate(trainfiles):
-            print 'Get training descriptors for class {}'.format(i)
+            print 'Get training descriptors for class {0}'.format(i)
             train_descr, _ = get_descriptors(clf, params.descr, params.ID)
             print '  Find NN'
             #idxes = make_indexes(train_descr, params.flann)
