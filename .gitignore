@@ -1,4 +1,4 @@
 *.pyc
-descriptors
+tmp_*
 errors.log
-results.txt
+*.res

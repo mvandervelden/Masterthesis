@@ -1,0 +1,24 @@
+[Parameters]
+resultsfile: results.txt
+verbose: True
+descr: <__main__.Parameters instance at 0x10531abd8>
+  scale_levels: 5
+  descriptor: sift
+  detector: densesampling
+  binary: True
+flann: <__main__.Parameters instance at 0x10531a2d8>
+  k: 1
+iterations: 1
+test: graz01_person
+data: <__main__.Parameters instance at 0x10532a2d8>
+  trainsize: 2
+  testsize: 2
+
+[Results]
+Truth:          [[ 0.  0.  1.  1.]]
+Classification: [[ 1.  0.  1.  0.]]
+
+conf: | cht | chf 
+  ----+-----|-----
+   ct | 1.0 | 1.0 
+   cf | 1.0 | 1.0 

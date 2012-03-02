@@ -47,14 +47,14 @@ def select_files(path, sz):
     files = [path+f for f in files]
     return files
 
-def get_descriptors(files, params):
+def get_descriptors(files, params, ID):
     from subprocess import Popen, PIPE
-    
+    tmp_dir = 'tmp_'+ID
     no_files = len(files)
-    if not 'descriptors' in os.listdir('.'):
-        os.mkdir('descriptors')
-    
-    outputbase = "descriptors/"+params.detector + "_" + params.descriptor + "_"
+    if not tmp_dir in os.listdir('.'):
+        os.mkdir(tmp_dir)
+    tmp_dir = tmp_dir+'/'
+    outputbase = params.detector + "_" + params.descriptor + "_"
     if params.binary:
         dopts = ["--detector", params.detector, "--descriptor", params.descriptor, "--outputFormat", 'binary',"--output"]
         outputext = '.dbin'
@@ -69,8 +69,9 @@ def get_descriptors(files, params):
     
     for i, f in enumerate(files):
         print "generating descriptors for {}".format(f)
-        pathlist = f.split('/')
-        o = outputbase+pathlist[-1][:-4]+outputext
+        
+        filename = f.split('/')[-1]
+        o = tmp_dir+outputbase+filename[:-4]+outputext
         run_args= ['colorDescriptor', f] + dopts + [o]
         #print run_args
         #print type(run_args)
@@ -86,19 +87,18 @@ def get_descriptors(files, params):
         
         if params.scale_levels > 1:
             print "  scaling:",
-            filebase = f[:-4]
-            filext = f[-4:]
+            filebase = filename[:-4]
+            filext = filename[-4:]
             fnew = f
             im1 = cv.LoadImageM(fnew)
             for scale in range(1,params.scale_levels):
                 print scale,
                 im2 = cv.CreateMat(im1.rows/2,im1.cols/2,im1.type)
                 cv.PyrDown(im1, im2)
-                fnew = filebase+str(scale)+filext
+                filename = filebase+'_'+str(scale)+filext
+                fnew = tmp_dir+filename
                 cv.SaveImage(fnew,im2)
-                
-                pathlist = fnew.split('/')
-                o = outputbase+pathlist[-1][:-4]+outputext
+                o = outputbase+filename[:-4]+outputext
                 run_args= ['colorDescriptor', fnew] + dopts + [o]
                 #print run_args
                 #print type(run_args)
@@ -179,6 +179,7 @@ if __name__ == '__main__':
     import ConfigParser, argparse
 
     parser = argparse.ArgumentParser()
+    parser.add_argument('-d', '--ID', default='1')
     parser.add_argument('-c', '--configfile', default="settings.cfg")
     args = parser.parse_args()
    
@@ -186,9 +187,10 @@ if __name__ == '__main__':
     config.read(args.configfile)
     
     params = Parameters()
-        
+    params.ID = args.ID    
     params.verbose = config.getboolean('General', 'verbose')
-    params.resultsfile = config.get('General', 'resultsfile')
+    r = config.get('General', 'resultsfile').split('.')
+    params.resultsfile = r[0]+'_'+params.ID+'.'+r[1]
     params.iterations = config.getint('General', 'iterations')
     params.test = config.get('Data', 'test')
     
@@ -218,12 +220,12 @@ if __name__ == '__main__':
             c_hats = np.zeros([params.iterations, no_classes*params.data.testsize])
             classes = np.zeros([params.iterations, no_classes*params.data.testsize])
         print 'Getting test descriptors'
-        test_descr, dssize = get_descriptors(testfiles, params.descr)
+        test_descr, dssize = get_descriptors(testfiles, params.descr, params.ID)
         print '\n'
         nns = np.zeros([test_descr.shape[0],no_classes])
         for i,clf in enumerate(trainfiles):
             print 'Get training descriptors for class {}'.format(i)
-            train_descr, _ = get_descriptors(clf, params.descr)
+            train_descr, _ = get_descriptors(clf, params.descr, params.ID)
             print '  Find NN'
             #idxes = make_indexes(train_descr, params.flann)
             nns[:,i] = find_nn(train_descr, test_descr, params.flann)
