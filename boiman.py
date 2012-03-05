@@ -8,98 +8,175 @@ Copyright (c) 2012. All rights reserved.
 
 import os
 import re
-import numpy as np
+from numpy import *
 import DescriptorIO, pyflann
+from performance import *
 
-class Parameters():
-    pass
+class FFile(object):
+    name = ''
+    def __init__(self,name,path):
+        self.name = name
+        self.path = path
+        self.base = name[:-4]
+        self.ext = name[-4:]
+    
+    def __str__(self):
+        return(self.path+self.name)
+    
+    def copy(self, fname=name):
+        return FFile(fname, self.path)
 
-def select_data(test, params):
-    trainsz = params.trainsize
-    testsz  = params.testsize
-    diff = params.diff
-    if test == 'graz01_person':
-        pathp = "../im/graz01/persons/"
-        pathb = "../im/graz01/bikes/"
-        pathn = "../im/graz01/no_bike_no_person/"
+class Test(object):
+    class Params:
+        pass
+    
+    def __init__(self, args):
+        from ConfigParser import RawConfigParser
         
-        pos_files = np.array(select_files(pathp,  trainsz + testsz, diff))
-        bike_files= np.array(select_files(pathb, (trainsz + testsz)/2, diff))
-        no_files  = np.array(select_files(pathn, (trainsz + testsz)/2, diff))
-        train_set = np.vstack([pos_files[:trainsz], np.hstack([bike_files[:trainsz/2],no_files[:trainsz/2]])])
-        #[pos_files[:trainsz], bike_files[:trainsz/2] + no_files[:trainsz/2]]
-        test_set  = np.hstack([pos_files[trainsz:],bike_files[trainsz/2:], no_files[trainsz/2:]])
-        #pos_files[trainsz:] + bike_files[trainsz/2:] + no_files[trainsz/2:]
-        classification = np.array([0]*testsz + [1]*testsz, int)
-        return train_set, test_set, classification
-    elif test == 'graz01_bike':
-        pass
-    elif test == 'caltech101':
-        pass
-    elif test == 'graz01_descriptors':
-        pathp = "../im/graz01/persons/"
-        pathb = "../im/graz01/bikes/"
-        pathn = "../im/graz01/no_bike_no_person/"
-        pers_files = np.array(select_files(pathp,  0, diff))
-        bike_files= np.array(select_files(pathb, 0, diff))
-        no_files  = np.array(select_files(pathn, 0, diff))
-
-        fileset  = np.hstack([pers_files,bike_files, no_files])
-        print fileset.shape
-        return fileset
-
-def select_files(path, sz, diff):
-    files = os.listdir(path)
-    def filt(x): return re.search('.jpg',x)
-    files = filter(filt,files)
-
-    if diff == 'no_hard':
-        if 'graz01/persons' in path:
-            limit = 348
-        elif 'graz01/bikes' in path:
-            limit = 306
-        elif 'graz01/no_bike_no_person' in path:
-            limit = 273
-        def rm_hard(x, limit): return int(re.search('[0-9]+',x).group(0)) <= limit
-        files = [f for f in files if rm_hard(f, limit)]
-
-    if sz == 0:
-        files = [path+f for f in files]
+        config = RawConfigParser()
+        self.config = config
+        config.read(args.configfile)
+        
+        self.ID = args.ID
+        self.test = config.get('Data', 'test')
+        self.verbose = config.getboolean('General', 'verbose')
+        
+        if self.verbose:
+            print 'Initializing Test'
+        
+        if args.descriptoronly:
+            self.descr_only = True
+            self.run_descriptors = True
+            self.run_flann = False
+            self.keep_descriptors = True
+            self.trainsize = 0
+            self.testsize = 0
+            self.difficulty = ''
+            print 'HOI!', self.keep_descriptors
+        else:
+            self.descr_only = False
+            self.run_descriptors = True
+            self.run_flann = True
+            self.keep_descriptors = False
+            self.trainsize = config.getint('Data','trainsize')
+            self.testsize = config.getint('Data', 'testsize')
+            self.difficulty = config.get('Data', 'difficulty')
+            self.file_limits = {}
+        
+        r = config.get('General', 'resultsfile').split('.')
+        self.resultsfile = r[0]+'_'+self.ID+'.'+r[1]
+        self.tmp_dir = 'tmp_'+args.ID+'/'
+                
+        self.descr = self.Params()
+        self.descr.descriptor = config.get('Descriptors', 'descriptor')
+        self.descr.detector = config.get('Descriptors', 'detector')
+        self.descr.binary = config.getboolean('Descriptors', 'save_binary')
+        self.descr.scale_levels = config.getint('Descriptors', 'scale_levels')
+        
+        self.flann = self.Params()
+        self.flann.k = config.getint('Flann', 'k')
+    
+    def select_files(self, path, sz):
+        if self.verbose:
+            print 'selecting {0} files from {1}'.format(sz,path)
+        
+        files = os.listdir(path)
+        def filt(x): return re.search('.jpg',x)
+        files = filter(filt,files)
+        
+        if not self.descr_only:
+            limit = [v for k,v in self.file_limits.items() if k in path]
+            if not limit == []:
+                limit = limit[0]
+                def rm_limit(x, limit): return int(re.search('[0-9]+',x).group(0)) <= limit
+                files = [f for f in files if rm_limit(f, limit)]
+                
+            random.shuffle(files)
+            files = files[:sz]
+        
+        files = [FFile(f, path) for f in files]
         return files
-    np.random.shuffle(files)
-    files = files[:sz]
-    files = [path+f for f in files]
-    return files
+    
+    def get_all_descriptors(self):
+        if self.verbose:
+            print 'Getting Descriptors'
+        
+        from subprocess import Popen, PIPE
+        
+        if not self.tmp_dir[:-1] in os.listdir('.'):
+            os.mkdir(self.tmp_dir)
+        
+        self.outputbase = self.descr.detector + "_" + self.descr.descriptor + "_"
+        if self.descr.binary:
+            self.dopts = [  "--detector", self.descr.detector, "--descriptor", \
+                            self.descr.descriptor, "--outputFormat", 'binary',"--output"]
+            self.outputext = '.dbin'
+        else:
+            self.dopts = [  "--detector", self.descr.detector, "--descriptor", \
+                            self.descr.descriptor,"--output"]
+            self.outputext = '.dtxt'
+        
+        if self.descr_only:
+            if self.verbose: print 'getting all descriptors: running descriptor only'
+            self.get_descriptor_sets(self.fileset)
+        else:
+            if self.verbose: print 'getting training descriptors:'
+            self.train_descriptors = [array(0)]*self.train_set.shape[0]
+            for it, clfiles in enumerate(self.train_set):
+                dscr, _ = self.get_descriptor_sets(clfiles)
+                self.train_descriptors[it] = dscr
+            if self.verbose: print 'getting test descriptors:'
+            self.test_descriptors, self.dssize = self.get_descriptor_sets(self.test_set)        
 
-def get_descriptors(files, params, tmp_dir):
-    from subprocess import Popen, PIPE
-    no_files = len(files)
-    if not tmp_dir[:-1] in os.listdir('.'):
-        os.mkdir(tmp_dir)
-    outputbase = params.detector + "_" + params.descriptor + "_"
-    if params.binary:
-        dopts = ["--detector", params.detector, "--descriptor", params.descriptor, "--outputFormat", 'binary',"--output"]
-        outputext = '.dbin'
-    else:
-        dopts = ["--detector", params.detector, "--descriptor", params.descriptor,"--output"]
-        outputext = '.dtxt'
-    
-    descriptors = [np.array(0) for i in range(no_files*params.scale_levels)]
-    
-    if params.scale_levels > 1:
-        import cv2.cv as cv
-    
-    for i, f in enumerate(files):
-        print "generating descriptors for {0}".format(f)
-        filename = f.split('/')[-1]
-        if not params.remove_tmp:
-            tmp_dir = f[:-len(filename)] + 'descriptors/'
-            if not 'descriptors' in os.listdir(f[:-len(filename)]):
-                os.mkdir(tmp_dir)
-                print 'tmp_dir: ',tmp_dir
-        o = tmp_dir+outputbase+filename[:-4]+outputext
-        run_args= ['colorDescriptor', f] + dopts + [o]
+    def get_descriptor_sets(self,fileset, ):
+        if self.descr.scale_levels > 1:
+            import cv2.cv as cv
+        
+        no_files = len(fileset)
+            
+        if self.run_flann:
+            descriptors = [array(0) for i in range(no_files*self.descr.scale_levels)]
+        if self.verbose: print '....file:', 
+        for i, f in enumerate(fileset):
+            if self.verbose: print i,
+            if self.keep_descriptors:
+                tmp_dir = f.path + 'descriptors/'
+                if not 'descriptors' in os.listdir(f.path):
+                    os.mkdir('descriptors')
+            else:
+                tmp_dir = self.tmp_dir
+            
+            if self.run_flann:
+                descriptors[i*self.descr.scale_levels] = self.run_color_descr(f, tmp_dir)
+            else:
+                self.run_color_descr(f, tmp_dir)
+
+            if self.descr.scale_levels > 1:
+                im1 = cv.LoadImageM(str(f))
+                base = f.base
+                for scale in range(1,self.descr.scale_levels):
+                    im2 = cv.CreateMat(im1.rows/2,im1.cols/2,im1.type)
+                    cv.PyrDown(im1, im2)
+                    f = FFile(base+'_'+str(scale)+f.ext, self.tmp_dir)
+                    cv.SaveImage(str(f),im2)
+                    
+                    if self.run_flann:
+                        descriptors[i*self.descr.scale_levels+scale] = self.run_color_descr(f,tmp_dir)
+                    else:
+                        self.run_color_descr(f, tmp_dir)
+                    os.remove(str(f))
+                    im1 = im2
+        if self.verbose: print '' 
+        if self.run_flann:
+            return vstack(descriptors), array([d.shape[0] for d in descriptors]).reshape(self.descr.scale_levels,no_files).sum(0)
+            
+    def run_color_descr(self, f, tmp_dir):
+        from subprocess import Popen, PIPE
+        
+        
+        o = tmp_dir+self.outputbase+f.base+self.outputext
         print o
+        run_args= ['colorDescriptor', str(f)] + self.dopts + [o]
         #print run_args
         #print type(run_args)
         p = Popen(run_args,stdout=PIPE, stderr=PIPE)
@@ -107,175 +184,141 @@ def get_descriptors(files, params, tmp_dir):
         if not err == '':
             raise Exception("ColDescriptor run failed.\n Message: {0}\n Did not make output for {1}".format(err, f))
         else:
-            if params.remove_tmp:
+            if not self.descr_only:
                 # read descriptors:
-                _, descriptors[i*params.scale_levels] = DescriptorIO.readDescriptors(o)
-                #print [d.shape for d in descriptors]
-                os.remove(o)
+                _, d = DescriptorIO.readDescriptors(o)
+                if not self.keep_descriptors:
+                    os.remove(o)
+                return d
+            else:
+                if not self.keep_descriptors:
+                    os.remove(o)
+    
+    def find_nn(self):
+        if self.verbose: print 'finding nearest neighbors.'
+        self.distances = zeros([self.no_classes,self.test_descriptors.shape[0]])
+        for it, descr in enumerate(self.train_descriptors):
+            if self.verbose: print '...class: ', it
+            flann = pyflann.FLANN()
+            print self.distances.shape
+            _, d = flann.nn(descr, self.test_descriptors, \
+                        num_neighbors=self.flann.k, algorithm='kdtree')
+            print d.shape
+            self.distances[it,:] = d
         
-        if params.scale_levels > 1:
-            print "  scaling:",
-            filebase = filename[:-4]
-            filext = filename[-4:]
-            fnew = f
-            im1 = cv.LoadImageM(fnew)
-            for scale in range(1,params.scale_levels):
-                print scale,
-                im2 = cv.CreateMat(im1.rows/2,im1.cols/2,im1.type)
-                cv.PyrDown(im1, im2)
-                filename = filebase+'_'+str(scale)+filext
-                fnew = tmp_dir+filename
-                cv.SaveImage(fnew,im2)
-                o = tmp_dir+outputbase+filebase+'_scale'+str(scale)+outputext
-                run_args= ['colorDescriptor', fnew] + dopts + [o]
-                #print run_args
-                #print type(run_args)
-                p = Popen(run_args,stdout=PIPE, stderr=PIPE)
-                _,err = p.communicate()
-                if not err == '':
-                    raise Exception("ColDescriptor run failed.\n Message: {0}\n Did not make output for {1}".format(err, fnew))
-                else:
-                    if params.remove_tmp:
-                        # read descriptors:
-                        _, descriptors[i*params.scale_levels+scale] = DescriptorIO.readDescriptors(o)
-                        #print [d.shape for d in descriptors]
-                        os.remove(o)
-                os.remove(fnew)
-                im1 = im2
-            print '' 
-    dssize = np.array([d.shape[0] for d in descriptors]).reshape(params.scale_levels,no_files).sum(0)
-    descriptors = np.vstack(descriptors)
-    return descriptors, dssize
+    def get_class(self):
+        if self.verbose: print 'Finding NB class.'
+        no_files = self.classification.shape[0]
+        # nns is a n x m array, where n=number of classes, m=numbr of test descriptors
+        # dssize = no of features per image
+        # testsz = no of test images
+        starts = hstack([0, cumsum(self.dssize)])
+        #print dssize, starts,nns.shape
+        self.c_hat = zeros(no_files,int)
+        
+        if self.verbose: print 'file: ',
+        for i in xrange(no_files):
+            if self.verbose: print i,
+            nfile = self.distances[:,starts[i]:starts[i+1]]
+            nsum = sum(nfile**2,1)
+            self.c_hat[i] = argmin(nsum)
+        if self.verbose: print ''
+        return self.c_hat
+    
+    def save_results(self):
+        print 'Saving results to: ', self.resultsfile
+        self.config.add_section('Results')
+        self.config.set('Results','ground_truth', self.classification)
+        self.config.set('Results', 'classification', self.c_hat)
+        
+        with open(self.resultsfile,'wb') as cfgfile:
+            self.config.write(cfgfile)
+    
+class GrazTest(Test):
+    
+    def __init__(self, args):
+        super(GrazTest, self).__init__(args)
+        self.no_classes = 2
+        if self.verbose: print 'Test will be GrazTest'
+        if self.difficulty == 'no_hard':
+            self.file_limits = {'persons':348, 'bikes': 306, 'no_bike_no_person': 273}
+    
+    def select_data(self, pathp, pathn1, pathn2):
+        if self.verbose: print 'Selecting Data the Graz01 way..'
+        
+        pos_files = array(self.select_files(pathp,  self.trainsize + self.testsize))
+        n1_files= array(self.select_files(pathn1, (self.trainsize + self.testsize)/2))
+        n2_files  = array(self.select_files(pathn2, (self.trainsize + self.testsize)/2))
+        
+        if not self.descr_only:
+            self.train_set = vstack([pos_files[:self.trainsize], hstack([n1_files[:self.trainsize/2],n2_files[:self.trainsize/2]])])
+            self.test_set  = hstack([pos_files[self.trainsize:],n1_files[self.trainsize/2:], n2_files[self.trainsize/2:]])
+            self.classification = array([0]*self.testsize + [1]*self.testsize, int)
+            return self.classification
+        else:
+            self.fileset = hstack([pos_files,n1_files, n2_files])
+        
+class GrazPersonTest(GrazTest):
+    
+    def select_data(self):
+        if self.verbose: print 'Selecting data the GrazPersonTest way'
+        
+        pathp = "../im/graz01/persons/"
+        pathn1 = "../im/graz01/bikes/"
+        pathn2 = "../im/graz01/no_bike_no_person/"
+        return super(GrazPersonTest, self).select_data(pathp,pathn1,pathn2)
+        
 
-def find_nn(train_descr, test_descr, params):
-    flann = pyflann.FLANN()
-    _, dists = flann.nn(train_descr, test_descr, num_neighbors=params.k, \
-            algorithm='kdtree')
-    return np.array(dists)
-   
-def get_class(nns, dssize, no_files):
-    # nns is a n x m array, where n=number of classes, m=numbr of test descriptors
-    # dssize = no of features per image
-    # testsz = no of test images
-    starts = np.hstack([0, np.cumsum(dssize)])
-    #print dssize, starts,nns.shape
-    c_hat = np.zeros(no_files,int)
-    for i in xrange(no_files):
-        nfile = nns[starts[i]:starts[i+1],:]
-        nsum = np.sum(nfile**2,0)
-        c_hat[i] = np.argmin(nsum)
-    return c_hat
+class GrazBikeTest(GrazTest):
+    
+    def select_data(self):
+        if self.verbose: print 'Selecting data the GrazBikeTest way'
+        
+        pathp = "../im/graz01/bikes/"
+        pathn1 = "../im/graz01/persons/"
+        pathn2 = "../im/graz01/no_bike_no_person/"
+        return super(GrazBikeTest, self).select_data(pathp,pathn1,pathn2)
 
-def get_performance(c, ch, params):
-    if params.verbose:
-        print 'Classes       : ', c
-        print 'Classification: ', ch
-    
-    sumdirection = 1
-    if len(c.shape) == 1:
-        sumdirection = 0
-    
-    tp = ((c==ch) & (c==0)).sum(sumdirection).mean()
-    tn = ((c==ch) & (c==1)).sum(sumdirection).mean()
-    fp = ((c!=ch) & (c==1)).sum(sumdirection).mean()
-    fn = ((c!=ch) & (c==0)).sum(sumdirection).mean()
-    
-    if params.verbose:
-    
-        print ''
-        print 'Confusion matrix: predicted:'
-        print ' actual :       : {0}   {1}'.format(tp, fn)
-        print '                  {0}   {1}'.format(fp, tn)
-    
-    f = open(params.resultsfile,'w')
-    
-    f.write('[Parameters]\n')
-    for k,v in vars(params).items():
-        f.write('{0}: {1}\n'.format(k,v))
-        if isinstance(v, Parameters):
-            for kk,vv in vars(v).items():
-                f.write('  {0}: {1}\n'.format(kk,vv))
-    f.write('\n[Results]\n')
-    f.write('Truth:          {0}\n'.format(c))
-    f.write('Classification: {0}\n\n'.format(ch))
-    f.write('conf: | cht | chf \n')
-    f.write('  ----+-----|-----\n')
-    f.write('   ct |{0:4.1f} |{1:4.1f} \n'.format(tp,fn))
-    f.write('   cf |{0:4.1f} |{1:4.1f} \n'.format(fp,tn))
-    f.close()
-    
+
+class CaltechTest(Test):
+    pass
+
+class PascalTest(Test):
+    pass
+
 if __name__ == '__main__':
-    import ConfigParser, argparse
+    import argparse
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', '--ID', default='1')
+    parser.add_argument('TEST')
     parser.add_argument('-c', '--configfile', default="settings.cfg")
     parser.add_argument('-s', '--descriptoronly', action='store_true')
     args = parser.parse_args()
-   
-    config = ConfigParser.RawConfigParser()
-    config.read(args.configfile)
+    if args.TEST == 'graz01_person':
+        test = GrazPersonTest(args)
+    elif args.TEST == 'graz01_bike':
+        test = GrazBikesTest(args)
+    elif args.TEST == 'caltech101':
+        test = CaltechTest(args)
+    elif args.TEST == 'pascal':
+        test = PascalTest(args)
+    elif args.TEST == 'graz01_descriptor':
+        test = GrazTest(args)
+
+    c = test.select_data()
     
-    params = Parameters()
-    params.ID = args.ID    
-    params.verbose = config.getboolean('General', 'verbose')
-    r = config.get('General', 'resultsfile').split('.')
-    params.resultsfile = r[0]+'_'+params.ID+'.'+r[1]
-    params.tmpdir = 'tmp_'+args.ID+'/'
-    params.iterations = config.getint('General', 'iterations')
-    params.test = config.get('Data', 'test')
-    
-    params.data = Parameters()
-    params.data.trainsize = config.getint('Data','trainsize')
-    params.data.testsize = config.getint('Data', 'testsize')
-    params.data.diff = config.get('Data', 'difficulty')
-    
-    params.descr = Parameters()
-    params.descr.descriptor = config.get('Descriptors', 'descriptor')
-    params.descr.detector = config.get('Descriptors', 'detector')
-    params.descr.binary = config.getboolean('Descriptors', 'save_binary')
-    params.descr.scale_levels = config.getint('Descriptors', 'scale_levels')
-    params.descr.remove_tmp = True
-    
-    params.flann = Parameters()
-    params.flann.k = config.getint('Flann', 'k')
-    
-    if args.descriptoronly:
-        params.test = 'graz01_descriptors'
-        params.ID = ''
-        params.descr.remove_tmp = False
-        if params.verbose:
-            print params.test
+    c_hats = zeros(test.no_classes*test.testsize)
+    classes = zeros(test.no_classes*test.testsize)
         
-        filenames = select_data(params.test, params.data)
-        get_descriptors(filenames, params.descr, params.tmpdir)
-    else:
-        if params.verbose:
-            print params.test
-    
-        c_hats = np.array(0)
-        classes = np.array(0)
-    
-        for it in range(params.iterations):
-            trainfiles, testfiles, classification = select_data(params.test, params.data)
-            no_classes = trainfiles.shape[0]
-            if classes.shape == ():
-                c_hats = np.zeros([params.iterations, no_classes*params.data.testsize])
-                classes = np.zeros([params.iterations, no_classes*params.data.testsize])
-            print 'Getting test descriptors'
-            test_descr, dssize = get_descriptors(testfiles, params.descr, params.tmpdir)
-            print '\n'
-            nns = np.zeros([test_descr.shape[0],no_classes])
-            for i,clf in enumerate(trainfiles):
-                print 'Get training descriptors for class {0}'.format(i)
-                train_descr, _ = get_descriptors(clf, params.descr, params.tempfile)
-                print '  Find NN'
-                #idxes = make_indexes(train_descr, params.flann)
-                nns[:,i] = find_nn(train_descr, test_descr, params.flann)
-            print 'Calculate c_hat'
-            c_hat = get_class(nns, dssize, params.data.testsize*no_classes)
-            classes[it,:] = classification
-            c_hats[it,:] = c_hat
-        get_performance(classes, c_hats, params)
-    
+    if test.run_descriptors:
+        test.get_all_descriptors()
+    if test.run_flann:
+        test.find_nn()
+        c_hats = test.get_class()
+        test.save_results()
+        cfmat = get_confmat(classes, c_hats, test.no_classes)
+        print cfmat
+        roc = get_ROC_equal_rate(cfmat)
+        print 'ROC: ', roc
     
