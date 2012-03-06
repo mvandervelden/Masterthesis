@@ -52,7 +52,6 @@ class Test(object):
             self.trainsize = 0
             self.testsize = 0
             self.difficulty = ''
-            print 'HOI!', self.keep_descriptors
         else:
             self.descr_only = False
             self.run_descriptors = True
@@ -175,7 +174,6 @@ class Test(object):
         
         
         o = tmp_dir+self.outputbase+f.base+self.outputext
-        print o
         run_args= ['colorDescriptor', str(f)] + self.dopts + [o]
         #print run_args
         #print type(run_args)
@@ -200,10 +198,8 @@ class Test(object):
         for it, descr in enumerate(self.train_descriptors):
             if self.verbose: print '...class: ', it
             flann = pyflann.FLANN()
-            print self.distances.shape
             _, d = flann.nn(descr, self.test_descriptors, \
                         num_neighbors=self.flann.k, algorithm='kdtree')
-            print d.shape
             self.distances[it,:] = d
         
     def get_class(self):
@@ -233,6 +229,13 @@ class Test(object):
         
         with open(self.resultsfile,'wb') as cfgfile:
             self.config.write(cfgfile)
+    
+    def remove_tmpfiles(self):
+        if self.verbose: print 'Removing Temp files'
+        
+        import shutil
+        if os.listdir(self.tmp_dir) == []:
+            shutil.rmtree(self.tmp_dir)
     
 class GrazTest(Test):
     
@@ -317,6 +320,7 @@ if __name__ == '__main__':
         test.find_nn()
         c_hats = test.get_class()
         test.save_results()
+        test.remove_tmpfiles()
         cfmat = get_confmat(classes, c_hats, test.no_classes)
         print cfmat
         roc = get_ROC_equal_rate(cfmat)

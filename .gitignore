@@ -1,4 +1,4 @@
 *.pyc
 tmp_*
-errors.log
+*.log
 *.res
