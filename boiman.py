@@ -66,6 +66,9 @@ class Test(object):
             if os.path.exists('/dev/shm'):
                 if self.verbose: print 'Using RAMdisk'
                 self.tmp_dir = '/dev/shm/tmp_'+args.ID+'/'
+                if os.path.exists(self.tmp_dir):
+                    os.remove(self.tmp_dir+'*')
+                    os.rmdir(self.tmp_dir)
             else:
                 self.tmp_dir = 'tmp_'+args.ID+'/'
         
