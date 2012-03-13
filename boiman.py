@@ -30,15 +30,16 @@ class Test(object):
     class Params:
         pass
     
-    def __init__(self, args):
+    def __init__(self, args, test):
         from ConfigParser import RawConfigParser
+        
+        self.test = test
         
         config = RawConfigParser()
         self.config = config
         config.read(args.configfile)
         
         self.ID = args.ID
-        self.test = config.get('Data', 'test')
         self.verbose = config.getboolean('General', 'verbose')
         
         if self.verbose:
@@ -52,6 +53,7 @@ class Test(object):
             self.trainsize = 0
             self.testsize = 0
             self.difficulty = ''
+            self.tmp_dir = 'tmp_'+args.ID+'/'
         else:
             self.descr_only = False
             self.run_descriptors = True
@@ -61,16 +63,22 @@ class Test(object):
             self.testsize = config.getint('Data', 'testsize')
             self.difficulty = config.get('Data', 'difficulty')
             self.file_limits = {}
+            if os.path.exists('/dev/shm'):
+                if self.verbose: print 'Using RAMdisk'
+                self.tmp_dir = '/dev/shm/tmp_'+args.ID+'/'
+            else:
+                self.tmp_dir = 'tmp_'+args.ID+'/'
         
         r = config.get('General', 'resultsfile').split('.')
         self.resultsfile = r[0]+'_'+self.ID+'.'+r[1]
-        self.tmp_dir = 'tmp_'+args.ID+'/'
                 
         self.descr = self.Params()
         self.descr.descriptor = config.get('Descriptors', 'descriptor')
         self.descr.detector = config.get('Descriptors', 'detector')
         self.descr.binary = config.getboolean('Descriptors', 'save_binary')
         self.descr.scale_levels = config.getint('Descriptors', 'scale_levels')
+        self.descr.scale_base = config.getfloat('Descriptors', 'scale_base')
+        self.descr.spacing_base = config.getint('Descriptors', 'spacing_base')
         
         self.flann = self.Params()
         self.flann.k = config.getint('Flann', 'k')
@@ -108,11 +116,11 @@ class Test(object):
         self.outputbase = self.descr.detector + "_" + self.descr.descriptor + "_"
         if self.descr.binary:
             self.dopts = [  "--detector", self.descr.detector, "--descriptor", \
-                            self.descr.descriptor, "--outputFormat", 'binary',"--output"]
+                            self.descr.descriptor, "--outputFormat", 'binary']
             self.outputext = '.dbin'
         else:
             self.dopts = [  "--detector", self.descr.detector, "--descriptor", \
-                            self.descr.descriptor,"--output"]
+                            self.descr.descriptor]
             self.outputext = '.dtxt'
         
         if self.descr_only:
@@ -127,54 +135,40 @@ class Test(object):
             if self.verbose: print 'getting test descriptors:'
             self.test_descriptors, self.dssize = self.get_descriptor_sets(self.test_set)        
 
-    def get_descriptor_sets(self,fileset, ):
-        if self.descr.scale_levels > 1:
-            import cv2.cv as cv
+    def get_descriptor_sets(self,fileset):
+        # if self.descr.scale_levels > 1:
+        #     import cv2.cv as cv
         
         no_files = len(fileset)
             
         if self.run_flann:
             descriptors = [array(0) for i in range(no_files*self.descr.scale_levels)]
-        if self.verbose: print '....file:', 
+        if self.verbose: print '....file:' 
         for i, f in enumerate(fileset):
-            if self.verbose: print i,
+            if self.verbose: print i
             if self.keep_descriptors:
                 tmp_dir = f.path + 'descriptors/'
                 if not 'descriptors' in os.listdir(f.path):
                     os.mkdir('descriptors')
             else:
                 tmp_dir = self.tmp_dir
-            
-            if self.run_flann:
-                descriptors[i*self.descr.scale_levels] = self.run_color_descr(f, tmp_dir)
-            else:
-                self.run_color_descr(f, tmp_dir)
+            for scale in range(self.descr.scale_levels):
+                scaling = self.descr.scale_base**(scale+1)
+                spacing = int(floor(self.descr.spacing_base*(self.descr.scale_base**scale)))
+                if self.run_flann:
+                    descriptors[(i*self.descr.scale_levels)+scale] = self.run_color_descr(f, tmp_dir, scaling, spacing)
+                else:
+                    self.run_color_descr(f, tmp_dir, scaling, spacing)
 
-            if self.descr.scale_levels > 1:
-                im1 = cv.LoadImageM(str(f))
-                base = f.base
-                for scale in range(1,self.descr.scale_levels):
-                    im2 = cv.CreateMat(im1.rows/2,im1.cols/2,im1.type)
-                    cv.PyrDown(im1, im2)
-                    f = FFile(base+'_'+str(scale)+f.ext, self.tmp_dir)
-                    cv.SaveImage(str(f),im2)
-                    
-                    if self.run_flann:
-                        descriptors[i*self.descr.scale_levels+scale] = self.run_color_descr(f,tmp_dir)
-                    else:
-                        self.run_color_descr(f, tmp_dir)
-                    os.remove(str(f))
-                    im1 = im2
         if self.verbose: print '' 
         if self.run_flann:
             return vstack(descriptors), array([d.shape[0] for d in descriptors]).reshape(self.descr.scale_levels,no_files).sum(0)
             
-    def run_color_descr(self, f, tmp_dir):
+    def run_color_descr(self, f, tmp_dir, scaling, spacing):
         from subprocess import Popen, PIPE
         
-        
-        o = tmp_dir+self.outputbase+f.base+self.outputext
-        run_args= ['colorDescriptor', str(f)] + self.dopts + [o]
+        o = tmp_dir+self.outputbase+'sc{0:.1f}'.format(scaling)+'_sp'+str(spacing)+'_'+f.base+self.outputext
+        run_args= ['colorDescriptor', str(f)] + self.dopts + ['--ds_spacing', str(spacing), '--ds_scales', '{0:.1f}'.format(scaling), '--output', o]
         #print run_args
         #print type(run_args)
         p = Popen(run_args,stdout=PIPE, stderr=PIPE)
@@ -239,8 +233,8 @@ class Test(object):
     
 class GrazTest(Test):
     
-    def __init__(self, args):
-        super(GrazTest, self).__init__(args)
+    def __init__(self, args, test):
+        super(GrazTest, self).__init__(args, test)
         self.no_classes = 2
         if self.verbose: print 'Test will be GrazTest'
         if self.difficulty == 'no_hard':
@@ -263,6 +257,9 @@ class GrazTest(Test):
         
 class GrazPersonTest(GrazTest):
     
+    def __init__(self,args):
+        super(GrazPersonTest, self).__init__(args,'graz01_person')
+    
     def select_data(self):
         if self.verbose: print 'Selecting data the GrazPersonTest way'
         
@@ -273,6 +270,8 @@ class GrazPersonTest(GrazTest):
         
 
 class GrazBikeTest(GrazTest):
+    def __init__(self,args):
+        super(GrazBikeTest, self).__init__(args,'graz01_bike')
     
     def select_data(self):
         if self.verbose: print 'Selecting data the GrazBikeTest way'
@@ -284,10 +283,14 @@ class GrazBikeTest(GrazTest):
 
 
 class CaltechTest(Test):
-    pass
+    def __init__(self,args):
+        super(CaltechTest, self).__init__(args,'caltech101')
+
 
 class PascalTest(Test):
-    pass
+    def __init__(self,args):
+        super(PascalTest, self).__init__(args,'pascal07')
+
 
 if __name__ == '__main__':
     import argparse
@@ -321,8 +324,4 @@ if __name__ == '__main__':
         c_hats = test.get_class()
         test.save_results()
         test.remove_tmpfiles()
-        cfmat = get_confmat(classes, c_hats, test.no_classes)
-        print cfmat
-        roc = get_ROC_equal_rate(cfmat)
-        print 'ROC: ', roc
     
