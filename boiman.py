@@ -223,7 +223,8 @@ class Test(object):
         self.config.add_section('Results')
         self.config.set('Results','ground_truth', self.classification)
         self.config.set('Results', 'classification', self.c_hat)
-        
+        self.config.set('Results', 'trainfiles', self.train_set)
+        self.config.set('Results', 'testfiles', self.test_set)
         with open(self.resultsfile,'wb') as cfgfile:
             self.config.write(cfgfile)
     
