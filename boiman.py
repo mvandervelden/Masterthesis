@@ -11,6 +11,8 @@ import re
 from numpy import *
 import DescriptorIO, pyflann
 from performance import *
+from subprocess import Popen, PIPE
+import shutil
 
 class FFile(object):
     name = ''
@@ -45,35 +47,48 @@ class Test(object):
         if self.verbose:
             print 'Initializing Test'
         
-        if args.descriptoronly:
-            self.descr_only = True
-            self.run_descriptors = True
-            self.run_flann = False
-            self.keep_descriptors = True
-            self.trainsize = 0
-            self.testsize = 0
-            self.difficulty = ''
-            self.tmp_dir = 'tmp_'+args.ID+'/'
+        # if args.descriptoronly:
+        #     self.descr_only = True
+        #     self.run_descriptors = True
+        #     self.run_flann = False
+        #     self.keep_descriptors = True
+        #     self.trainsize = 0
+        #     self.testsize = 0
+        #     self.difficulty = ''
+        #     self.tmp_dir = 'tmp_'+args.ID+'/'
+        #else:
+        #self.descr_only = False
+        self.run_descriptors = True
+        self.run_flann = True
+        
+        # is always True at start, wil be set to False afterwards, so the first dscriptors will be saved
+        self.keep_descriptors = True
+        self.keep_nn = True
+        self.sample = []
+        
+        self.trainsize = config.getint('Data','trainsize')
+        self.testsize = config.getint('Data', 'testsize')
+        self.difficulty = config.get('Data', 'difficulty')
+        self.file_limits = {}
+        if os.path.exists('/dev/shm'):
+            if self.verbose: print 'Using RAMdisk'
+            self.tmp_dir = '/dev/shm/tmp_'+args.ID+'/'
         else:
-            self.descr_only = False
-            self.run_descriptors = True
-            self.run_flann = True
-            self.keep_descriptors = False
-            self.trainsize = config.getint('Data','trainsize')
-            self.testsize = config.getint('Data', 'testsize')
-            self.difficulty = config.get('Data', 'difficulty')
-            self.file_limits = {}
-            if os.path.exists('/dev/shm'):
-                if self.verbose: print 'Using RAMdisk'
-                self.tmp_dir = '/dev/shm/tmp_'+args.ID+'/'
-                if os.path.exists(self.tmp_dir):
-                    os.remove(self.tmp_dir+'*')
-                    os.rmdir(self.tmp_dir)
-            else:
-                self.tmp_dir = 'tmp_'+args.ID+'/'
+            self.tmp_dir = 'tmp_'+args.ID+'/'
+        
+        if os.path.exists(self.tmp_dir):
+            ls = os.listdir(self.tmp_dir)
+            if len(os.listdir(self.tmp_dir)) > 0:
+                for f in ls:
+                    os.remove(self.tmp_dir+f)
+        else:
+            os.mkdir(self.tmp_dir)
+        self.resultsdir = 'results/'
+        if not self.resultsdir[:-1] in os.listdir('.'):
+            os.mkdir(self.resultsdir)
         
         r = config.get('General', 'resultsfile').split('.')
-        self.resultsfile = r[0]+'_'+self.ID+'.'+r[1]
+        self.resultsfile =self.resultsdir + r[0]+'_'+self.ID+'.'+r[1]
                 
         self.descr = self.Params()
         self.descr.descriptor = config.get('Descriptors', 'descriptor')
@@ -94,27 +109,21 @@ class Test(object):
         def filt(x): return re.search('.jpg',x)
         files = filter(filt,files)
         
-        if not self.descr_only:
-            limit = [v for k,v in self.file_limits.items() if k in path]
-            if not limit == []:
-                limit = limit[0]
-                def rm_limit(x, limit): return int(re.search('[0-9]+',x).group(0)) <= limit
-                files = [f for f in files if rm_limit(f, limit)]
+        limit = [v for k,v in self.file_limits.items() if k in path]
+        if not limit == []:
+            limit = limit[0]
+            def rm_limit(x, limit): return int(re.search('[0-9]+',x).group(0)) <= limit
+            files = [f for f in files if rm_limit(f, limit)]
                 
-            random.shuffle(files)
-            files = files[:sz]
+        random.shuffle(files)
+        files = files[:sz]
         
         files = [FFile(f, path) for f in files]
         return files
     
-    def get_all_descriptors(self):
+    def set_descriptor_variables(self):
         if self.verbose:
-            print 'Getting Descriptors'
-        
-        from subprocess import Popen, PIPE
-        
-        if not self.tmp_dir[:-1] in os.listdir('.'):
-            os.mkdir(self.tmp_dir)
+            print 'Setting Descriptor variables'
         
         self.outputbase = self.descr.detector + "_" + self.descr.descriptor + "_"
         if self.descr.binary:
@@ -126,50 +135,37 @@ class Test(object):
                             self.descr.descriptor]
             self.outputext = '.dtxt'
         
-        if self.descr_only:
-            if self.verbose: print 'getting all descriptors: running descriptor only'
-            self.get_descriptor_sets(self.fileset)
-        else:
-            if self.verbose: print 'getting training descriptors:'
-            self.train_descriptors = [array(0)]*self.train_set.shape[0]
-            for it, clfiles in enumerate(self.train_set):
-                dscr, _ = self.get_descriptor_sets(clfiles)
-                self.train_descriptors[it] = dscr
-            if self.verbose: print 'getting test descriptors:'
-            self.test_descriptors, self.dssize = self.get_descriptor_sets(self.test_set)        
+        
+    def get_descriptors(self, files, save_dssize=False):
+        if self.verbose: print 'Descriptors:'
+        # Get descriptors for the test_images
+        descriptors, dssize = self.get_descriptor_sets(files)
+        if save_dssize:
+            self.dssize = dssize
+        return descriptors
 
     def get_descriptor_sets(self,fileset):
-        # if self.descr.scale_levels > 1:
-        #     import cv2.cv as cv
         
         no_files = len(fileset)
             
-        if self.run_flann:
-            descriptors = [array(0) for i in range(no_files*self.descr.scale_levels)]
+        descriptors = [array(0) for i in range(no_files*self.descr.scale_levels)]
         if self.verbose: print '....file:' 
+
         for i, f in enumerate(fileset):
             if self.verbose: print i
             if self.keep_descriptors:
-                tmp_dir = f.path + 'descriptors/'
-                if not 'descriptors' in os.listdir(f.path):
-                    os.mkdir('descriptors')
+                save=True
+                self.keep_descriptors = False
             else:
-                tmp_dir = self.tmp_dir
+                save=False
             for scale in range(self.descr.scale_levels):
                 scaling = self.descr.scale_base**(scale+1)
                 spacing = int(floor(self.descr.spacing_base*(self.descr.scale_base**scale)))
-                if self.run_flann:
-                    descriptors[(i*self.descr.scale_levels)+scale] = self.run_color_descr(f, tmp_dir, scaling, spacing)
-                else:
-                    self.run_color_descr(f, tmp_dir, scaling, spacing)
+                descriptors[(i*self.descr.scale_levels)+scale] = self.run_color_descr(f, self.tmp_dir, scaling, spacing, save)
 
-        if self.verbose: print '' 
-        if self.run_flann:
-            return vstack(descriptors), array([d.shape[0] for d in descriptors]).reshape(self.descr.scale_levels,no_files).sum(0)
+        return vstack(descriptors), array([d.shape[0] for d in descriptors]).reshape(self.descr.scale_levels,no_files).sum(0)
             
-    def run_color_descr(self, f, tmp_dir, scaling, spacing):
-        from subprocess import Popen, PIPE
-        
+    def run_color_descr(self, f, tmp_dir, scaling, spacing, save):
         o = tmp_dir+self.outputbase+'sc{0:.1f}'.format(scaling)+'_sp'+str(spacing)+'_'+f.base+self.outputext
         run_args= ['colorDescriptor', str(f)] + self.dopts + ['--ds_spacing', str(spacing), '--ds_scales', '{0:.1f}'.format(scaling), '--output', o]
         #print run_args
@@ -179,27 +175,23 @@ class Test(object):
         if not err == '':
             raise Exception("ColDescriptor run failed.\n Message: {0}\n Did not make output for {1}".format(err, f))
         else:
-            if not self.descr_only:
-                # read descriptors:
-                _, d = DescriptorIO.readDescriptors(o)
-                if not self.keep_descriptors:
-                    os.remove(o)
-                return d
+            # read descriptors:
+            _, d = DescriptorIO.readDescriptors(o)
+            if not save:
+                os.remove(o)
             else:
-                if not self.keep_descriptors:
-                    os.remove(o)
+                self.sample.append(self.resultsdir+self.outputbase+'sc{0:.1f}'.format(scaling)+'_sp'+str(spacing)+'_'+f.base+self.outputext)
+                shutil.move(o, self.resultsdir)
+            return d
     
-    def find_nn(self):
+    def find_nn(self, test_descr, train_descr):
         if self.verbose: print 'finding nearest neighbors.'
-        self.distances = zeros([self.no_classes,self.test_descriptors.shape[0]])
-        for it, descr in enumerate(self.train_descriptors):
-            if self.verbose: print '...class: ', it
-            flann = pyflann.FLANN()
-            _, d = flann.nn(descr, self.test_descriptors, \
-                        num_neighbors=self.flann.k, algorithm='kdtree')
-            self.distances[it,:] = d
+        self.distances = zeros([self.no_classes,test_descr.shape[0]])
+        flann = pyflann.FLANN()
+        f, d = flann.nn(train_descr, test_descr, num_neighbors=self.flann.k, algorithm='kdtree')
+        return f,d
         
-    def get_class(self):
+    def get_class(self, nns):
         if self.verbose: print 'Finding NB class.'
         no_files = self.classification.shape[0]
         # nns is a n x m array, where n=number of classes, m=numbr of test descriptors
@@ -212,28 +204,41 @@ class Test(object):
         if self.verbose: print 'file: ',
         for i in xrange(no_files):
             if self.verbose: print i,
-            nfile = self.distances[:,starts[i]:starts[i+1]]
+            nfile = nns[:,starts[i]:starts[i+1]]
             nsum = sum(nfile**2,1)
             self.c_hat[i] = argmin(nsum)
         if self.verbose: print ''
         return self.c_hat
     
-    def save_results(self):
+    def save_results(self, train_set, test_set, nns, features):
         print 'Saving results to: ', self.resultsfile
+        
         self.config.add_section('Results')
         self.config.set('Results','ground_truth', self.classification)
         self.config.set('Results', 'classification', self.c_hat)
-        self.config.set('Results', 'trainfiles', self.train_set)
-        self.config.set('Results', 'testfiles', self.test_set)
+        self.config.set('Results', 'trainfiles', train_set)
+        self.config.set('Results', 'testfiles', test_set)
         with open(self.resultsfile,'wb') as cfgfile:
             self.config.write(cfgfile)
+        
+        import cPickle as cpk
+        with open(self.resultsfile[:-4]+'.cpk', 'wb') as cpkfile:
+            cpk.dump(self.classification, cpkfile)
+            cpk.dump(self.c_hat, cpkfile)
+            cpk.dump([str(f) for f in train_set], cpkfile)
+            cpk.dump([str(f) for f in test_set],cpkfile)
+            cpk.dump(nns,cpkfile)
+            cpk.dump(features,cpkfile)
+            cpk.dump(self.sample,cpkfile)
+        
     
     def remove_tmpfiles(self):
         if self.verbose: print 'Removing Temp files'
         
         import shutil
-        if os.listdir(self.tmp_dir) == []:
-            shutil.rmtree(self.tmp_dir)
+        if not os.listdir(self.tmp_dir) == []:
+            os.remove(self.tmp_dir+'*')
+        shutil.rmtree(self.tmp_dir)
     
 class GrazTest(Test):
     
@@ -251,13 +256,10 @@ class GrazTest(Test):
         n1_files= array(self.select_files(pathn1, (self.trainsize + self.testsize)/2))
         n2_files  = array(self.select_files(pathn2, (self.trainsize + self.testsize)/2))
         
-        if not self.descr_only:
-            self.train_set = vstack([pos_files[:self.trainsize], hstack([n1_files[:self.trainsize/2],n2_files[:self.trainsize/2]])])
-            self.test_set  = hstack([pos_files[self.trainsize:],n1_files[self.trainsize/2:], n2_files[self.trainsize/2:]])
-            self.classification = array([0]*self.testsize + [1]*self.testsize, int)
-            return self.classification
-        else:
-            self.fileset = hstack([pos_files,n1_files, n2_files])
+        train_set = vstack([pos_files[:self.trainsize], hstack([n1_files[:self.trainsize/2],n2_files[:self.trainsize/2]])])
+        test_set  = hstack([pos_files[self.trainsize:],n1_files[self.trainsize/2:], n2_files[self.trainsize/2:]])
+        self.classification = array([0]*self.testsize + [1]*self.testsize, int)
+        return train_set, test_set
         
 class GrazPersonTest(GrazTest):
     
@@ -303,7 +305,6 @@ if __name__ == '__main__':
     parser.add_argument('-d', '--ID', default='1')
     parser.add_argument('TEST')
     parser.add_argument('-c', '--configfile', default="settings.cfg")
-    parser.add_argument('-s', '--descriptoronly', action='store_true')
     args = parser.parse_args()
     if args.TEST == 'graz01_person':
         test = GrazPersonTest(args)
@@ -316,16 +317,20 @@ if __name__ == '__main__':
     elif args.TEST == 'graz01_descriptor':
         test = GrazTest(args)
 
-    c = test.select_data()
-    
-    c_hats = zeros(test.no_classes*test.testsize)
-    classes = zeros(test.no_classes*test.testsize)
-        
+    train_files, test_files = test.select_data()
+    test.set_descriptor_variables()
     if test.run_descriptors:
-        test.get_all_descriptors()
+        test_descr = test.get_descriptors(test_files, True)
     if test.run_flann:
-        test.find_nn()
-        c_hats = test.get_class()
-        test.save_results()
+        nns = zeros([test.no_classes,test_descr.shape[0]])
+        features = zeros([test.no_classes, test_descr.shape[0]])
+        for it, classfiles in enumerate(train_files):
+            train_descr = test.get_descriptors(classfiles)
+            f, n = test.find_nn(test_descr, train_descr)
+            features[it,:] = f
+            nns[it,:] = n
+        test.get_class(nns)
+        
+        test.save_results(train_files, test_files, nns, features)
         test.remove_tmpfiles()
     
