@@ -309,7 +309,7 @@ if __name__ == '__main__':
     if args.TEST == 'graz01_person':
         test = GrazPersonTest(args)
     elif args.TEST == 'graz01_bike':
-        test = GrazBikesTest(args)
+        test = GrazBikeTest(args)
     elif args.TEST == 'caltech101':
         test = CaltechTest(args)
     elif args.TEST == 'pascal':
