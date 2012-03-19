@@ -2,4 +2,6 @@
 tmp_*
 *.log
 *.res
+*.cpk
 results
+.tm_properties
