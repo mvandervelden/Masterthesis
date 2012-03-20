@@ -1,161 +1,177 @@
 from numpy import *
 from ConfigParser import RawConfigParser
 
+class Results(object):
+    pass
 
-def get_confmat(c,ch):
-    no_classes = max(c)+1
+
+def get_confmat(cs,chs):
+    """ Returns a n-D confusion matrix of a ground truth classification vector c and a predicted classification ch.
+        The rows determine the ground truth, the columns the predicted value. """
+    # Get the number of classes
+    no_classes = cs.max()+1
+    # Initialize the matrix
     confmat = zeros([no_classes, no_classes])
-        
-    for ci,chi in zip(c,ch):
-        confmat[ci,chi] += 1
+    # Iterate over each pair of class-classification and add the combination to the entry of the confucion matrix
+    for c,ch in zip(cs,chs):
+        for i,j in zip(c,ch):
+            confmat[i,j] += 1
     return confmat
 
 def get_equal_error_rate(confmat):
+    """ Calculate the n-D ROC Equal Error Rate of a confusion matrix"""
+    
+    # Get the prior probability of each class by dividing the amount of images in the class by the total
     ssums = confmat.sum(0)
     priors = ssums/ssums.sum()
+    # Get the amount of "true positives" for each class (the diagonal of the CF)
     corrects = diag(confmat)
-    
+    # Get the true positive rate for each class by dividing the amounts of true positives by their amounts
     truth_rates = corrects/ssums
+    # The sum of true positive rates times their prior over the classes defines the equal error rate
+    # (with 2 classes, this is p1*tpr + p2*(1-fpr)[=tnr])
     return (truth_rates*priors).sum()
 
-def show_settings(results):
-    config = results[0]
+def show_settings(config):
+    """ From a list of cfg-like result files 'results', print the values of the first file, except the 'results' section"""
     print ' Settings:'
+    # Iterate over the sections
     for section in config.sections():
+        # Except the results section
         if not section == 'Results':
+            # Print the section name
             print '   [{0}]'.format(section)
+            # Iterate through the items of the current section
             for option, value in config.items(section):
+                # Print the item (name+ value)
                 print '     {0}: {1}'.format(option, value)
 
 def get_results(results):
-    import re
+    """ Returns the results for all cPickle-results files """
     import cPickle as cpk
+    
+    res = [Results() for i in range(len(results))]
+    # Iterate through the resultfiles
     for it, r in enumerate(results):
+        # Open the resultfile and parse it as a cPickle file
         with open(r,'rb') as pkl:
-            c = cpk.load(pkl)
-            c_hat = cpk.load(pkl)
-            trainfiles = cpk.load(pkl)
-            testfiles = cpk.load(pkl)
-            nns = cpk.load(pkl)
-            features = cpk.load(pkl)
-            samples = cpk.load(pkl)
-    return c, c_hat, trainfiles, testfiles, nns,features, samples
+            res[it].configfile = cpk.load(pkl)
+            res[it].c = cpk.load(pkl)
+            res[it].c_hat = cpk.load(pkl)
+            res[it].trainfiles = cpk.load(pkl)
+            res[it].testfiles = cpk.load(pkl)
+            res[it].nns = cpk.load(pkl)
+            res[it].features = cpk.load(pkl)
+            res[it].samples = cpk.load(pkl)            
+    return res
 
 def get_filenames(pattern):
+    """ Function that finds all files that match a regex pattern. The pattern is assumed to be a path from the working
+        working directory. It returns a list of the matching files"""
     import os, re
     
-    p = pattern[0].split('/')
-    path = ''
-    for pi in p[:-1]:
-        path += pi+'/'
-    files = os.listdir(path)
-    patt = re.compile(p[-1])
-    matches= [path+f for f in files if not isinstance(patt.search(f),type(None))]
-    print matches
+    matches = []
+    for patt in pattern:
+        # Break down the path into folders
+        p = patt.split('/')
+        # Determine the path from the list of folders p
+        path = ''
+        for folder in p[:-1]:
+            path += folder+'/'
+        # Get all files in the path
+        files = os.listdir(path)
+        # assume the last part of the pattern is a regular expression: compile it
+        patt = re.compile(p[-1])
+        # Add the matching files to the list of matches, if the pattern matches any files at all
+        matches= matches+[path+f for f in files if not isinstance(patt.search(f),type(None))]
+        print matches
     return matches
 
-def gauss_kern(sigma):
-    """ Returns a normalized 1D gauss kernel array for convolutions """
-    # take the range of x to be from -3sigma tot 3sigma
-    x = arange(-3*sigma,(3*sigma)+1)
-    # Calculate the gaussian
-    G = (sigma*sqrt(2*pi))**(-1)*exp(-(x**2)/(2*sigma**2))
-    # Normalize the gaussian to ensure that the intensity remains the same.
-    return G/G.sum()
+def visualize_features(r):
+    """ Visualize the features/classification of a test image.
+        This function assumes scipy (ndimage), PIL (Image), matplotlib (pylab) and Koen's DescriptorIO are available
+        Besides: the test file's descriptors should be available"""
+    import DescriptorIO
+    import pylab as plb
+    import Image
+    import scipy.ndimage as nd
+    testfile = r.testfiles[0]
+    print 'Visualizing first testimage: {0}'.format(testfile)
     
-def blur_image(im, sig, sigy=None) :
-    """ blurs the image by convolving with a gaussian kernel of typical
-        size n. The optional keyword argument ny allows for a different
-        size in the y direction.
-    """
-    gx = gauss_kern(sig)
-    if not sigy:
-        sigy = sig
-    gy = gauss_kern(sigy)
-    print gx, gy
-    for r in range(im.shape[0]):
-        im[r,:] = convolve(im[r,:], gx, 'same')
-    for c in range(im.shape[1]):
-        im[:,c] = convolve(im[:,c], gy, 'same')
-    return im
-
+    print r.samples
+    features_by_scale = []
+    all_features = zeros([0,5])
+    for s in r.samples:
+        f, _ = DescriptorIO.readDescriptors(s)
+        features_by_scale.append(f)
+        all_features = vstack([all_features, f])
+    # Load the testimage, in grayscale ("L")
+    image = Image.open(testfile).convert("L")
+    im = asarray(image)
+    A = zeros(im.shape)
+    B = zeros(im.shape)
+    
+    # Normalize the distances to be between 0 and 1, between the global min and max,
+    # Furthermore, convert to a 'heat map' instead of a 'distance_map', so 1-dist
+    dists = float_(r.nns)
+    dists = 1-(dists-dists.min())/(dists.max()-dists.min())
+    
+    # For all feature centers, give A the similarity to class 0, B the similarity to class 1
+    # Convert the feature indexes to ints
+    features_by_scale = int_(features_by_scale[0])
+    A[features_by_scale[:,1],features_by_scale[:,0]] = dists[0,:features_by_scale.shape[0]]
+    B[features_by_scale[:,1],features_by_scale[:,0]] = dists[1,:features_by_scale.shape[0]]
+    
+    # TODO: make the blur dependent on the scale of the features
+    A_blur = nd.gaussian_filter(A,1.2*10)
+    B_blur = nd.gaussian_filter(B,1.2*10)
+    # plot the original image and their heat maps
+    plb.subplot(1,3,1)
+    plb.imshow(im,cmap=plb.cm.gray)
+    plb.subplot(1,3,2)
+    plb.imshow(A_blur)
+    plb.subplot(1,3,3)
+    plb.imshow(B_blur)
+    plb.show()
 
 if __name__ == '__main__':
     import argparse
-
+    
+    # Parse the command line arguments
     parser = argparse.ArgumentParser()
     parser.add_argument('filename', nargs='+')
     parser.add_argument('-p','--pattern', action='store_true')
     parser.add_argument('-v', '--verbose', action='store_true')
     parser.add_argument('-x', '--visualize', action='store_true')
     args = parser.parse_args()
+    # if the -p flag is set, search for files conforming the given pattern(s), else assume a list of files/paths.
+    # Extension is assumed to be .pkl (pickle), it will be added when necessary
     if args.pattern:
-        files = get_filenames(args.filename)
+        results = get_filenames(args.filename)
     else:
-        files = args.filename
+        results = args.filename
+    # iterate through the files given
+
+    # Get the results
+    res_list = get_results(results)
+    # Parse the settings file
+    show_settings(res_list[0].configfile)
+    # Show the settings of the test
+    print 'Showing results of {0} files:\n\t{1}'.format(len(results),results)
     
-    configs= []
-    results=[]
-    for f in files:
-        rcp = RawConfigParser()
-        rcp.read(f+'.res')
-        configs.append(rcp)
-        results.append(f+'.cpk')
-    
-    
-    show_settings(configs)
-    print 'Showing results of {0}'.format(files)
-    
-    c, c_hat, trainfiles, testfiles, nns, features, samples = get_results(results)
-    
-    cf = get_confmat(c, c_hat)
+    c_hats = vstack([r.c_hat for r in res_list])
+    cs = vstack([r.c for r in res_list])
+    # create combined confusion matrix for all results files
+    cf = get_confmat(cs, c_hats)
     print 'Confusion matrix'
     print cf
+    
+    # Get equal error rate:
     eer = get_equal_error_rate(cf)
     print 'ROC equal error rate: ', eer
-
+        
     if args.visualize:
-        # Only do this on own computer, because matplotlib is requirde, unles you have x-window forwarding and matplotlib installed remotely
-        print 'Visualizing first testimage: {0}'.format(testfiles[0])
-        import DescriptorIO
-        import matplotlib.pyplot as plt
-        import matplotlib.image as mi   
-                
-        print samples
-        features_by_scale = []
-        all_features = zeros([0,5])
-        for s in samples:
-            f, _ = DescriptorIO.readDescriptors(s)
-            features_by_scale.append(f)
-            all_features = vstack([all_features, f])
-
-        # clmin = argmin(nns,0)
-        #dmin = min(nns,0)
-        
-        # clmax = clmin.max()
-        # features_by_class = [array(0) for cl in range(clmax)]
-        # dists_by_class
-        # for cl in range(clmin.max()):
-        #     features_by_class[cl] = all_features[clmin]
-                
-        im = mi.imread(testfiles[0])
-        A = zeros(im.shape[0:2])
-        B = zeros(im.shape[0:2])
-
-        A[int_(features_by_scale[0][:,1]),int_(features_by_scale[0][:,0])] = nns[0,:features_by_scale[0].shape[0]]
-        B[int_(features_by_scale[0][:,1]),int_(features_by_scale[0][:,0])] = nns[1,:features_by_scale[0].shape[0]]
-        A *=1/A.max()
-        
-        plt.subplot(2,2,1)
-        plt.imshow(im, origin='lower')
-        #plt.plot(f[:,0],f[:,1],'go')
-        plt.subplot(2,2,2)
-        plt.imshow(A)
-        plt.subplot(2,2,3)
-        A_norm = blur_image(A,11)
-        plt.imshow(A_norm)
-        plt.subplot(2,2,4)
-        B_norm = blur_image(B,11)
-        plt.imshow(B_norm)
-        plt.show()
+        # Only do this on own computer, because matplotlib is required, unles you have x-window forwarding and matplotlib installed remotely
+        visualize_features(res_list[0])
+    
         

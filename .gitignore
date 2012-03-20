@@ -3,5 +3,5 @@ tmp_*
 *.log
 *.res
 *.cpk
-results
+*results
 .tm_properties
