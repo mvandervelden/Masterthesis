@@ -321,6 +321,7 @@ class GrazPersonTest(GrazTest):
     def __init__(self,args):
         # Call the generic constructor, defining the test as a 'person' test
         super(GrazPersonTest, self).__init__(args,'graz01_person')
+        
     
     def select_data(self):
         """ Select data, where the positive path is the one with person images, and the two negative paths have bikes, 
@@ -354,7 +355,41 @@ class CaltechTest(Test):
     """ Class with data_specific functions for a Caltech101 test, defined in Boiman"""
     def __init__(self,args):
         super(CaltechTest, self).__init__(args,'caltech101')
-
+        
+        if self.difficulty == 'no_background':
+            self.no_classes = 101
+        else:
+            self.no_classes = 102
+        if self.verbose: print 'Test will be CaltechTest'
+        
+        #TODO set alpha value, and implement it for the distance measure
+        #TODO set n_label = 1,5,15,30 labeled images per class (trainingset size)
+        #TODO performance: mean recognition rate per class
+    
+    def select_data(self):
+        if self.verbose: print 'Selecting Data the Caltech101 way..'
+        
+        motherpath = '../im/caltech101/101_ObjectCategories'
+        catlist = os.listdir(motherpath)
+        #TODO filter out background class (make flag for it?) and {., ..}
+        
+        # Select files for each of 3 folders with images, of the sizes indicated
+        train_set = []
+        test_set = []
+        for cls in catlist:
+            if not (self.difficulty == 'no_background' and cls == 'BACKGROUND_Google'):
+                files = self.select_files(motherpath+'/'+cls + '/',  self.trainsize + self.testsize)
+                train_set.append(array(files[:self.trainsize]))
+                test_set.append(array(files[self.trainsize:]))
+        # The train_set is 101D or 102D (101/102 classes), the test_set is 1D (their class doesn't matter) 
+        train_set = vstack(train_set)
+        test_set  = hstack(test_set)
+        # Set the ground truth of the classification of the test images
+        self.classification = reshape(tile(range(self.no_classes),[self.testsize,1]), self.no_classes*self.testsize, order='F')
+        print self.classification
+        # Return train and test set
+        return train_set, test_set
+    
 
 class PascalTest(Test):
     """ Class with data_specific functions for a PascalVOC07 test"""
@@ -378,14 +413,12 @@ if __name__ == '__main__':
     elif args.TEST == 'graz01_bike':
         test = GrazBikeTest(args)
     elif args.TEST == 'caltech101':
-        #TODO
         test = CaltechTest(args)
     elif args.TEST == 'pascal':
         #TODO
         test = PascalTest(args)
-    elif args.TEST == 'graz01_descriptor':
-        #Not sure whether needed
-        test = GrazTest(args)
+    else:
+        print 'unknown test: {graz01_person, graz01_bike, caltech101, pascal}'
     
     # Select names of files used as training and test images
     train_files, test_files = test.select_data()

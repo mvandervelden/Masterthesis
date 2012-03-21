@@ -62,7 +62,7 @@ def get_results(results):
             res[it].testfiles = cpk.load(pkl)
             res[it].nns = cpk.load(pkl)
             res[it].features = cpk.load(pkl)
-            res[it].samples = cpk.load(pkl)            
+            res[it].samples = cpk.load(pkl)
     return res
 
 def get_filenames(pattern):
