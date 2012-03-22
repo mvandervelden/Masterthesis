@@ -86,10 +86,14 @@ class Test(object):
         # Set up a results folder
         if os.path.exists('/var/scratch/vdvelden'):
             self.resultsdir = '/var/scratch/vdvelden/' + self.test + '_results/'
+            if not self.test+'_results' in os.listdir('/var/scratch/vdvelden'):
+                print self.resultsdir
+                print self.test+'_results'
+                os.mkdir(self.resultsdir)
         else:
             self.resultsdir = self.test+'_results/'
-        if not self.resultsdir[:-1] in os.listdir('.'):
-            os.mkdir(self.resultsdir)
+            if not self.resultsdir[:-1] in os.listdir(rb):
+                os.mkdir(self.resultsdir)
         # Make a file name for the general results
         r = config.get('General', 'resultsfile').split('.')
         self.resultsfile =self.resultsdir + r[0]+'_'+self.ID+'.'+r[1]
