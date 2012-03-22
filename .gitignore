@@ -5,3 +5,5 @@ tmp_*
 *.cpk
 *results
 .tm_properties
+.DS_Store
+*.tar.gz

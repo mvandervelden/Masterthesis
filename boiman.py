@@ -84,7 +84,10 @@ class Test(object):
         else:
             os.mkdir(self.tmp_dir)
         # Set up a results folder
-        self.resultsdir = self.test+'_results/'
+        if os.path.exists('/var/scratch/vdvelden'):
+            self.resultsdir = '/var/scratch/vdvelden/' + self.test + '_results/'
+        else:
+            self.resultsdir = self.test+'_results/'
         if not self.resultsdir[:-1] in os.listdir('.'):
             os.mkdir(self.resultsdir)
         # Make a file name for the general results
@@ -103,6 +106,8 @@ class Test(object):
         # Set all FLANN parameters in a Params struct
         self.flann = self.Params()
         self.flann.k = config.getint('Flann', 'k')
+        
+        
     
     def select_files(self, path, sz):
         """ Function to select 'sz' files from a path, at random"""
@@ -240,7 +245,11 @@ class Test(object):
         starts = hstack([0, cumsum(self.dssize)])
         
         # Initialize the classification
-        self.c_hat = zeros(no_files,int)
+        if self.no_classes < 256:
+            dt = uint8
+        else:
+            dt = uint16
+        self.c_hat = zeros(no_files, dt)
         
         if self.verbose: print 'file: ',
         # Iterate over the files, and for each file, get it's descriptors distances to all classes from nns[:,xx],
@@ -259,30 +268,11 @@ class Test(object):
             features. It stores the experiment settings to a cPickle (.pkl) file with actual results."""
         print 'Saving results to: ', self.resultsfile
         
-        import cPickle as cpk
-        with open(self.resultsfile, 'wb') as cpkfile:
-            # Make a cPickle file and dump all results into it
-            cpk.dump(self.config, cpkfile)
-            # for section in config.sections():
-            #     # Iterate through the items of the current section
-            #     for option, value in config.items(section):
-            #         cpk.dump((option, value),cpkfile)
-            cpk.dump(self.classification, cpkfile)
-            cpk.dump(self.c_hat, cpkfile)
-            cpk.dump([[str(f) for f in ff] for ff in train_set], cpkfile)
-            cpk.dump([str(f) for f in test_set],cpkfile)
-            cpk.dump(nns,cpkfile)
-            cpk.dump(features,cpkfile)
-            cpk.dump(self.sample,cpkfile)
-    
-    def remove_tmpfiles(self):
-        # Clean up
-        if self.verbose: print 'Removing Temp files'
         
-        # If the tmp_dir is not empty yet, empty its contents, and then remove the tmp_dir itself
-        if not os.listdir(self.tmp_dir) == []:
-            os.remove(self.tmp_dir+'*')
-        shutil.rmtree(self.tmp_dir)
+        import cPickle as cpk
+    
+    
+    
     
 class GrazTest(Test):
     """ Class with data-specific functions for the Graz01 data set"""
@@ -312,7 +302,7 @@ class GrazTest(Test):
         train_set = vstack([pos_files[:self.trainsize], hstack([n1_files[:self.trainsize/2],n2_files[:self.trainsize/2]])])
         test_set  = hstack([pos_files[self.trainsize:],n1_files[self.trainsize/2:], n2_files[self.trainsize/2:]])
         # Set the ground truth of the classification of the test images
-        self.classification = array([0]*self.testsize + [1]*self.testsize, int)
+        self.classification = array([0]*self.testsize + [1]*self.testsize, uint8)
         # Return train and test set
         return train_set, test_set
         
@@ -328,9 +318,15 @@ class GrazPersonTest(GrazTest):
             and neither persons nor bikes, respectively."""
         if self.verbose: print 'Selecting data the GrazPersonTest way'
         
-        pathp = "../im/graz01/persons/"
-        pathn1 = "../im/graz01/bikes/"
-        pathn2 = "../im/graz01/no_bike_no_person/"
+        if os.path.exists('/var/scratch/vdvelden/im/graz01'):
+            # On the nodes, the images should be on the scratch disk
+            pathp = "/var/scratch/vdvelden/im/graz01/persons/"
+            pathn1 = "/var/scratch/vdvelden/im/graz01/bikes/"
+            pathn2 = "/var/scratch/vdvelden/im/graz01/no_bike_no_person/"
+        else:
+            pathp = "../im/graz01/persons/"
+            pathn1 = "../im/graz01/bikes/"
+            pathn2 = "../im/graz01/no_bike_no_person/"
         return super(GrazPersonTest, self).select_data(pathp,pathn1,pathn2)
         
 
@@ -345,9 +341,16 @@ class GrazBikeTest(GrazTest):
             and neither persons nor bikes, respectively."""
         if self.verbose: print 'Selecting data the GrazBikeTest way'
         
-        pathp = "../im/graz01/bikes/"
-        pathn1 = "../im/graz01/persons/"
-        pathn2 = "../im/graz01/no_bike_no_person/"
+        if os.path.exists('/var/scratch/vdvelden/im/graz01'):
+            # On the nodes, the images should be on the scratch disk
+            pathp = "/var/scratch/vdvelden/im/graz01/bikes/"
+            pathn1 = "/var/scratch/vdvelden/im/graz01/persons/"
+            pathn2 = "/var/scratch/vdvelden/im/graz01/no_bike_no_person/"
+        else:
+            pathp = "../im/graz01/bikes/"
+            pathn1 = "../im/graz01/persons/"
+            pathn2 = "../im/graz01/no_bike_no_person/"
+            
         return super(GrazBikeTest, self).select_data(pathp,pathn1,pathn2)
 
 
@@ -363,13 +366,16 @@ class CaltechTest(Test):
         if self.verbose: print 'Test will be CaltechTest'
         
         #TODO set alpha value, and implement it for the distance measure
-        #TODO set n_label = 1,5,15,30 labeled images per class (trainingset size)
         #TODO performance: mean recognition rate per class
     
     def select_data(self):
         if self.verbose: print 'Selecting Data the Caltech101 way..'
         
-        motherpath = '../im/caltech101/101_ObjectCategories'
+        if os.path.exists('/var/scratch/vdvelden/im/caltech101/101_ObjectCategories'):
+            # On the nodes, the images should be on the scratch disk
+            motherpath = '/var/scratch/vdvelden/im/caltech101/101_ObjectCategories'
+        else:
+            motherpath = '../im/caltech101/101_ObjectCategories'
         catlist = os.listdir(motherpath)
         #TODO filter out background class (make flag for it?) and {., ..}
         
@@ -385,7 +391,7 @@ class CaltechTest(Test):
         train_set = vstack(train_set)
         test_set  = hstack(test_set)
         # Set the ground truth of the classification of the test images
-        self.classification = reshape(tile(range(self.no_classes),[self.testsize,1]), self.no_classes*self.testsize, order='F')
+        self.classification = reshape(tile(range(self.no_classes),[self.testsize,1]), self.no_classes*self.testsize, order='F').astype(uint8)
         print self.classification
         # Return train and test set
         return train_set, test_set
@@ -396,6 +402,8 @@ class PascalTest(Test):
     
     def __init__(self,args):
         super(PascalTest, self).__init__(args,'pascal07')
+
+
 
 if __name__ == '__main__':
     import argparse
@@ -434,6 +442,7 @@ if __name__ == '__main__':
     features = zeros([test.no_classes, test_descr.shape[0]],dtype=uint32)
     # Iterate over the classes of the training set
     for it, classfiles in enumerate(train_files):
+        if test.verbose: print "Class no {0}".format(it)
         # For each class, get the descriptors for the training images
         train_descr = test.get_descriptors(classfiles)
         # Find the nearest neighbors for each test descriptor to the current class descriptors

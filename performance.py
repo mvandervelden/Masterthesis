@@ -1,5 +1,6 @@
 from numpy import *
 from ConfigParser import RawConfigParser
+import sys, time
 
 class Results(object):
     pass
@@ -22,12 +23,13 @@ def get_equal_error_rate(confmat):
     """ Calculate the n-D ROC Equal Error Rate of a confusion matrix"""
     
     # Get the prior probability of each class by dividing the amount of images in the class by the total
-    ssums = confmat.sum(0)
+    ssums = confmat.sum(1)
     priors = ssums/ssums.sum()
     # Get the amount of "true positives" for each class (the diagonal of the CF)
     corrects = diag(confmat)
     # Get the true positive rate for each class by dividing the amounts of true positives by their amounts
     truth_rates = corrects/ssums
+    print truth_rates
     # The sum of true positive rates times their prior over the classes defines the equal error rate
     # (with 2 classes, this is p1*tpr + p2*(1-fpr)[=tnr])
     return (truth_rates*priors).sum()
@@ -110,29 +112,58 @@ def visualize_features(r):
     im = asarray(image)
     A = zeros(im.shape)
     B = zeros(im.shape)
-    
+    C = zeros(im.shape)
     # Normalize the distances to be between 0 and 1, between the global min and max,
     # Furthermore, convert to a 'heat map' instead of a 'distance_map', so 1-dist
     dists = float_(r.nns)
     dists = 1-(dists-dists.min())/(dists.max()-dists.min())
-    
+    diff = dists[0]-dists[1]
     # For all feature centers, give A the similarity to class 0, B the similarity to class 1
     # Convert the feature indexes to ints
     features_by_scale = int_(features_by_scale[0])
     A[features_by_scale[:,1],features_by_scale[:,0]] = dists[0,:features_by_scale.shape[0]]
     B[features_by_scale[:,1],features_by_scale[:,0]] = dists[1,:features_by_scale.shape[0]]
-    
+    C[features_by_scale[:,1],features_by_scale[:,0]] = diff[:features_by_scale.shape[0]]
     # TODO: make the blur dependent on the scale of the features
     A_blur = nd.gaussian_filter(A,1.2*10)
     B_blur = nd.gaussian_filter(B,1.2*10)
+    C_blur = nd.gaussian_filter(C,1.2*10)
     # plot the original image and their heat maps
-    plb.subplot(1,3,1)
+    plb.subplot(2,2,1)
     plb.imshow(im,cmap=plb.cm.gray)
-    plb.subplot(1,3,2)
+    plb.subplot(2,2,2)
     plb.imshow(A_blur)
-    plb.subplot(1,3,3)
+    plb.colorbar()
+    plb.subplot(2,2,3)
     plb.imshow(B_blur)
+    plb.colorbar()
+    plb.subplot(2,2,4)
+    plb.imshow(C_blur)
+    plb.colorbar()
     plb.show()
+
+def timeit(f):
+    """ Annotate a function with its elapsed execution time. """
+    def timed_f(*args, **kwargs):
+        t1 = time.time()
+        
+        try:
+            res = f(*args, **kwargs)
+        finally:
+            t2 = time.time()
+        
+        timed_f.func_time = ((t2 - t1) / 60.0, t2 - t1, (t2 - t1) * 1000.0)
+        
+        if __debug__:
+            sys.stdout.write("%s took %0.3fm %0.3fs %0.3fms\n" % (
+                f.func_name,
+                timed_f.func_time[0],
+                timed_f.func_time[1],
+                timed_f.func_time[2],
+            ))
+        return res
+        
+    return timed_f
 
 if __name__ == '__main__':
     import argparse
@@ -151,7 +182,9 @@ if __name__ == '__main__':
     else:
         results = args.filename
     # iterate through the files given
-
+    
+    get_results = timeit(get_results)
+    show_settings = timeit(show_settings)
     # Get the results
     res_list = get_results(results)
     # Parse the settings file
@@ -161,15 +194,19 @@ if __name__ == '__main__':
     
     c_hats = vstack([r.c_hat for r in res_list])
     cs = vstack([r.c for r in res_list])
+    
+    # Show no of errors (simple measure, check)
+    print 'Hits: {0} out of {1}'.format((c_hats == cs).sum(), c_hats.shape)
+    
     # create combined confusion matrix for all results files
     cf = get_confmat(cs, c_hats)
     print 'Confusion matrix'
     print cf
-    
+    print c_hats[0]
     # Get equal error rate:
     eer = get_equal_error_rate(cf)
     print 'ROC equal error rate: ', eer
-        
+    
     if args.visualize:
         # Only do this on own computer, because matplotlib is required, unles you have x-window forwarding and matplotlib installed remotely
         visualize_features(res_list[0])

@@ -11,11 +11,11 @@ Afterwards, I go to the code folder (`cd code`).
 To run a test, and check the resources used, I basically enter:
 set the test and iteration ID:
 
-`tst=graz01_bike;i=1`
+`tst=graz01_bike;i=1;cfg=settings.cfg`
 
 run the experiment:
 
-``/usr/bin/time -f "Time: %e\nCPU: %P\nmemory_max: %M\n" -o timing_$i.res python boiman.py $tst -d `eval date +%y%m%d_`$i``
+``/usr/bin/time -f "Time: %e\nCPU: %P\nmemory_max: %M\n" -o timing_$i.res python boiman.py $tst -d `eval date +%y%m%d_`$i -c $cfg``
 
 ## File description ##
 
