@@ -411,7 +411,7 @@ class CaltechTest(Test):
         
         if self.difficulty == 'no_background':
             #self.no_classes = 101
-            self.no_classes = 10
+            self.no_classes = 101
         else:
             self.no_classes = 102
         if self.verbose: print 'Test will be CaltechTest'
@@ -501,7 +501,7 @@ if __name__ == '__main__':
             for i in range(no_chunks):
                 ch_max = min(files_per_chunk*(i+1),test_files.shape[0])
                 rng = range(files_per_chunk*i,ch_max)
-                print 'Chunk size: ',test_files[rng].shape[0]
+                print '    Chunk size: ',test_files[rng].shape[0]
                 pkl.dump((test_files[rng],test.classification[rng]),f)
         with open(args.ID+'/trainfiles.pkl','wb') as f:
             pkl.dump(train_files,f)
