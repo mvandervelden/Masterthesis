@@ -120,3 +120,6 @@ if __name__ == "__main__":
     print points
     print "Descriptors in the file:", descriptors.shape
     print descriptors
+    print points.dtype
+    print descriptors.dtype
+    print descriptors.max()

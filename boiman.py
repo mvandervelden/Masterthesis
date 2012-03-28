@@ -87,12 +87,10 @@ class Test(object):
         if os.path.exists('/var/scratch/vdvelden'):
             self.resultsdir = '/var/scratch/vdvelden/' + self.test + '_results/'
             if not self.test+'_results' in os.listdir('/var/scratch/vdvelden'):
-                print self.resultsdir
-                print self.test+'_results'
                 os.mkdir(self.resultsdir)
         else:
             self.resultsdir = self.test+'_results/'
-            if not self.resultsdir[:-1] in os.listdir(rb):
+            if not self.resultsdir[:-1] in os.listdir('.'):
                 os.mkdir(self.resultsdir)
         # Make a file name for the general results
         r = config.get('General', 'resultsfile').split('.')
@@ -168,10 +166,11 @@ class Test(object):
         
         no_files = len(fileset)
         #Initialize a list of empty arrays, on entry for each scale of each file
-        descriptors = [array(0) for i in range(no_files*self.descr.scale_levels)]
+        descriptors = [array(0,uint8) for i in range(no_files*self.descr.scale_levels)]
         if self.verbose: print '....file:' 
         
         # Iterate over the files in the set
+        siz = 0
         for i, f in enumerate(fileset):
             if self.verbose: print i
             # If this is the first file, make sure to keep the discriptors and set the flag to False
@@ -187,11 +186,14 @@ class Test(object):
                 # Determine the spacing factor ({base, base*scalebase, base*scalebase^2, ..., base * scalebase ^(no_scale-1)}, rounded to the lower amount of pixels: "better to have a bit more descriptors than a bit less"..)
                 spacing = int(floor(self.descr.spacing_base*(self.descr.scale_base**scale)))
                 # Calculate the descriptors with the given parameters and store the resulting array in the descriptors-list
-                descriptors[(i*self.descr.scale_levels)+scale] = self.run_color_descr(f, self.tmp_dir, scaling, spacing, save)
+                dd = self.run_color_descr(f, self.tmp_dir, scaling, spacing, save)
+                siz += (dd.shape[0]*dd.shape[1]*8)/8000000
+                descriptors[(i*self.descr.scale_levels)+scale] = dd
+            print siz,'MB'
         # Save the number of descriptors of each file into self.dssize if the save_dssize flag is set
         if save_dssize:
             # get the size of each array in the list of descriptors, and sum the amounts for each file (over all scale levels, that's wehre the reshape is for)
-            self.dssize = array([d.shape[0] for d in descriptors]).reshape(self.descr.scale_levels,no_files).sum(0)
+            self.dssize = array([d.shape[0] for d in descriptors]).reshape(self.descr.scale_levels,no_files).sum(0).astype(uint32)
         # Convert the list of descriptors to a 2D array and return this, which file or scale it is doesn't matter anymore.
         return vstack(descriptors)
     
@@ -219,12 +221,15 @@ class Test(object):
             # We only need the descriptors d, we discard the location and scale returned as the first argument
             _, d = DescriptorIO.readDescriptors(p_o)
             # If the save flag is on, the descriptor file will not be removed, but it will be saved to the results folder, and its new location will be added to self.sample, which will de added to the resultsfile
-            if not save:
+            if True: # not save:
                 os.remove(p_o)
             else:
                 self.sample.append(self.resultsdir+o)
                 shutil.move(p_o, self.resultsdir)
             # return the descriptors
+            
+            # Convert to 8bit uints, take care of possible 512 values
+            d=dstack([d/2,ones(d.shape,uint8)*127]).min(2).astype(uint8)
             return d
     
     def find_nn(self, test_descr, train_descr):
@@ -274,9 +279,48 @@ class Test(object):
         
         
         import cPickle as cpk
+        with open(self.resultsfile, 'wb') as cpkfile:
+            # Make a cPickle file and dump all results into it
+            cpk.dump(self.config, cpkfile)
+
+            cpk.dump(self.classification, cpkfile)
+            cpk.dump(self.c_hat, cpkfile)
+            cpk.dump([[str(f) for f in ff] for ff in train_set], cpkfile)
+            cpk.dump([str(f) for f in test_set],cpkfile)
+            cpk.dump(nns,cpkfile)
+            cpk.dump(self.dssize,cpkfile)
+            #cpk.dump(features,cpkfile)
+            #cpk.dump(self.sample,cpkfile)
+
+    def remove_tmpfiles(self):
+        # Clean up
+        if self.verbose: print 'Removing Temp files'
+        
+        # If the tmp_dir is not empty yet, empty its contents, and then remove the tmp_dir itself
+        if not os.listdir(self.tmp_dir) == []:
+            os.remove(self.tmp_dir+'*')
+        shutil.rmtree(self.tmp_dir)
     
-    
-    
+    def predict_descriptor_sizes(self, no_test_files):
+        spacing = zeros(self.descr.scale_levels)    
+        for i,scale in enumerate(range(self.descr.scale_levels)):
+            # Determine the spacing factor ({base, base*scalebase, base*scalebase^2, ..., base * scalebase ^(no_scale-1)}, rounded to the lower amount of pixels: "better to have a bit more descriptors than a bit less"..)
+            spacing[i] = (int(floor(self.descr.spacing_base*(self.descr.scale_base**scale))))
+        dim = self.avg_filesize
+        img_no_descr = outer(dim,1./spacing).round().prod(0).sum()
+        Mbytes_per_image = int(img_no_descr*128)/1000000
+        total_Mbytes = no_test_files*Mbytes_per_image
+        print total_Mbytes, 'M'
+        if os.getlogin() == 'iMaarten':
+            self.max_size = 2000
+        elif os.getlogin() == 'vdvelden':
+            self.max_size = 20000
+        else:
+            self.max_size = 2000
+        files_per_chunk = self.max_size/Mbytes_per_image
+        return files_per_chunk
+
+        
     
 class GrazTest(Test):
     """ Class with data-specific functions for the Graz01 data set"""
@@ -290,7 +334,9 @@ class GrazTest(Test):
         # image folder can be chosen, because, following the data manual, the ones with an index above this are hard to classify.
         if self.difficulty == 'no_hard':
             self.file_limits = {'persons':348, 'bikes': 306, 'no_bike_no_person': 273}
-    
+        
+        self.avg_filesize = array([640,480])
+        
     def select_data(self, pathp, pathn1, pathn2):
         """ Select data using the set-up used in the Boiman experiment with Graz01 data. 
             For the positive class, trainsize+testsize items are selected, and then subdivided into the respective parts
@@ -364,11 +410,13 @@ class CaltechTest(Test):
         super(CaltechTest, self).__init__(args,'caltech101')
         
         if self.difficulty == 'no_background':
-            self.no_classes = 101
+            #self.no_classes = 101
+            self.no_classes = 10
         else:
             self.no_classes = 102
         if self.verbose: print 'Test will be CaltechTest'
         
+        self.avg_filesize = array([400,400])
         #TODO set alpha value, and implement it for the distance measure
         #TODO performance: mean recognition rate per class
     
@@ -386,7 +434,12 @@ class CaltechTest(Test):
         # Select files for each of 3 folders with images, of the sizes indicated
         train_set = []
         test_set = []
+        iii=0
         for cls in catlist:
+            if iii==10:
+                break
+            else:
+                iii += 1
             if not (self.difficulty == 'no_background' and cls == 'BACKGROUND_Google'):
                 files = self.select_files(motherpath+'/'+cls + '/',  self.trainsize + self.testsize)
                 train_set.append(array(files[:self.trainsize]))
@@ -417,6 +470,8 @@ if __name__ == '__main__':
     parser.add_argument('-d', '--ID', default='1')
     parser.add_argument('TEST')
     parser.add_argument('-c', '--configfile', default="settings.cfg")
+    parser.add_argument('-p', '--predict', action='store_true')
+    parser.add_argument('-f', '--loadfiles', type=int, default=0 )
     args = parser.parse_args()
     
     # Depending on the kind of test, initialize a test object accordingly
@@ -432,9 +487,40 @@ if __name__ == '__main__':
     else:
         print 'unknown test: {graz01_person, graz01_bike, caltech101, pascal}'
     
-    # Select names of files used as training and test images
-    train_files, test_files = test.select_data()
+    if args.predict:
+        train_files, test_files = test.select_data()
+        files_per_chunk = test.predict_descriptor_sizes(test_files.shape[0])
+        print 'Files per chunk: ', files_per_chunk
+        no_chunks = int(ceil(test_files.shape[0]* 1./files_per_chunk))
+        print 'No of chunks:', no_chunks
+        
+        import cPickle as pkl
+        if not os.path.exists(args.ID):
+            os.mkdir(args.ID)
+        with open(args.ID+'/'+str(no_chunks)+'chunks.pkl','wb') as f:
+            for i in range(no_chunks):
+                ch_max = min(files_per_chunk*(i+1),test_files.shape[0])
+                rng = range(files_per_chunk*i,ch_max)
+                print 'Chunk size: ',test_files[rng].shape[0]
+                pkl.dump((test_files[rng],test.classification[rng]),f)
+        with open(args.ID+'/trainfiles.pkl','wb') as f:
+            pkl.dump(train_files,f)
+            pkl.dump(no_chunks,f)
+        exit(0)
     
+    if args.loadfiles > 0:
+        import cPickle as pkl
+        with open(args.ID+'/trainfiles.pkl','rb') as f:
+            train_files = pkl.load(f)
+            no_chunks = pkl.load(f)
+        with open(args.ID+'/'+str(no_chunks)+'chunks.pkl','rb') as f:
+            for i in range(args.loadfiles):
+                test_files, test.classification = pkl.load(f)
+    else:
+        # Select names of files used as training and test images
+        train_files, test_files = test.select_data()
+    print 'No of test files: ', test_files.shape
+    print 'No of train files: ', [f.shape for f in train_files]
     # To run ColorDescriptor, first set the variables that need be set for all files
     test.set_descriptor_variables()
     
