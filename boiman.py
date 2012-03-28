@@ -436,10 +436,10 @@ class CaltechTest(Test):
         test_set = []
         iii=0
         for cls in catlist:
-            if iii==10:
-                break
-            else:
-                iii += 1
+            # if iii==10:
+            #     break
+            # else:
+            #     iii += 1
             if not (self.difficulty == 'no_background' and cls == 'BACKGROUND_Google'):
                 files = self.select_files(motherpath+'/'+cls + '/',  self.trainsize + self.testsize)
                 train_set.append(array(files[:self.trainsize]))
