@@ -1,3 +1,5 @@
+#! /usr/bin/env python
+
 from numpy import *
 from ConfigParser import RawConfigParser
 import sys, time
@@ -13,7 +15,7 @@ def get_confmat(cs,chs):
     no_classes = cs.max()+1
     # Initialize the matrix
     confmat = zeros([no_classes, no_classes])
-    # Iterate over each pair of class-classification and add the combination to the entry of the confucion matrix
+    # Iterate over each pair of class-classification and add the combination to the entry of the confusion matrix
     for c,ch in zip(cs,chs):
         for i,j in zip(c,ch):
             confmat[i,j] += 1
@@ -48,7 +50,7 @@ def show_settings(config):
                 # Print the item (name+ value)
                 print '     {0}: {1}'.format(option, value)
 
-def get_results(results):
+def get_results(results, no_nns):
     """ Returns the results for all cPickle-results files """
     import cPickle as cpk
     
@@ -62,9 +64,10 @@ def get_results(results):
             res[it].c_hat = cpk.load(pkl)
             res[it].trainfiles = cpk.load(pkl)
             res[it].testfiles = cpk.load(pkl)
-            res[it].nns = cpk.load(pkl)
-            res[it].features = cpk.load(pkl)
-            res[it].samples = cpk.load(pkl)
+            if not no_nns:
+                res[it].nns = cpk.load(pkl)
+                res[it].features = cpk.load(pkl)
+                res[it].samples = cpk.load(pkl)
     return res
 
 def get_filenames(pattern):
@@ -174,6 +177,8 @@ if __name__ == '__main__':
     parser.add_argument('-p','--pattern', action='store_true')
     parser.add_argument('-v', '--verbose', action='store_true')
     parser.add_argument('-x', '--visualize', action='store_true')
+    # Debug flag, because it seems that that nns is often not saved due to crashes. This enables me to read the results anyway
+    parser.add_argument('-n', '--no_nns', action='store_true')
     args = parser.parse_args()
     # if the -p flag is set, search for files conforming the given pattern(s), else assume a list of files/paths.
     # Extension is assumed to be .pkl (pickle), it will be added when necessary
@@ -183,10 +188,10 @@ if __name__ == '__main__':
         results = args.filename
     # iterate through the files given
     
-    get_results = timeit(get_results)
-    show_settings = timeit(show_settings)
+    # get_results = timeit(get_results)
+    # show_settings = timeit(show_settings)
     # Get the results
-    res_list = get_results(results)
+    res_list = get_results(results, args.no_nns)
     # Parse the settings file
     show_settings(res_list[0].configfile)
     # Show the settings of the test

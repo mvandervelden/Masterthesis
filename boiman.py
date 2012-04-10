@@ -1,3 +1,4 @@
+#! /usr/bin/env python
 # encoding: utf-8
 """
 boiman.py
@@ -51,12 +52,12 @@ class Test(object):
         
         self.ID = args.ID
         self.verbose = config.getboolean('General', 'verbose')
-        
+        self.no_classes = args.no_classes
         if self.verbose:
             print 'Initializing Test'
         
         # is always True at start, wil be set to False afterwards, so the descriptors of the first test file will be saved
-        self.keep_descriptors = True
+        self.keep_descriptors = False
         # Same goes for this, keep the nearest neighbors for the first test file
         self.keep_nn = True
         self.sample = []
@@ -176,7 +177,6 @@ class Test(object):
             # If this is the first file, make sure to keep the discriptors and set the flag to False
             if self.keep_descriptors:
                 save=True
-                self.keep_descriptors = False
             else:
                 save=False
             # Iterate over the scales at which descriptors have to be calculated
@@ -221,7 +221,7 @@ class Test(object):
             # We only need the descriptors d, we discard the location and scale returned as the first argument
             _, d = DescriptorIO.readDescriptors(p_o)
             # If the save flag is on, the descriptor file will not be removed, but it will be saved to the results folder, and its new location will be added to self.sample, which will de added to the resultsfile
-            if True: # not save:
+            if not save:
                 os.remove(p_o)
             else:
                 self.sample.append(self.resultsdir+o)
@@ -272,7 +272,7 @@ class Test(object):
         # Return the classification for each file
         return self.c_hat
     
-    def save_results(self, train_set, test_set, nns, features):
+    def save_results(self, train_set, test_set, nns):
         """ Save the results of the experiment, along with a list of files used, the distances found, and the indexes of the 
             features. It stores the experiment settings to a cPickle (.pkl) file with actual results."""
         print 'Saving results to: ', self.resultsfile
@@ -289,6 +289,7 @@ class Test(object):
             cpk.dump([str(f) for f in test_set],cpkfile)
             cpk.dump(nns,cpkfile)
             cpk.dump(self.dssize,cpkfile)
+            cpk.dump(self.classlist,cpkfile)
             #cpk.dump(features,cpkfile)
             #cpk.dump(self.sample,cpkfile)
 
@@ -328,7 +329,8 @@ class GrazTest(Test):
         # Do a default intialization
         super(GrazTest, self).__init__(args, test)
         # Set the number of classes to 2 (positive, negative)
-        self.no_classes = 2
+        if self.no_classes == 0 or self.no_classes > 2:
+            self.no_classes = 2
         if self.verbose: print 'Test will be GrazTest'
         # This data set can be run with difficulty 'no_hard' of full. In the former case only the first n images per
         # image folder can be chosen, because, following the data manual, the ones with an index above this are hard to classify.
@@ -409,11 +411,12 @@ class CaltechTest(Test):
     def __init__(self,args):
         super(CaltechTest, self).__init__(args,'caltech101')
         
-        if self.difficulty == 'no_background':
-            #self.no_classes = 101
-            self.no_classes = 101
-        else:
-            self.no_classes = 102
+        if self.no_classes == 0:
+            if self.difficulty == 'no_background':
+                #self.no_classes = 101
+                self.no_classes = 101
+            else:
+                self.no_classes = 102
         if self.verbose: print 'Test will be CaltechTest'
         
         self.avg_filesize = array([400,400])
@@ -428,18 +431,15 @@ class CaltechTest(Test):
             motherpath = '/var/scratch/vdvelden/im/caltech101/101_ObjectCategories'
         else:
             motherpath = '../im/caltech101/101_ObjectCategories'
-        catlist = os.listdir(motherpath)
-        #TODO filter out background class (make flag for it?) and {., ..}
-        
+        self.classlist = os.listdir(motherpath)
+        if self.no_classes < 101:
+            random.shuffle(self.classlist)
+            self.classlist = self.classlist[:self.no_classes]
         # Select files for each of 3 folders with images, of the sizes indicated
         train_set = []
         test_set = []
         iii=0
-        for cls in catlist:
-            # if iii==10:
-            #     break
-            # else:
-            #     iii += 1
+        for cls in self.classlist:
             if not (self.difficulty == 'no_background' and cls == 'BACKGROUND_Google'):
                 files = self.select_files(motherpath+'/'+cls + '/',  self.trainsize + self.testsize)
                 train_set.append(array(files[:self.trainsize]))
@@ -472,6 +472,7 @@ if __name__ == '__main__':
     parser.add_argument('-c', '--configfile', default="settings.cfg")
     parser.add_argument('-p', '--predict', action='store_true')
     parser.add_argument('-f', '--loadfiles', type=int, default=0 )
+    parser.add_argument('-n', '--no_classes', type=int, default=0)
     args = parser.parse_args()
     
     # Depending on the kind of test, initialize a test object accordingly
@@ -488,6 +489,8 @@ if __name__ == '__main__':
         print 'unknown test: {graz01_person, graz01_bike, caltech101, pascal}'
     
     if args.predict:
+        # Only predict the amount of chunks needed to avoid memory problems (size of the training descriptor array),
+        # select files accordingly and save the filenames to a file.
         train_files, test_files = test.select_data()
         files_per_chunk = test.predict_descriptor_sizes(test_files.shape[0])
         print 'Files per chunk: ', files_per_chunk
@@ -509,6 +512,8 @@ if __name__ == '__main__':
         exit(0)
     
     if args.loadfiles > 0:
+        # Don't do a full test, only perform a test on the chunk specified by the loadfiles-integer
+        # (previously set by a run with the -p flag)
         import cPickle as pkl
         with open(args.ID+'/trainfiles.pkl','rb') as f:
             train_files = pkl.load(f)
@@ -529,22 +534,21 @@ if __name__ == '__main__':
     
     # Initialize the nearest neighbors array and their features array (needed if you want to know to which training feature the test feature was closest within a class)
     nns = zeros([test.no_classes,test_descr.shape[0]], dtype=uint32)
-    features = zeros([test.no_classes, test_descr.shape[0]],dtype=uint32)
+    #features = zeros([test.no_classes, test_descr.shape[0]],dtype=uint32)
     # Iterate over the classes of the training set
     for it, classfiles in enumerate(train_files):
         if test.verbose: print "Class no {0}".format(it)
         # For each class, get the descriptors for the training images
         train_descr = test.get_descriptors(classfiles)
         # Find the nearest neighbors for each test descriptor to the current class descriptors
-        f, n = test.find_nn(test_descr, train_descr)
+        _, n = test.find_nn(test_descr, train_descr)
         # Add the results (a feature index and the distance to it) to the final arrays
-        features[it,:] = f
         nns[it,:] = n
     # Determine a class for each test image using the nearest distances per feature per class
     test.get_class(nns)
     
     # Save the results and settings
-    test.save_results(train_files, test_files, nns, features)
+    test.save_results(train_files, test_files, nns)
     # Make sure to clean up afterwards
     test.remove_tmpfiles()
     
