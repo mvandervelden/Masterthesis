@@ -133,8 +133,16 @@ class Test(object):
             files = [f for f in files if rm_limit(f, limit)]
         
         # Select sz files at random by shuffling the list first, and then taking the first sz
-        random.shuffle(files)
-        files = files[:sz]
+        if sz <= len(files):
+            random.shuffle(files)
+            files = files[:sz]
+        else:
+            # The number of files to select is less than the required size:
+            random.shuffle(files)
+            plusfiles = files[:sz-len(files)]
+            files += plusfiles
+            random.shuffle(files)
+            print 'too little files, padding'
         
         # make FFile instances for all files selected
         files = [FFile(f, path) for f in files]
@@ -252,7 +260,6 @@ class Test(object):
         # Define which descriptors (distance values) belong to which test image by referring to self.dssize.
         # The first descriptor (distance) of each file is defined in 'starts', which is length no_files+1 (the last entry equals m)
         starts = hstack([0, cumsum(self.dssize)])
-        
         # Initialize the classification
         if self.no_classes < 256:
             dt = uint8
@@ -263,8 +270,10 @@ class Test(object):
         if self.verbose: print 'file: ',
         # Iterate over the files, and for each file, get it's descriptors distances to all classes from nns[:,xx],
         # take the sum of the squares of these distances per class and then use the argmin as the NB assumption of the most likely class in c_hat
+        print 'no_files: ', no_files, 'starts_len: ',starts.shape
         for i in xrange(no_files):
             if self.verbose: print i,
+            print 'start-end:',starts[i],'-', starts[i+1], 'nnssize: ',nns.shape
             nfile = nns[:,starts[i]:starts[i+1]]
             nsum = sum(nfile**2,1)
             self.c_hat[i] = argmin(nsum)
@@ -290,8 +299,6 @@ class Test(object):
             cpk.dump(nns,cpkfile)
             cpk.dump(self.dssize,cpkfile)
             cpk.dump(self.classlist,cpkfile)
-            #cpk.dump(features,cpkfile)
-            #cpk.dump(self.sample,cpkfile)
 
     def remove_tmpfiles(self):
         # Clean up
