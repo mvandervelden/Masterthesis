@@ -363,7 +363,7 @@ class GrazPersonTest(GrazTest):
     def __init__(self,args):
         # Call the generic constructor, defining the test as a 'person' test
         super(GrazPersonTest, self).__init__(args,'graz01_person')
-        
+        self.classlist = ['person','no_person']
     
     def select_data(self):
         """ Select data, where the positive path is the one with person images, and the two negative paths have bikes, 
@@ -387,6 +387,7 @@ class GrazBikeTest(GrazTest):
     def __init__(self,args):
         # Call the generic constructor, defining the test as a 'person' test
         super(GrazBikeTest, self).__init__(args,'graz01_bike')
+        self.classlist = ['bike','no_bike']
     
     def select_data(self):
         """ Select data, where the positive path is the one with bike images, and the two negative paths have persons, 

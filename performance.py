@@ -66,8 +66,8 @@ def get_results(results, no_nns):
             res[it].testfiles = cpk.load(pkl)
             if not no_nns:
                 res[it].nns = cpk.load(pkl)
-                res[it].features = cpk.load(pkl)
-                res[it].samples = cpk.load(pkl)
+                res[it].dssize = cpk.load(pkl)
+                res[it].classlist = cpk.load(pkl)
     return res
 
 def get_filenames(pattern):
@@ -196,7 +196,7 @@ if __name__ == '__main__':
     show_settings(res_list[0].configfile)
     # Show the settings of the test
     print 'Showing results of {0} files:\n\t{1}'.format(len(results),results)
-    
+    print 'Classes used:',res_list[0].classlist
     c_hats = vstack([r.c_hat for r in res_list])
     cs = vstack([r.c for r in res_list])
     
