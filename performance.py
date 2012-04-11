@@ -31,6 +31,7 @@ def get_equal_error_rate(confmat):
     corrects = diag(confmat)
     # Get the true positive rate for each class by dividing the amounts of true positives by their amounts
     truth_rates = corrects/ssums
+    print 'Truth rates:'
     print truth_rates
     # The sum of true positive rates times their prior over the classes defines the equal error rate
     # (with 2 classes, this is p1*tpr + p2*(1-fpr)[=tnr])
@@ -64,10 +65,10 @@ def get_results(results, no_nns):
             res[it].c_hat = cpk.load(pkl)
             res[it].trainfiles = cpk.load(pkl)
             res[it].testfiles = cpk.load(pkl)
+            res[it].dssize = cpk.load(pkl)
+            res[it].classlist = cpk.load(pkl)
             if not no_nns:
                 res[it].nns = cpk.load(pkl)
-                res[it].dssize = cpk.load(pkl)
-                res[it].classlist = cpk.load(pkl)
     return res
 
 def get_filenames(pattern):
@@ -196,17 +197,19 @@ if __name__ == '__main__':
     show_settings(res_list[0].configfile)
     # Show the settings of the test
     print 'Showing results of {0} files:\n\t{1}'.format(len(results),results)
-    print 'Classes used:',res_list[0].classlist
+    if not args.no_nns:
+        print 'Classes used:',res_list[0].classlist
     c_hats = vstack([r.c_hat for r in res_list])
     cs = vstack([r.c for r in res_list])
     
     # Show no of errors (simple measure, check)
-    print 'Hits: {0} out of {1}'.format((c_hats == cs).sum(), c_hats.shape)
+    print 'Hits: {0} out of {1}'.format((c_hats == cs).sum(), c_hats.shape[1])
     
     # create combined confusion matrix for all results files
     cf = get_confmat(cs, c_hats)
     print 'Confusion matrix'
     print cf
+    print 'c_hats[0]'
     print c_hats[0]
     # Get equal error rate:
     eer = get_equal_error_rate(cf)

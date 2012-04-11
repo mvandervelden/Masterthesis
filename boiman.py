@@ -270,10 +270,10 @@ class Test(object):
         if self.verbose: print 'file: ',
         # Iterate over the files, and for each file, get it's descriptors distances to all classes from nns[:,xx],
         # take the sum of the squares of these distances per class and then use the argmin as the NB assumption of the most likely class in c_hat
-        print 'no_files: ', no_files, 'starts_len: ',starts.shape
+        # print 'no_files: ', no_files, 'starts_len: ',starts.shape
         for i in xrange(no_files):
             if self.verbose: print i,
-            print 'start-end:',starts[i],'-', starts[i+1], 'nnssize: ',nns.shape
+            # print 'start-end:',starts[i],'-', starts[i+1], 'nnssize: ',nns.shape
             nfile = nns[:,starts[i]:starts[i+1]]
             nsum = sum(nfile**2,1)
             self.c_hat[i] = argmin(nsum)
@@ -296,9 +296,12 @@ class Test(object):
             cpk.dump(self.c_hat, cpkfile)
             cpk.dump([[str(f) for f in ff] for ff in train_set], cpkfile)
             cpk.dump([str(f) for f in test_set],cpkfile)
-            cpk.dump(nns,cpkfile)
             cpk.dump(self.dssize,cpkfile)
             cpk.dump(self.classlist,cpkfile)
+            print 'nns shape', nns.shape
+            print 'nns dtype', nns.dtype
+            cpk.dump(nns,cpkfile)
+
 
     def remove_tmpfiles(self):
         # Clean up
