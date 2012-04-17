@@ -7,3 +7,5 @@ tmp_*
 .tm_properties
 .DS_Store
 *.tar.gz
+nbnn
+colorDescriptor
