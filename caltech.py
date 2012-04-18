@@ -1,5 +1,5 @@
 from nbnn import *
-from numpy import random
+from numpy import random as rndm
 class CaltechTest(Test):
     
     def __init__(self, output_dir, descriptors, trainsize, testsize, no_classes=101,flann_args={}):
@@ -32,7 +32,7 @@ class CaltechTest(Test):
                 def filt(x): return re.search('.jpg',x)
                 cl_paths = filter(filt,cl_paths)
                 # Shuffling the list first, and then take the first for the training set
-                random.shuffle(cl_paths)
+                rndm.shuffle(cl_paths)
                 train_set.extend(cl_paths[:self.trainsize])
                 test_files = cl_paths[self.trainsize:files_per_class]
                 test_set.extend(test_files)

@@ -44,6 +44,7 @@ if __name__ == "__main__":
     no_classes = int(test_parameters['no_classes'])
     
     if test_parameters['test'] == 'caltech':
+        descriptor_args['alpha'] = int(descriptor_args['alpha'])
         descriptors = [XYDescriptor(**kwargs) for kwargs in descriptor_args]
         test = CaltechTest(testdir, descriptors, trainsize, testsize, no_classes)
         result = test.run_test(nbnn_classify)
