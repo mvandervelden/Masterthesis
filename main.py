@@ -2,7 +2,6 @@ from nbnn import *
 from caltech import *
 import sys, ConfigParser
 
-
 def parse_cfg(cfg_file):
     with open(cfg_file) as cfg:
         test_parameters = dict()
@@ -22,7 +21,10 @@ def parse_cfg(cfg_file):
             else:
                 d = dict()
                 for name, value in config.items(section):
-                    d[name] = value
+                    if name=='alpha':
+                        d[name] = float(value)
+                    else:
+                        d[name] = value
                 descriptors.append(d)
     return test_parameters, descriptors, flann_parameters
 
@@ -39,15 +41,21 @@ if __name__ == "__main__":
     
     trainsize = int(test_parameters['trainsize'])
     testsize = int(test_parameters['testsize'])
-    outputdir = test_parameters['outputdir']
     testdir = test_parameters['testdir']
     no_classes = int(test_parameters['no_classes'])
     
     if test_parameters['test'] == 'caltech':
-        descriptor_args['alpha'] = int(descriptor_args['alpha'])
         descriptors = [XYDescriptor(**kwargs) for kwargs in descriptor_args]
         test = CaltechTest(testdir, descriptors, trainsize, testsize, no_classes)
         result = test.run_test(nbnn_classify)
-        print [test.get_ground_truth(image).keys() for image in test.test_set]
-        print result
+    test_ground_truth = [test.get_ground_truth(image).keys()[0] for image in test.test_set]
+    print [test.get_ground_truth(image).keys() for image in test.test_set]
+    print result
+    with open(testdir+'/gt.txt','w') as gt:
+        for t in test_ground_truth:
+            gt.write(t+'\n')
+    with open(testdir+'/res.txt','w') as rf:
+        for r in result:
+            rf.write(r+'\n')
+    
         
