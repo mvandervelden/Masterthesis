@@ -48,8 +48,13 @@ if __name__ == "__main__":
     testsize = int(test_parameters['testsize'])
     testdir = test_parameters['testdir']
     no_classes = int(test_parameters['no_classes'])
-    resultdir = test_parameters['resultdir']
-
+    resultsdir = test_parameters['resultdir']
+    
+    if not os.path.exists(resultsdir):
+        os.mkdir(resultsdir)
+    else:
+        raise Exception("Results dir already exists: %s"%resultsdir)
+    
     if test_parameters['test'] == 'caltech':
         descriptors = [XYDescriptor(**kwargs) for kwargs in descriptor_args]
         test = CaltechTest(testdir, descriptors, trainsize, testsize, 
@@ -59,14 +64,14 @@ if __name__ == "__main__":
         [test.get_ground_truth(image).keys()[0] for image in test.test_set]
     print test_ground_truth
     print result
-    with open(resultdir+'/gt.txt','w') as gt:
+    with open(resultsdir+'/gt.txt','w') as gt:
         for t in test_ground_truth:
             gt.write(t+'\n')
-    with open(resultdir+'/res.txt','w') as rf:
+    with open(resultsdir+'/res.txt','w') as rf:
         for r in result:
             rf.write(r+'\n')
     # Copy the result to the resultfolder
-        resulttarfile = resultdir+'/'+testdir.split('/')[-1]+'.tar.gz'
+        resulttarfile = resultsdir+'/'+testdir.split('/')[-1]+'.tar.gz'
     with tarfile.open(resulttarfile,'w:gz') as rtf:
         rtf.add(testdir)
     shutil.rmtree(testdir)
