@@ -36,15 +36,15 @@ if __name__ == "__main__":
     """
     if len(sys.argv) < 2:
         raise Exception("Please give a config file as command line argument")
-        
+
     test_parameters, descriptor_args, flann_args = parse_cfg(sys.argv[1])
-    
+
     trainsize = int(test_parameters['trainsize'])
     testsize = int(test_parameters['testsize'])
     testdir = test_parameters['testdir']
     no_classes = int(test_parameters['no_classes'])
     resultdir = test_parameters['resultdir']
-    
+
     if test_parameters['test'] == 'caltech':
         descriptors = [XYDescriptor(**kwargs) for kwargs in descriptor_args]
         test = CaltechTest(testdir, descriptors, trainsize, testsize, no_classes)
