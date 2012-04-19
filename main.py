@@ -1,6 +1,6 @@
 from nbnn import *
 from caltech import *
-import sys, ConfigParser
+import sys, ConfigParser, tarfile, os, shutil
 
 def parse_cfg(cfg_file):
     with open(cfg_file) as cfg:
@@ -43,19 +43,24 @@ if __name__ == "__main__":
     testsize = int(test_parameters['testsize'])
     testdir = test_parameters['testdir']
     no_classes = int(test_parameters['no_classes'])
+    resultdir = test_parameters['resultdir']
     
     if test_parameters['test'] == 'caltech':
         descriptors = [XYDescriptor(**kwargs) for kwargs in descriptor_args]
         test = CaltechTest(testdir, descriptors, trainsize, testsize, no_classes)
         result = test.run_test(nbnn_classify)
     test_ground_truth = [test.get_ground_truth(image).keys()[0] for image in test.test_set]
-    print [test.get_ground_truth(image).keys() for image in test.test_set]
+    print test_ground_truth
     print result
-    with open(testdir+'/gt.txt','w') as gt:
+    with open(resultdir+'/gt.txt','w') as gt:
         for t in test_ground_truth:
             gt.write(t+'\n')
-    with open(testdir+'/res.txt','w') as rf:
+    with open(resultdir+'/res.txt','w') as rf:
         for r in result:
             rf.write(r+'\n')
-    
+    # Copy the result to the resultfolder
+        resulttarfile = resultdir+'/'+testdir.split('/')[-1]+'.tar.gz'
+    with tarfile.open(resulttarfile,'w:gz') as rtf:
+        rtf.add(testdir)
+    shutil.rmtree(testdir)
         
