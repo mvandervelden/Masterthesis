@@ -2,7 +2,8 @@ from nbnn import *
 from numpy import random as rndm
 class CaltechTest(Test):
     
-    def __init__(self, output_dir, descriptors, trainsize, testsize, no_classes=101,flann_args={}):
+    def __init__(self, output_dir, descriptors, trainsize, testsize, 
+            no_classes=101,flann_args={}):
         self.trainsize = trainsize
         self.testsize = testsize
         self.no_classes = no_classes
@@ -27,7 +28,8 @@ class CaltechTest(Test):
             if not (cls == 'BACKGROUND_Google'):
                 # Get all files in the path
                 cl_files = os.listdir(motherpath+'/'+cls)
-                cl_paths = ['/'.join([motherpath,cls,cl_file]) for cl_file in cl_files]
+                cl_paths = \
+                    ['/'.join([motherpath,cls,cl_file]) for cl_file in cl_files]
                 # filter out all files to keep the jpg's only
                 def filt(x): return re.search('.jpg',x)
                 cl_paths = filter(filt,cl_paths)
@@ -38,7 +40,9 @@ class CaltechTest(Test):
                 test_set.extend(test_files)
                 # Check whether the remainder of the files is enough for the test set
                 if len(test_files) < self.testsize:
-                    print "padding the testfiles of class "+cls+": too little files:", len(test_files), "<", self.testsize
+                    print "padding the testfiles of class "+cls+\
+                        ": too little files:", len(test_files), "<", \
+                        self.testsize
                     double_files = test_files[:self.testsize - len(test_files)]
                     if len(double_files) < self.testsize - len(test_files):
                         raise Exception("More than once too little files")

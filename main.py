@@ -17,21 +17,26 @@ def parse_cfg(cfg_file):
                     test_parameters[name] = value
             elif section == 'Flann':
                 for name, value in config.items(section):
-                    flann_parameters[name] = value
+                    if name=='verbose':
+                        flann_parameters[name] = value=='True'
+                    else:
+                        flann_parameters[name] = value
             else:
                 d = dict()
                 for name, value in config.items(section):
                     if name=='alpha':
                         d[name] = float(value)
+                    elif name=='verbose':
+                        d[name] = value=='True'
                     else:
                         d[name] = value
                 descriptors.append(d)
     return test_parameters, descriptors, flann_parameters
 
 if __name__ == "__main__":
-    """ Run main using a congif file as argument. The file is parsed into geneal test parameters,
-        a list of descriptor_args (a dict per descriptor) and flann args.
-        It runs the expected test.
+    """ Run main using a congif file as argument. The file is parsed into 
+        general test parameters, a list of descriptor_args (a dict per 
+        descriptor) and flann args. It runs the expected test.
     
     """
     if len(sys.argv) < 2:
@@ -47,9 +52,11 @@ if __name__ == "__main__":
 
     if test_parameters['test'] == 'caltech':
         descriptors = [XYDescriptor(**kwargs) for kwargs in descriptor_args]
-        test = CaltechTest(testdir, descriptors, trainsize, testsize, no_classes)
+        test = CaltechTest(testdir, descriptors, trainsize, testsize, 
+            no_classes, flann_args)
         result = test.run_test(nbnn_classify)
-    test_ground_truth = [test.get_ground_truth(image).keys()[0] for image in test.test_set]
+    test_ground_truth = \
+        [test.get_ground_truth(image).keys()[0] for image in test.test_set]
     print test_ground_truth
     print result
     with open(resultdir+'/gt.txt','w') as gt:
