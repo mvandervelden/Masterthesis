@@ -1,5 +1,6 @@
 from nbnn import *
 from caltech import *
+from performance import *
 import sys, ConfigParser, tarfile, os, shutil
 
 def parse_cfg(cfg_file):
@@ -61,10 +62,13 @@ if __name__ == "__main__":
         test = CaltechTest(testdir, descriptors, trainsize, testsize, 
             no_classes, flann_args)
         result = test.run_test(nbnn_classify)
+        print "Caltech Test performed"
+    print 'len test:', len(test.test_set)
+    print 'len train:', len(test.train_set)
     test_ground_truth = \
         [test.get_ground_truth(image).keys()[0] for image in test.test_set]
-    print test_ground_truth
-    print result
+    #print test_ground_truth
+    #print result
     with open(resultsdir+'/gt.txt','w') as gt:
         for t in test_ground_truth:
             gt.write(t+'\n')
@@ -82,4 +86,8 @@ if __name__ == "__main__":
     rtf.close()
     shutil.rmtree(testdir)
 
+    cf,class_list = get_confusion_matrix(test_ground_truth, result)
+    print cf
+    print class_list
+    print get_equal_error_rate(cf)
         
