@@ -41,8 +41,9 @@ if __name__ == "__main__":
     """
     if len(sys.argv) < 2:
         raise Exception("Please give a config file as command line argument")
-
-    test_parameters, descriptor_args, flann_args = parse_cfg(sys.argv[1])
+    
+    configfile = sys.argv[1]
+    test_parameters, descriptor_args, flann_args = parse_cfg(configfile)
 
     trainsize = int(test_parameters['trainsize'])
     testsize = int(test_parameters['testsize'])
@@ -70,9 +71,15 @@ if __name__ == "__main__":
     with open(resultsdir+'/res.txt','w') as rf:
         for r in result:
             rf.write(r+'\n')
+    # Copy the settings file to the resultsfolder for future reference
+    shutil.copy(configfile, resultsdir)
     # Copy the result to the resultfolder
-        resulttarfile = resultsdir+'/'+testdir.split('/')[-1]+'.tar.gz'
-    with tarfile.open(resulttarfile,'w:gz') as rtf:
-        rtf.add(testdir)
+    # Using 'with' not possible in python < v2.7
+    resulttarfile = resultsdir+'/'+testdir.split('/')[-1]+'.tar.gz'
+    
+    rtf = tarfile.open(resulttarfile,'w:gz')
+    rtf.add(testdir)
+    rtf.close()
     shutil.rmtree(testdir)
+
         
