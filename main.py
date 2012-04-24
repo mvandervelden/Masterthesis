@@ -67,13 +67,15 @@ if __name__ == "__main__":
     print 'len train:', len(test.train_set)
     test_ground_truth = \
         [test.get_ground_truth(image).keys()[0] for image in test.test_set]
+    result_classes = [r for (o,r) in result]
+    print result_classes
     #print test_ground_truth
     #print result
     with open(resultsdir+'/gt.txt','w') as gt:
         for t in test_ground_truth:
             gt.write(t+'\n')
     with open(resultsdir+'/res.txt','w') as rf:
-        for r in result:
+        for r in result_classes:
             rf.write(r+'\n')
     # Copy the settings file to the resultsfolder for future reference
     shutil.copy(configfile, resultsdir)
@@ -86,7 +88,7 @@ if __name__ == "__main__":
     rtf.close()
     shutil.rmtree(testdir)
 
-    cf,class_list = get_confusion_matrix(test_ground_truth, result)
+    cf,class_list = get_confusion_matrix(test_ground_truth, result_classes)
     print cf
     print class_list
     print get_equal_error_rate(cf)
