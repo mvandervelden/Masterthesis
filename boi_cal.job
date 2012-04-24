@@ -1,0 +1,6 @@
+#! /bin/bash
+#$ -l h_rt=24:00:00
+source ./bash_profile
+
+cd code
+python main.py $0
