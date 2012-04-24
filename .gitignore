@@ -1,11 +1,10 @@
 *.pyc
-tmp_*
+tmp*
 *.log
 *.res
-*.cpk
 *results
 .tm_properties
 .DS_Store
 *.tar.gz
 nbnn
-colorDescriptor
+old

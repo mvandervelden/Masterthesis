@@ -67,7 +67,7 @@ if __name__ == "__main__":
     print 'len train:', len(test.train_set)
     test_ground_truth = \
         [test.get_ground_truth(image).keys()[0] for image in test.test_set]
-    result_classes = [r for (o,r) in result]
+    result_classes = [r for (_,r) in result]
     print result_classes
     #print test_ground_truth
     #print result
