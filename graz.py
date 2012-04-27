@@ -59,7 +59,7 @@ if __name__ == "__main__":
     
     dargs = [{"cache_dir": "./", 'verbose':True}]
     descriptors = [Descriptor(**kwargs) for kwargs in dargs]
-    test = GrazTest('./test',descriptors, 2,2, flann_args={"verbose":True})
+    test = GrazTest('./test',descriptors, 2,2, test='bike',flann_args={"verbose":True})
     result = test.run_test(nbnn_classify)
     print [test.get_ground_truth(imp).keys() for imp in test.test_set]
     print result
