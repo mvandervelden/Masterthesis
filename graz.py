@@ -37,8 +37,10 @@ class GrazTest(Test):
         
         files = os.listdir(path)
         paths = [path+'/'+f for f in files]
-        def filt(x): return re.search('.'+self.filetype,x)
+        print self.filetype
+        def filt(x): return re.search('\.'+self.filetype,x)
         paths = filter(filt,paths)
+        print paths
         rndm.shuffle(paths)
         return paths[:s1], paths[s1:s1+s2]
     

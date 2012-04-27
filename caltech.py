@@ -31,7 +31,7 @@ class CaltechTest(Test):
                 cl_paths = \
                     ['/'.join([motherpath,cls,cl_file]) for cl_file in cl_files]
                 # filter out all files to keep the jpg's only
-                def filt(x): return re.search('.jpg',x)
+                def filt(x): return re.search('\.jpg',x)
                 cl_paths = filter(filt,cl_paths)
                 # Shuffling the list first, and then take the first for the training set
                 rndm.shuffle(cl_paths)
