@@ -4,11 +4,17 @@ from numpy import random as rndm
 class GrazTest(Test):
     
     def __init__(self, output_dir, descriptors, trainsize, testsize, 
-            filetype='png',test='person',flann_args={}):
+            filetype='png',test='person',difficult=False, flann_args={}):
         self.trainsize = trainsize
         self.testsize = testsize
         self.filetype = filetype
         self.test = test
+        if not difficult:
+            self.file_limits = {'persons':348, 'bikes': 306, \
+                'no_bike_no_person': 273}
+        else:
+            self.file_limits = {}
+        
         super(GrazTest,self).__init__(output_dir, descriptors, flann_args)
     
     def select_data(self):
@@ -40,7 +46,15 @@ class GrazTest(Test):
         print self.filetype
         def filt(x): return re.search('\.'+self.filetype,x)
         paths = filter(filt,paths)
-        print paths
+        
+        limit = [v for k,v in self.file_limits.items() if k in path]
+
+        if not limit == []:
+            # If there's a limit, filter out the images exceeding this limit
+            limit = limit[0]
+            def rm_limit(x, limit): return int(re.search('[0-9]+',x).group(0)) <= limit
+            paths = [p for p in paths if rm_limit(p.split('/')[-1], limit)]
+        
         rndm.shuffle(paths)
         return paths[:s1], paths[s1:s1+s2]
     
@@ -61,7 +75,8 @@ if __name__ == "__main__":
     
     dargs = [{"cache_dir": "./", 'verbose':True}]
     descriptors = [Descriptor(**kwargs) for kwargs in dargs]
-    test = GrazTest('./test',descriptors, 2,2, test='bike',flann_args={"verbose":True})
+    test = GrazTest('./test',descriptors, 2,2, test='bike',difficult=True, \
+        flann_args={"verbose":True})
     result = test.run_test(nbnn_classify)
     print [test.get_ground_truth(imp).keys() for imp in test.test_set]
     print result

@@ -68,6 +68,7 @@ if __name__ == "__main__":
         print "Caltech Test performed"
     else:
         filetype = test_parameters['filetype']
+        difficult = test_parameters['difficult'] == 'True'
         descriptors = [Descriptor(**kwargs) for kwargs in descriptor_args]
         test = GrazTest(testdir, descriptors, trainsize, testsize, \
             filetype, teststr, flann_args)
