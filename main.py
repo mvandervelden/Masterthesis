@@ -1,5 +1,6 @@
 from nbnn import *
 from caltech import *
+from graz import *
 from performance import *
 import sys, ConfigParser, tarfile, os, shutil
 
@@ -49,20 +50,29 @@ if __name__ == "__main__":
     trainsize = int(test_parameters['trainsize'])
     testsize = int(test_parameters['testsize'])
     testdir = test_parameters['testdir']
-    no_classes = int(test_parameters['no_classes'])
     resultsdir = test_parameters['resultdir']
+    teststr = test_parameters['test']
     
     if not os.path.exists(resultsdir):
         os.mkdir(resultsdir)
     else:
         raise Exception("Results dir already exists: %s"%resultsdir)
     
-    if test_parameters['test'] == 'caltech':
+    if teststr == 'caltech':
+        no_classes = int(test_parameters['no_classes'])
+        
         descriptors = [XYDescriptor(**kwargs) for kwargs in descriptor_args]
         test = CaltechTest(testdir, descriptors, trainsize, testsize, 
             no_classes, flann_args)
         result = test.run_test(nbnn_classify)
         print "Caltech Test performed"
+    else:
+        filetype = test_parameters['filetype']
+        descriptors = [Descriptor(**kwargs) for kwargs in descriptor_args]
+        test = GrazTest(testdir, descriptors, trainsize, testsize, \
+            filetype, teststr, flann_args)
+        result = test.run_test(nbnn_classify)
+        print "Graz "+teststr+"Test performed"
     print 'len test:', len(test.test_set)
     print 'len train:', len(test.train_set)
     test_ground_truth = \
