@@ -24,14 +24,14 @@ def parse_cfg(cfg_file):
                     else:
                         flann_parameters[name] = value
             else:
-                d = dict()
+                d = [section, dict()]
                 for name, value in config.items(section):
                     if name=='alpha':
-                        d[name] = float(value)
+                        d[1][name] = float(value)
                     elif name=='verbose':
-                        d[name] = value=='True'
+                        d[1][name] = value=='True'
                     else:
-                        d[name] = value
+                        d[1][name] = value
                 descriptors.append(d)
     return test_parameters, descriptors, flann_parameters
 
@@ -61,7 +61,7 @@ if __name__ == "__main__":
     if teststr == 'caltech':
         no_classes = int(test_parameters['no_classes'])
         
-        descriptors = [XYDescriptor(**kwargs) for kwargs in descriptor_args]
+        descriptors = [eval(d)(**kwargs) for d,kwargs in descriptor_args]
         test = CaltechTest(testdir, descriptors, trainsize, testsize, 
             no_classes, flann_args)
         result = test.run_test(nbnn_classify)
@@ -69,9 +69,9 @@ if __name__ == "__main__":
     else:
         filetype = test_parameters['filetype']
         difficult = test_parameters['difficult'] == 'True'
-        descriptors = [Descriptor(**kwargs) for kwargs in descriptor_args]
+        descriptors = [eval(d)(**kwargs) for d,kwargs in descriptor_args]
         test = GrazTest(testdir, descriptors, trainsize, testsize, \
-            filetype, teststr, flann_args)
+            filetype, teststr, difficult, flann_args)
         result = test.run_test(nbnn_classify)
         print "Graz "+teststr+"Test performed"
     print 'len test:', len(test.test_set)

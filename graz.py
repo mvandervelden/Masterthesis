@@ -1,5 +1,6 @@
 from nbnn import *
 from numpy import random as rndm
+from mydescriptor import *
 
 class GrazTest(Test):
     
@@ -43,7 +44,7 @@ class GrazTest(Test):
         
         files = os.listdir(path)
         paths = [path+'/'+f for f in files]
-        print self.filetype
+
         def filt(x): return re.search('\.'+self.filetype,x)
         paths = filter(filt,paths)
         
@@ -52,7 +53,8 @@ class GrazTest(Test):
         if not limit == []:
             # If there's a limit, filter out the images exceeding this limit
             limit = limit[0]
-            def rm_limit(x, limit): return int(re.search('[0-9]+',x).group(0)) <= limit
+            def rm_limit(x, limit):
+                return int(re.search('[0-9]+',x).group(0)) <= limit
             paths = [p for p in paths if rm_limit(p.split('/')[-1], limit)]
         
         rndm.shuffle(paths)
@@ -74,7 +76,7 @@ class GrazTest(Test):
 if __name__ == "__main__":
     
     dargs = [{"cache_dir": "./", 'verbose':True}]
-    descriptors = [Descriptor(**kwargs) for kwargs in dargs]
+    descriptors = [Descriptor8Cut(**dargs[0])]
     test = GrazTest('./test',descriptors, 2,2, test='bike',difficult=True, \
         flann_args={"verbose":True})
     result = test.run_test(nbnn_classify)
