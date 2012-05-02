@@ -71,9 +71,14 @@ if __name__ == "__main__":
     EER/Mean Recognition Rate
     
     """
-    if len(sys.argv) == 3:
-        groundtruth_file = sys.argv[1]
-        prediction_file = sys.argv[2]
+    if len(sys.argv) > 1:
+        if len(sys.argv) == 2:
+            folder = sys.argv[1]
+            groundtruth_file = folder+'/gt.txt'
+            prediction_file = folder+'/res.txt'
+        else:
+            groundtruth_file = sys.argv[1]
+            prediction_file = sys.argv[2]
         print "Loading ground truth from: ", groundtruth_file
         groundtruth = []
         with open(groundtruth_file,'r') as f:
