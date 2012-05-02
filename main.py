@@ -52,7 +52,10 @@ if __name__ == "__main__":
     testdir = test_parameters['testdir']
     resultsdir = test_parameters['resultdir']
     teststr = test_parameters['test']
-    save_estimators = test_parameters['save_estimators'] == 'True'
+    if 'save_estimators' in test_parameters:
+        save_estimators = test_parameters['save_estimators'] == 'True'
+    else:
+        save_estimators = False
     
     if not os.path.exists(resultsdir):
         os.mkdir(resultsdir)
