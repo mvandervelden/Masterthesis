@@ -4,7 +4,7 @@
 source ~/.bash_profile
 rm -rfv /local/vdvelden
 mkdir /local/vdvelden
-for it in `seq 1 5`; do
+for it in `seq 6 10`; do
 	s=$SCRIPT'_'$it
 	echo $s
 	python main.py $s.cfg
