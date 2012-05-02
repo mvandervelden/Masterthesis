@@ -52,6 +52,7 @@ if __name__ == "__main__":
     testdir = test_parameters['testdir']
     resultsdir = test_parameters['resultdir']
     teststr = test_parameters['test']
+    save_estimators = test_parameters['save_estimators'] == 'True'
     
     if not os.path.exists(resultsdir):
         os.mkdir(resultsdir)
@@ -82,6 +83,7 @@ if __name__ == "__main__":
     print result_classes
     #print test_ground_truth
     #print result
+    print 'Writing results to file'
     with open(resultsdir+'/gt.txt','w') as gt:
         for t in test_ground_truth:
             gt.write(t+'\n')
@@ -89,14 +91,17 @@ if __name__ == "__main__":
         for r in result_classes:
             rf.write(r+'\n')
     # Copy the settings file to the resultsfolder for future reference
+    print "Copying configfile to resultsfolder"
     shutil.copy(configfile, resultsdir)
     # Copy the result to the resultfolder
     # Using 'with' not possible in python < v2.7
-    resulttarfile = resultsdir+'/'+testdir.split('/')[-1]+'.tar.gz'
+    if save_estimators:
+        print "Tarring data to results"
+        resulttarfile = resultsdir+'/'+testdir.split('/')[-1]+'.tar.gz'
     
-    rtf = tarfile.open(resulttarfile,'w:gz')
-    rtf.add(testdir)
-    rtf.close()
+        rtf = tarfile.open(resulttarfile,'w:gz')
+        rtf.add(testdir)
+        rtf.close()
     shutil.rmtree(testdir)
 
     cf,class_list = get_confusion_matrix(test_ground_truth, result_classes)
