@@ -56,6 +56,10 @@ if __name__ == "__main__":
         save_estimators = test_parameters['save_estimators'] == 'True'
     else:
         save_estimators = False
+    if 'batch_size' in test_parameters:
+        batch_size = int(test_parameters['batch_size'])
+    else:
+        batch_size = None
     
     if not os.path.exists(resultsdir):
         os.mkdir(resultsdir)
@@ -76,7 +80,7 @@ if __name__ == "__main__":
         descriptors = [eval(d)(**kwargs) for d,kwargs in descriptor_args]
         test = GrazTest(testdir, descriptors, trainsize, testsize, \
             filetype, teststr, difficult, flann_args)
-        result = test.run_test(nbnn_classify)
+        result = test.run_test(nbnn_classify, batch_size)
         print "Graz "+teststr+"Test performed"
     print 'len test:', len(test.test_set)
     print 'len train:', len(test.train_set)
