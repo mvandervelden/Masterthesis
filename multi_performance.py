@@ -19,6 +19,7 @@ if __name__ == "__main__":
             start_i = 0
     else:
         no_folders = 5
+        start_i = 0
     p = pattern.split('/')
     repatt = p[-1]+'_[0-9]+$'
     allfolders = os.listdir('/'.join(p[0:-1]))
