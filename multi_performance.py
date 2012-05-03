@@ -12,13 +12,13 @@ if __name__ == "__main__":
     """
     pattern = sys.argv[1]
     if len(sys.argv)>2:
-	no_folders = int(sys.argv[2])
+        no_folders = int(sys.argv[2])
         if len(sys.argv)>3:
             start_i = int(sys.argv[3])
         else:
             start_i = 0
     else:
-        no_folders = -1
+        no_folders = 5
     p = pattern.split('/')
     repatt = p[-1]+'_[0-9]+$'
     allfolders = os.listdir('/'.join(p[0:-1]))
