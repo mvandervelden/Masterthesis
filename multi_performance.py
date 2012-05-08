@@ -25,22 +25,20 @@ if __name__ == "__main__":
     allfolders = os.listdir('/'.join(p[0:-1]))
     folders = ['/'.join(p[0:-1]+[f]) for f in allfolders \
         if re.search(repatt, f) is not None]
-    if no_folders < 0:
-        no_folders = len(folders)
+    folders.sort()
     conf_matrices = None
     classlist = None
     eers = np.zeros([no_folders])
     for i,folder in enumerate(folders[start_i:start_i+no_folders]):
         groundtruth_file = folder+'/gt.txt'
         prediction_file = folder+'/res.txt'
-        print "Loading ground truth from: ", groundtruth_file
+        print "Loading from: ", folder
         groundtruth = []
         with open(groundtruth_file,'r') as f:
             # read the whole file, split it on newlines and filter out empty
             # lines (presumably at the end of the file)
             groundtruth = filter(None, f.read().split('\n'))
         #print groundtruth
-        print "Loading prediction from: ", prediction_file
         prediction = []
         with open(prediction_file, 'r') as f:
             # read the whole file, split it on newlines and filter out empty
