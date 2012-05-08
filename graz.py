@@ -61,7 +61,8 @@ class GrazTest(Test):
         return paths[:s1], paths[s1:s1+s2]
     
     def get_ground_truth(self, im_path):
-        # Set the ground truth of an image: the class is the name of the folder in which the image is.
+        # Set the ground truth of an image: the class is the name of the folder
+        # in which the image is.
         if self.test == 'person':
             classes = ['persons', 'nonpersons']
         elif self.test == 'bike':
