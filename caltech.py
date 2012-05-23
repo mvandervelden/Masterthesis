@@ -2,7 +2,7 @@ from nbnn import *
 from numpy import random as rndm
 class CaltechTest(Test):
     
-    def __init__(self, output_dir, descriptors, trainsize, testsize, 
+    def __init__(self, output_dir, descriptors, trainsize=15, testsize=20, 
             no_classes=101,flann_args={}):
         self.trainsize = trainsize
         self.testsize = testsize
@@ -12,11 +12,11 @@ class CaltechTest(Test):
     def select_data(self):
         import re
         
-        if os.path.exists('scratchdisk/im/caltech101/101_ObjectCategories'):
+        if os.path.exists('scratchdisk/im/caltechresize/101_ObjectCategories'):
             # On the nodes, the images should be on the scratch disk
-            motherpath = 'scratchdisk/im/caltech101/101_ObjectCategories'
+            motherpath = 'scratchdisk/im/caltechresize/101_ObjectCategories'
         else:
-            motherpath = '../im/caltech101/101_ObjectCategories'
+            motherpath = '../im/caltechresize/101_ObjectCategories'
         classlist = os.listdir(motherpath)
         if self.no_classes < 101:
             classlist = classlist[:self.no_classes]

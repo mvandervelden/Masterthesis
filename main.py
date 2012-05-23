@@ -21,6 +21,8 @@ def parse_cfg(cfg_file):
                 for name, value in config.items(section):
                     if name=='verbose':
                         flann_parameters[name] = value=='True'
+                    elif name in ['trees','checks','k']:
+                        flann_parameters[name] = int(value)
                     else:
                         flann_parameters[name] = value
             else:
