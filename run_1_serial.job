@@ -1,0 +1,11 @@
+#! /bin/bash
+#$ -l h_rt=300:00:00
+#$ -cwd
+source ~/.bash_profile
+rm -rfv /local/vdvelden
+mkdir /local/vdvelden
+s=$SCRIPT'_'$IT
+echo $s
+python main.py $s.cfg
+done
+rm -rfv /local/vdvelden
