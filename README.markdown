@@ -1,48 +1,40 @@
 # Master Thesis Github #
 
 
-Tests are designed to be run on DAS-4 nodes.
-Currently, I login to the head node, I start a screen session for each experiment, and in this session, I claim a node using:
+Tests are run using GSE job manager:
 
-`qrsh -l h_rt=1:00:00`
+`qsub -v SCRIPT=foo bar.job`
 
-Afterwards, I go to the code folder (`cd code`).
-
-To run a test, and check the resources used, I basically enter:
-set the test and iteration ID:
-
-`tst=graz01_bike;id=1;cfg=settings.cfg`
-
-run the experiment:
-
-``/usr/bin/time -f "Time: %e\nCPU: %P\nmemory_max: %M\n" -o timing_$id.res python boiman.py $tst -d `eval date +%y%m%d_`$id -c $cfg``
+The code expects a python package called **nbnn** (Found [here](https://github.com/cvanweelden/nbnn) )
 
 ## File description ##
 
-**bmp2jpg.py**
-Small script to convert a folder of bmp files to jpg files (needed because Koen van de Sande's colorDescriptor only seems to take jpgs, while graz01 has bmps only)
+**detection\_cheap.py**
+Usage: `$ python detection_cheap.py some/config/file.cfg`
 
-**boiman.py**
-Main program with test classes and function
-usage: `python boiman.py [-h] [-d ID] [-c CONFIGFILE] TEST`, where `TEST` can be either graz01\_person, graz01\_bike, *caltech101, pascal07*
+Main file for a cheap kind of detection on the VOC11 data set.
 
-**DescriptorIO.py**
-Koen van de Sande's functions to interpret his Descriptor-files, is used in poiman.py and performance.py
+**make5cfg\_iterations.sh** and **make10cfg\_iterations.sh**
+Usage: `$ ./makeNcfg_iterations.sh some/config/pattern`
 
-**performance.py**
-Functions to get the performance from results files, and to visualize examples
+Shell script that searches for a file called `pattern_1.cfg` in path `some/config`
+and duplicates this file N times. During duplication, `_1` patterns within the file
+are replaced with `_i`. Useful in case multiple iterations with the same settings
+need to be run.
 
-**README**
+**pascal.py**
+Dataset classes for the Pascal Detection (future: Classification) tasks, that
+extend nbnn's VOC Dataset class. Also contains a VOCResultsHandler class that
+interprets and saves VOC detection results
+
+**README.markdown**
 This file
 
-**runflann.py**
-*Deprecated* early attempt towards boiman.py
+**run\_1.job**, **run\_5\_serial.job**, **run\_10\_serial.job**
+Job scripts to runthe program using variable config files
 
-**settings.cfg**
-Settings which are read by boiman.py
+**voc\_cheapdetection.cfg**
+Example Config file for the detection task
 
-**test.jpg**
-Image from the Graz01 set to perform small tests on.
-
-**tst.sh**
-Attempt to a shell script that runs multiple processes simultaneously, currently issues with RAM memory
+**voctest\_tesf.txt** and **voctest\_trsf.txt**
+Example dataset files for VOC detection
