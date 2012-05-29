@@ -67,13 +67,13 @@ if __name__ == "__main__":
     log.info('===================INIT VOCDET DATASET===================')
     dataset = VOCDetection(**data_args)
     log.debug(dataset.train_set)
+    log.info("===================INIT RESULTSHANDLER===================")
+    vrh = VOCResultsHandler(dataset,test_params['result_path'],th=1)
     log.info('=====================INIT DESCRIPTOR=====================')
     descriptors = [eval(d)(**kwargs) for d,kwargs in descriptor_args]
     log.info('=====================INIT ESTIMATOR =====================')
     estimators = [NBNNEstimator.from_dataset(test_params['temp_path'], dataset, \
         descriptor, **flann_args) for descriptor in descriptors]
-    log.info("===================INIT RESULTSHANDLER===================")
-    vrh = VOCResultsHandler(dataset,test_params['result_path'],th=1)
     log.info("======================STARTING TEST======================")
     run_test(dataset, descriptors, estimators, vrh.voc_detection_results, \
         batch_size=test_params['batch_size'], output_function=ranked_classify)
