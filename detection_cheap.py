@@ -57,7 +57,8 @@ if __name__ == "__main__":
     test_params, data_args, descriptor_args, flann_args = parse_cfg(configfile)
     
     
-    log.basicConfig(level=log.INFO)
+    log.basicConfig(filename=test_params['logfile'],level=log.INFO,\
+        format='%(asctime)s - %(levelname)s - %(message)s')
     log.info('===================VOC CHEAP DETECTION===================')
     log.info('=========================================================')
     
