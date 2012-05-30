@@ -167,6 +167,59 @@ class VOCDetection(VOC):
         
         return xp.get_objects()
 
+class VOCClassification(VOCDetection):
+    
+    def __init__(self, classes, trainset_file, testset_file, image_path,
+            gt_annotation_path):
+        super(VOCClassification,self).__init__(classes,trainset_file, \
+            testset_file, image_path, gt_annotation_path)
+        self.training = True
+    
+    
+    def get_segmentation(self, im_path):
+        """Load annotation file of an image, and parse the xml to find all
+        bounding boxes within the file
+        
+        Keyword arguments:
+        im_path - path to an image
+        
+        Returns: a MultipleSegmentation of the list of bounding boxes in the
+        image
+        
+        """
+
+        if self.training:
+            im_id = self.get_im_id(im_path)
+            annotation_file = self.gt_annotation_path%im_id
+            objects = self.get_objects_from_xml(annotation_file)
+            ground_truth = set([o['name'] for o in objects])
+            return Classification(len(ground_truth))
+        else:
+            return Classification(1)
+    
+    def get_ground_truth(self, im_path, segmentation):
+        """Get the class of all objects in an image, using its annotation file
+        
+        Keyword arguments:
+        im_path - the filename and path of an image, used to get its ID
+        segmentation - Segmentation object of the image, not needed.
+        
+        Returns: list of class strings.
+        
+        """
+        
+        im_id = self.get_im_id(im_path)
+        annotation_file = self.gt_annotation_path%im_id
+        objects = self.get_objects_from_xml(annotation_file)
+        
+        ground_truth = list(set([o['name'] for o in objects]))
+        return ground_truth
+    
+    def toggle_training(self):
+        self.training = not self.training
+        return self.training
+    
+
 class VOCResultsHandler(object):
     
     def __init__(self, dataset,results_path,th=0.5):
@@ -178,8 +231,10 @@ class VOCResultsHandler(object):
         for cls in self.classes:
             self.results[cls] = dict()
         os.mkdir('/'.join(self.results_path.split('/')[:-1]))
-        
-    def voc_detection_results(self,im_path,segmentation,results):
+
+class VOCDetectionResultsHandler(VOCResultsHandler):
+    
+    def set_results(self,im_path,segmentation,results):
         im_id = self.dataset.get_im_id(im_path)
         for (bbox,result) in zip(segmentation.bboxes,results):
             for (cls,dist) in result:
@@ -187,15 +242,16 @@ class VOCResultsHandler(object):
                     self.results[cls][im_id] = []
                 self.results[cls][im_id].append((dist,bbox))
     
-    def print_results(self):
+    def __str__(self):
+        s = ''
         for (cls,imgs) in self.results.items():
-            print cls+':'
+            s += cls+':'
             for (img,bboxlist) in imgs.items():
                 for (dist,bbox) in bboxlist:
-                    print "  %s %s %s %s %s %s"%( img, dist, bbox[0], bbox[1], \
+                    s += "  %s %s %s %s %s %s"%( img, dist, bbox[0], bbox[1], \
                         bbox[2], bbox[3] )
     
-    def save_results(self):
+    def save_to_files(self):
         mx = 0
         for (cls,imgs) in self.results.items():
             for (img,bboxlist) in imgs.items():
@@ -222,6 +278,45 @@ class VOCResultsHandler(object):
             with open(self.results_path%cls ,'w') as f:
                 f.write(cls_str)
     
+
+class VOCClassificationResultsHandler(VOCResultsHandler):
+    
+    def set_results(self,im_path,_segmentation,results):
+        log.info('Results to be set: %s'%results)
+        im_id = self.dataset.get_im_id(im_path)
+        for (cls,dist) in results[0]:
+            self.results[cls][im_id] = dist
+    
+    def __str__(self):
+        s = ''
+        for (cls,imgs) in self.results.items():
+            s += cls+':\n'
+            for (img,dist) in imgs.items():
+                s += "  %s %s\n"%( img, dist )
+        
+    def save_to_files(self):
+        mx = 0
+        for (cls,imgs) in self.results.items():
+            for (img,dist) in imgs.items():
+                if not math.isinf(dist) and dist > mx:
+                    mx = dist
+        
+        log.debug( 'Max: %f,thresh: %f,product: %f'%\
+            (mx, self.threshold, mx*self.threshold) )
+        for (cls,imgs) in self.results.items():
+            cls_str = ""
+            for (img,dist) in imgs.items():
+                # Make a confidence value between 0-1
+                # Determined by the dist: dist/mx
+                log.debug( 'D: %f,norm: %f,conf: %f, maxed: %f'%( dist, \
+                    (dist/(mx*self.threshold)), 1-(dist/(mx* self.threshold\
+                    )), max(1-(dist/(mx*self.threshold)), 0)))
+                if not math.isinf(dist):
+                    conf = max(1-(dist/(mx*self.threshold)),0)
+                    if conf > 0:
+                        cls_str += "%s %.5f\n"%( img, 1 - (dist/mx) )
+            with open(self.results_path%cls ,'w') as f:
+                f.write(cls_str)
     
 if __name__ == "__main__":
     
@@ -242,10 +337,10 @@ if __name__ == "__main__":
     estimator = NBNNEstimator.from_dataset('tempnbnn',dataset,descriptor)
     logging.info("======================STARTING TEST======================\n")
     
-    vrh = VOCResultsHandler(dataset,resultspath,th=1)
-    run_test(dataset, descriptor, estimator,vrh.voc_detection_results, \
+    vrh = VOCDetectionResultsHandler(dataset,resultspath,th=1)
+    run_test(dataset, descriptor, estimator,vrh.set_results, \
         output_function=ranked_classify)
-    vrh.print_results()
-    vrh.save_results()
+    print vrh
+    vrh.save_to_files()
     gts = [dataset.get_ground_truth(ip,None) for ip in dataset.test_set]
     print gts 
