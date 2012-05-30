@@ -57,28 +57,29 @@ if __name__ == "__main__":
     test_params, data_args, descriptor_args, flann_args = parse_cfg(configfile)
     
     
-    log.basicConfig(filename=test_params['logfile'],level=log.DEBUG,\
+    log.basicConfig(filename=test_params['logfile'],level=log.INFO,\
         format='%(asctime)s - %(levelname)s - %(message)s')
-    log.info('===================VOC CHEAP DETECTION===================')
+    log.info('===================VOC CLASSIFICATION ===================')
     log.info('=========================================================')
     
     # classes =['aeroplane','bicycle','bird','boat','bottle','bus','car','cat',\
     #     'chair','cow','diningtable','dog','horse','motorbike','person',\
     #     'pottedplant','sheep','sofa','train','tvmonitor']
-    log.info('===================INIT VOCDET DATASET===================')
-    dataset = VOCDetection(**data_args)
+    log.info('===================INIT VOCCLAS DATASET===================')
+    dataset = VOCClassification(**data_args)
     log.debug(dataset.train_set)
     log.info("===================INIT RESULTSHANDLER===================")
-    vrh = VOCDetectionResultsHandler(dataset,test_params['result_path'],th=1)
+    vrh = VOCClassificationResultsHandler(dataset,test_params['result_path'],th=1)
     log.info('=====================INIT DESCRIPTOR=====================')
     descriptors = [eval(d)(**kwargs) for d,kwargs in descriptor_args]
     log.info('=====================INIT ESTIMATOR =====================')
     estimators = [NBNNEstimator.from_dataset(test_params['temp_path'], dataset, \
         descriptor, **flann_args) for descriptor in descriptors]
     log.info("======================STARTING TEST======================")
+    dataset.toggle_training()
     run_test(dataset, descriptors, estimators, vrh.set_results, \
         batch_size=test_params['batch_size'], output_function=ranked_classify)
-    #print vrh
+    #vrh.print_results()
     log.info("=====================SAVING RESULTS =====================")
     vrh.save_to_files()
     log.info("=======================CLEANING UP=======================")
