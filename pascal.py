@@ -137,16 +137,16 @@ class VOCDetection(VOC):
                 if not self.cur_object is None and not data == '':
                     if self.depth == 2:
                         if self.cur_field == 'name':
-                            log.debug('char_data (name): %s'%(data))
+                            #log.debug('char_data (name): %s'%(data))
                             self.cur_object[self.cur_field] = data
                         elif self.cur_field == 'difficult':
-                            log.debug('char_data (diff): %s'%(data))
+                            #log.debug('char_data (diff): %s'%(data))
                             self.cur_object[self.cur_field] = data == '1'
                             # else:
                             #     self.cur_object[self.cur_field] = data
                     elif self.depth == 3 and \
                         self.cur_field in ['xmin','ymin','xmax','ymax']:
-                        log.debug('char_data (bbox): %s'%(data))
+                        #log.debug('char_data (bbox): %s'%(data))
                         idx = self.blist.index(self.cur_field)
                         self.cur_object['bbox'][idx] = int(data)
             
