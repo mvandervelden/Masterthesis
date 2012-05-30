@@ -4,9 +4,5 @@
 source ~/.bash_profile
 rm -rfv /local/vdvelden
 mkdir /local/vdvelden
-for it in `seq 1 5`; do
-	s=$SCRIPT'_'$it
-	echo $s
-	python main.py $s.cfg
-done
+python detection_cheap.py $SCRIPT
 rm -rfv /local/vdvelden
