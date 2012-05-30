@@ -95,7 +95,7 @@ class VOCDetection(VOC):
                 """
 
                 self.depth += 1
-                log.debug('start_element %d: %s'%(self.depth, name))
+                #log.debug('start_element %d: %s'%(self.depth, name))
                 
                 self.cur_field = name
                 if self.depth == 1 and name == 'object':
@@ -117,7 +117,7 @@ class VOCDetection(VOC):
 
                 self.depth -= 1
                 if self.depth == 0 and name == 'object':
-                    log.debug(self.cur_object)
+                    #log.debug(self.cur_object)
                     if self.difficult or not self.cur_object['difficult']:
                         self.objects.append(self.cur_object)
                     self.cur_object = None
@@ -235,12 +235,15 @@ class VOCResultsHandler(object):
 class VOCDetectionResultsHandler(VOCResultsHandler):
     
     def set_results(self,im_path,segmentation,results):
+        log.debug('Segmentation: %s'%segmentation.bboxes)
+        log.debug('  results: %s'%results)
         im_id = self.dataset.get_im_id(im_path)
         for (bbox,result) in zip(segmentation.bboxes,results):
-            for (cls,dist) in result:
-                if not im_id in self.results[cls]:
-                    self.results[cls][im_id] = []
-                self.results[cls][im_id].append((dist,bbox))
+            if not result is None:
+                for (cls,dist) in result:
+                    if not im_id in self.results[cls]:
+                        self.results[cls][im_id] = []
+                    self.results[cls][im_id].append((dist,bbox))
     
     def __str__(self):
         s = ''
