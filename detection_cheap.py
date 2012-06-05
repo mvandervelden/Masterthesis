@@ -1,6 +1,8 @@
 from nbnn import *
 from pascal import *
-import logging as log
+import logging,logging.config
+from memuse import *
+
 import os,sys, ConfigParser, shutil
 
 def parse_cfg(cfg_file):
@@ -56,9 +58,11 @@ if __name__ == "__main__":
     configfile = sys.argv[1]
     test_params, data_args, descriptor_args, flann_args = parse_cfg(configfile)
     
+    logging.config.fileConfig('logging.conf',disable_existing_loggers=False)
+    log = logging.getLogger('')
+    f = MemuseFilter()
+    log.handlers[0].addFilter(f)
     
-    log.basicConfig(filename=test_params['logfile'],level=log.DEBUG,\
-        format='%(asctime)s - %(levelname)s - %(message)s')
     log.info('===================VOC CHEAP DETECTION===================')
     log.info('=========================================================')
     
@@ -67,7 +71,6 @@ if __name__ == "__main__":
     #     'pottedplant','sheep','sofa','train','tvmonitor']
     log.info('===================INIT VOCDET DATASET===================')
     dataset = VOCDetection(**data_args)
-    log.debug(dataset.train_set)
     log.info("===================INIT RESULTSHANDLER===================")
     vrh = VOCDetectionResultsHandler(dataset,test_params['result_path'],th=1)
     log.info('=====================INIT DESCRIPTOR=====================')

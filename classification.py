@@ -1,6 +1,7 @@
 from nbnn import *
 from pascal import *
-import logging as log
+import logging,logging.config
+from memuse import *
 import os,sys, ConfigParser, shutil
 
 def parse_cfg(cfg_file):
@@ -10,7 +11,6 @@ def parse_cfg(cfg_file):
         descriptors = []
         flann_args = dict()
         
-
         config = ConfigParser.RawConfigParser()
         config.readfp(cfg)
         sections = config.sections()
@@ -56,9 +56,11 @@ if __name__ == "__main__":
     configfile = sys.argv[1]
     test_params, data_args, descriptor_args, flann_args = parse_cfg(configfile)
     
-    
-    log.basicConfig(filename=test_params['logfile'],level=log.INFO,\
-        format='%(asctime)s - %(levelname)s - %(message)s')
+    logging.config.fileConfig('logging.conf',disable_existing_loggers=False)
+    log = logging.getLogger('')
+    f = MemuseFilter()
+    log.handlers[0].addFilter(f)
+
     log.info('===================VOC CLASSIFICATION ===================')
     log.info('=========================================================')
     
