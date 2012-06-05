@@ -1,9 +1,9 @@
 from nbnn import *
 import xml.parsers.expat as expat
 import re,os,math
+import numpy.random as rndm
 
 log = logging.getLogger(__name__)
-
 class VOCDetection(VOC):
     
     def __init__(self, classes, trainset_file, testset_file, image_path,
@@ -219,6 +219,92 @@ class VOCClassification(VOCDetection):
         self.training = not self.training
         return self.training
     
+class CaltechClassification(Dataset):
+    
+    def __init__(self, image_path,trainsize=20,testsize=15, no_classes=None):
+        print log.__dict__
+        classes = ["BACKGROUND_Google","Faces","Faces_easy","Leopards",\
+            "Motorbikes","accordion","airplanes","anchor","ant","barrel",\
+            "bass","beaver","binocular","bonsai","brain","brontosaurus",\
+            "buddha","butterfly","camera","cannon","car_side","ceiling_fan",\
+            "cellphone","chair","chandelier","cougar_body","cougar_face","crab",\
+            "crayfish","crocodile","crocodile_head","cup","dalmatian",\
+            "dollar_bill","dolphin","dragonfly","electric_guitar","elephant",\
+            "emu","euphonium","ewer","ferry","flamingo","flamingo_head",\
+            "garfield","gerenuk","gramophone","grand_piano","hawksbill",\
+            "headphone","hedgehog","helicopter","ibis","inline_skate",\
+            "joshua_tree","kangaroo","ketch","lamp","laptop","llama","lobster",\
+            "lotus","mandolin","mayfly","menorah","metronome","minaret",\
+            "nautilus","octopus","okapi","pagoda","panda","pigeon","pizza",\
+            "platypus","pyramid","revolver","rhino","rooster","saxophone",\
+            "schooner","scissors","scorpion","sea_horse","snoopy","soccer_ball",\
+            "stapler","starfish","stegosaurus","stop_sign","strawberry",\
+            "sunflower","tick","trilobite","umbrella","watch","water_lilly",\
+            "wheelchair","wild_cat","windsor_chair","wrench","yin_yang"]
+        if not no_classes is None:
+            classes = classes[-no_classes:]
+            log.info(classes)
+        self.class_order = classes
+        train_set, test_set = self.select_data(classes,image_path,trainsize, \
+            testsize)
+        
+        super(CaltechClassification,self).__init__(classes, train_set, test_set)
+        
+
+    def get_segmentation(self, im_path):
+        """Implement this to return a segmentation (see segmentation.py) which
+        is used in the construction of the estimators and in the testing.
+
+        Keyword arguments:
+        im_path -- the path to an image
+        
+        Returns:
+        Segmentation object for the image.
+
+        """
+        return Classification(1)
+
+    def get_ground_truth(self, im_path, segmentation):
+        """Get the ground truth class for each segment in the segmentation. This
+        is used in the construction of the estimators.
+
+        Keyword arguments:
+        im_path -- path to an image
+        segmentation -- a Segmentation object for this image
+
+        Returns:
+        A list of class_names corresponding to the objects in the segmentation.
+      
+        """
+        return im_path.split('/')[-2]
+        
+    def select_data(self, classes,image_path, trainsize, testsize):
+        # Select files for each of 3 folders with images, of the sizes indicated
+        train_set = []
+        test_set = []
+        files_per_class = trainsize + testsize
+        for cls in classes:
+            if not (cls == 'BACKGROUND_Google'):
+                # Get all files in the path
+                cl_files = os.listdir(image_path+'/'+cls)
+                cl_paths = \
+                    ['/'.join([image_path,cls,cl_file]) for cl_file in cl_files]
+                # filter out all files to keep the jpg's only
+                def filt(x): return re.search('\.jpg',x)
+                cl_paths = filter(filt,cl_paths)
+                # Shuffling the list first, and then take the first for the training set
+                rndm.shuffle(cl_paths)
+                train_set.extend(cl_paths[:trainsize])
+                test_files = cl_paths[trainsize:files_per_class]
+                test_set.extend(test_files)
+                # Check whether the remainder of the files is enough for the test set
+                if len(test_files) < testsize:
+                    log.info("padding the testfiles of class %s"%cls +\
+                        ": too little files: %d <%d"%(len(test_files),testsize))
+                    double_files = test_files[:testsize - len(test_files)]
+                    test_set.extend(double_files)
+        # Return train and test set
+        return train_set, test_set
 
 class VOCResultsHandler(object):
     
@@ -320,7 +406,39 @@ class VOCClassificationResultsHandler(VOCResultsHandler):
                         cls_str += "%s %.5f\n"%( img, 1 - (dist/mx) )
             with open(self.results_path%cls ,'w') as f:
                 f.write(cls_str)
+
+class CaltechResultsHandler(object):
     
+    def __init__(self,dataset,results_path):
+        self.results_path = results_path
+        self.classes = dataset.class_order
+        self.dataset = dataset
+        self.results = dict()
+        for cls1 in self.classes:
+            self.results[cls1] = dict()
+            for cls2 in self.classes:
+                self.results[cls1][cls2] = []
+        os.mkdir('/'.join(self.results_path.split('/')[:-1]))
+    
+    def set_results(self,im_path,segmentation,mxcls):
+        gtcls = im_path.split('/')[-2]
+        log.info('Results to be set: gt:%s, res:%s'%(gtcls,mxcls))
+        self.results[gtcls][mxcls[0]].append(im_path)
+        
+    def __str__(self):
+        s = ""
+        for cls1 in self.classes:
+            ss = ""
+            for cls2 in self.classes:
+                ss += "%d "% len(self.results[cls1][cls2])
+            s += "%s\n"%ss
+        return s
+    
+    def save_to_files(self):
+        confmat = str(self)
+        with open(self.results_path%'confmat','w') as f:
+            f.write(confmat)
+
 if __name__ == "__main__":
     
     import logging
