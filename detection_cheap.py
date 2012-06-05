@@ -58,7 +58,7 @@ if __name__ == "__main__":
     configfile = sys.argv[1]
     test_params, data_args, descriptor_args, flann_args = parse_cfg(configfile)
     
-    logging.config.fileConfig('logging.conf',disable_existing_loggers=False)
+    logging.config.fileConfig(test_params['log_config'],disable_existing_loggers=False)
     log = logging.getLogger('')
     f = MemuseFilter()
     log.handlers[0].addFilter(f)
