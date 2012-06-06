@@ -311,6 +311,7 @@ class VOCResultsHandler(object):
     def __init__(self, dataset,results_path,th=0.5):
         self.classes = dataset.class_order
         self.results = dict()
+        self.object_cls = dict()
         self.dataset = dataset
         self.results_path = results_path
         self.threshold = th
@@ -324,12 +325,20 @@ class VOCDetectionResultsHandler(VOCResultsHandler):
         log.debug('Segmentation: %s'%segmentation.bboxes)
         log.debug('  results: %s'%results)
         im_id = self.dataset.get_im_id(im_path)
+        self.object_cls[im_id] = dict()
         for (bbox,result) in zip(segmentation.bboxes,results):
             if not result is None:
+                mindist = float("inf")
+                minclass = ''
                 for (cls,dist) in result:
                     if not im_id in self.results[cls]:
                         self.results[cls][im_id] = []
                     self.results[cls][im_id].append((dist,bbox))
+                    if dist < mindist:
+                        mindist = dist
+                        minclass = cls
+                bb_string = str(bbox)
+                self.object_cls[im_id][bb_string] = (minclass,mindist)
     
     def __str__(self):
         s = ''
@@ -366,15 +375,29 @@ class VOCDetectionResultsHandler(VOCResultsHandler):
                             1 - (dist/mx), bbox[0], bbox[1], bbox[2], bbox[3])
             with open(self.results_path%cls ,'w') as f:
                 f.write(cls_str)
-    
+        # Write a file for a confusion matrix: per file the class:
+        object_cls_str = ""
+        for im_id,bboxdict in self.object_cls.items():
+            for bbox, clstuple in bboxdict.items():
+                object_cls_str += "%s %s %s %f\n"%(im_id,bbox,clstuple[0],clstuple[1])
+        with open('/'.join(self.results_path.split('/')[:-1])+'/objectclassification.txt','w') as f:
+            f.write(object_cls_str)
+        
 
 class VOCClassificationResultsHandler(VOCResultsHandler):
     
     def set_results(self,im_path,_segmentation,results):
         log.info('Results to be set: %s'%results)
         im_id = self.dataset.get_im_id(im_path)
+        mindist = float("inf")
+        minclass = ''
         for (cls,dist) in results[0]:
             self.results[cls][im_id] = dist
+            if dist < mindist:
+                mindist = dist
+                minclass = cls
+        self.object_cls[im_id] = (minclass,mindist)
+            
     
     def __str__(self):
         s = ''
@@ -406,6 +429,13 @@ class VOCClassificationResultsHandler(VOCResultsHandler):
                         cls_str += "%s %.5f\n"%( img, 1 - (dist/mx) )
             with open(self.results_path%cls ,'w') as f:
                 f.write(cls_str)
+        # Write a file for a confusion matrix: per file the class:
+        object_cls_str = ""
+        for im_id,clstuple in self.object_cls.items():
+            object_cls_str += "%s %s %f\n"%(im_id,clstuple[0],clstuple[1])
+        with open('/'.join(self.results_path.split('/')[:-1])+'/objectclassification.txt','w') as f:
+            f.write(object_cls_str)
+        
 
 class CaltechResultsHandler(object):
     
