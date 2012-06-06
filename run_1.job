@@ -1,8 +1,0 @@
-#! /bin/bash
-#$ -l h_rt=24:00:00
-#$ -cwd
-source ~/.bash_profile
-rm -rfv /local/vdvelden
-mkdir /local/vdvelden
-python main.py $SCRIPT
-rm -rfv /local/vdvelden
