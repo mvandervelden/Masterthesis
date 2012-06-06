@@ -4,8 +4,5 @@
 source ~/.bash_profile
 rm -rfv /local/vdvelden
 mkdir /local/vdvelden
-s=$SCRIPT'_'$IT
-echo $s
-python main.py $s.cfg
-done
+python main.py $SCRIPT
 rm -rfv /local/vdvelden
