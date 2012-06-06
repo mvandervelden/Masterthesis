@@ -11,6 +11,7 @@ def parse_cfg(cfg_file):
         descriptors = []
         flann_args = dict()
         
+
         config = ConfigParser.RawConfigParser()
         config.readfp(cfg)
         sections = config.sections()
@@ -28,6 +29,9 @@ def parse_cfg(cfg_file):
                 for name, value in config.items(section):
                     if name == 'classes':
                         data_args[name] = value.split(',')
+                    elif name == 'trainsize' or name == 'testsize' or \
+                            name == 'no_classes':
+                        data_args[name] = int(value)
                     else:
                         data_args[name] = value
             elif section == 'Flann':
@@ -51,37 +55,30 @@ def parse_cfg(cfg_file):
 if __name__ == "__main__":
     
     if len(sys.argv) < 2:
-        raise Exception("Please give a config file as command line argument")
-    
+        raise Exception("Please give a config file as command line argument")    
     configfile = sys.argv[1]
     test_params, data_args, descriptor_args, flann_args = parse_cfg(configfile)
-    
+
     logging.config.fileConfig(test_params['log_config'],disable_existing_loggers=False)
     log = logging.getLogger('')
     f = MemuseFilter()
     log.handlers[0].addFilter(f)
 
-    log.info('===================VOC CLASSIFICATION ===================')
+    log.info('================CALTECH101 CLASSIFICATION================')
     log.info('=========================================================')
-    
-    # classes =['aeroplane','bicycle','bird','boat','bottle','bus','car','cat',\
-    #     'chair','cow','diningtable','dog','horse','motorbike','person',\
-    #     'pottedplant','sheep','sofa','train','tvmonitor']
-    log.info('===================INIT VOCCLAS DATASET===================')
-    dataset = VOCClassification(**data_args)
-    log.debug(dataset.train_set)
+    log.info('===================INIT CAL101 DATASET===================')
+    dataset = CaltechClassification(**data_args)
     log.info("===================INIT RESULTSHANDLER===================")
-    vrh = VOCClassificationResultsHandler(dataset,test_params['result_path'],th=1)
+    vrh = CaltechResultsHandler(dataset,test_params['result_path'])
     log.info('=====================INIT DESCRIPTOR=====================')
     descriptors = [eval(d)(**kwargs) for d,kwargs in descriptor_args]
     log.info('=====================INIT ESTIMATOR =====================')
     estimators = [NBNNEstimator.from_dataset(test_params['temp_path'], dataset, \
         descriptor, **flann_args) for descriptor in descriptors]
     log.info("======================STARTING TEST======================")
-    dataset.toggle_training()
     run_test(dataset, descriptors, estimators, vrh.set_results, \
-        batch_size=test_params['batch_size'], output_function=ranked_classify)
-    #vrh.print_results()
+        batch_size=test_params['batch_size'], output_function=nbnn_classify)
+    log.info(vrh)
     log.info("=====================SAVING RESULTS =====================")
     vrh.save_to_files()
     log.info("=======================CLEANING UP=======================")
