@@ -222,7 +222,6 @@ class VOCClassification(VOCDetection):
 class CaltechClassification(Dataset):
     
     def __init__(self, image_path,trainsize=20,testsize=15, no_classes=None):
-        print log.__dict__
         classes = ["BACKGROUND_Google","Faces","Faces_easy","Leopards",\
             "Motorbikes","accordion","airplanes","anchor","ant","barrel",\
             "bass","beaver","binocular","bonsai","brain","brontosaurus",\
@@ -276,7 +275,7 @@ class CaltechClassification(Dataset):
         A list of class_names corresponding to the objects in the segmentation.
       
         """
-        return im_path.split('/')[-2]
+        return [im_path.split('/')[-2]]
         
     def select_data(self, classes,image_path, trainsize, testsize):
         # Select files for each of 3 folders with images, of the sizes indicated

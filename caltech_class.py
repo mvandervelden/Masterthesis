@@ -78,7 +78,10 @@ if __name__ == "__main__":
     log.info("======================STARTING TEST======================")
     run_test(dataset, descriptors, estimators, vrh.set_results, \
         batch_size=test_params['batch_size'], output_function=nbnn_classify)
-    log.info(vrh)
+    log.info("result:")
+    a=str(vrh).split('\n')
+    for aa in a:
+        log.info(aa)
     log.info("=====================SAVING RESULTS =====================")
     vrh.save_to_files()
     log.info("=======================CLEANING UP=======================")
