@@ -34,34 +34,33 @@ class MemuseFilter(logging.Filter):
         if len(v) < 3:
             return 0.0  # invalid format?
          # convert Vm value to bytes
-        return float(v[1]) * self._scale[v[2]]
+        return ''.join(v[1:3])
 
-    def memory(self,since=0.0):
+    def memory(self):
         '''Return memory usage in bytes.
         '''
-        return self._VmB('VmSize:') - since
+        return self._VmB('VmSize:')
 
-    def resident(self,since=0.0):
+    def resident(self):
         '''Return resident memory usage in bytes.
         '''
-        return self._VmB('VmRSS:') - since
+        return self._VmB('VmRSS:')
 
-    def stacksize(self,since=0.0):
+    def stacksize(self):
         '''Return stack size in bytes.
         '''
-        return self._VmB('VmStk:') - since
+        return self._VmB('VmStk:')
 
-    def swapsize(self,since=0.0):
+    def swapsize(self):
         '''Return swap size in bytes.
         '''
-        return self._VmB('VmSwap:') - since
+        return self._VmB('VmSwap:')
 
     def byte_to_mb(self,byte):
         return byte/(1024*1024)
 
     def str_mem(self):
-        return "Tot:%.0fM,Swap:%.0fM"%(\
-            self.byte_to_mb(self.memory()),self.byte_to_mb(self.swapsize()) )
+        return "Tot:%s,Swap:%s"%(self.memory(),self.swapsize() )
 
 if __name__ == "__main__":
     from random import choice
@@ -71,7 +70,7 @@ if __name__ == "__main__":
     # logging.basicConfig(level=logging.DEBUG,
     #                     format='%(asctime)-15s %(name)-5s %(levelname)-8s Mem:%(memuse)s %(message)s')
     
-    logging.config.fileConfig('logging.conf')
+    logging.config.fileConfig('blank.log.cfg')
     # create logger
     a1 = logging.getLogger('')
     f = MemuseFilter()
