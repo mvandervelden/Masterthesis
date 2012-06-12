@@ -204,7 +204,7 @@ class VOCClassification(VOCDetection):
             im_id = self.get_im_id(im_path)
             annotation_file = self.gt_annotation_path%im_id
             objects = self.get_objects_from_xml(annotation_file)
-            ground_truth = set([o['name'] for o in objects])
+            ground_truth = set([o['name'] for o in objects if o['name'] in self.classes])
             return Classification(len(ground_truth))
         else:
             return Classification(1)
@@ -223,8 +223,10 @@ class VOCClassification(VOCDetection):
         im_id = self.get_im_id(im_path)
         annotation_file = self.gt_annotation_path%im_id
         objects = self.get_objects_from_xml(annotation_file)
-        
-        ground_truth = list(set([o['name'] for o in objects]))
+        if self.training:
+            ground_truth = list(set([o['name'] for o in objects if o['name'] in self.classes]))
+        else:
+            ground_truth = list(set([o['name'] for o in objects]))
         return ground_truth
 
     
