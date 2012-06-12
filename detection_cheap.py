@@ -79,6 +79,7 @@ if __name__ == "__main__":
     estimators = [NBNNEstimator.from_dataset(test_params['temp_path'], dataset, \
         descriptor, **flann_args) for descriptor in descriptors]
     log.info("======================STARTING TEST======================")
+    dataset.toggle_training()
     run_test(dataset, descriptors, estimators, vrh.set_results, \
         batch_size=test_params['batch_size'], output_function=ranked_classify)
     #print vrh

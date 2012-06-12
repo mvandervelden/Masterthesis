@@ -12,7 +12,8 @@ class VOCDetection(VOC):
         super(VOCDetection,self).__init__(classes, trainset_file, \
                 testset_file, image_path)
         self.gt_annotation_path = gt_annotation_path
-    
+        self.training = True
+        
     def get_segmentation(self, im_path):
         """Load annotation file of an image, and parse the xml to find all
         bounding boxes within the file
@@ -28,7 +29,10 @@ class VOCDetection(VOC):
         im_id = self.get_im_id(im_path)
         annotation_file = self.gt_annotation_path%im_id
         objects = self.get_objects_from_xml(annotation_file)
-        bboxes = [o['bbox'] for o in objects]
+        if self.training:
+            bboxes = [o['bbox'] for o in objects if o['name'] in self.classes]
+        else:
+            bboxes = [o['bbox'] for o in objects]
         return MultipleSegmentation(bboxes)
     
     def get_ground_truth(self, im_path, segmentation):
@@ -45,8 +49,10 @@ class VOCDetection(VOC):
         im_id = self.get_im_id(im_path)
         annotation_file = self.gt_annotation_path%im_id
         objects = self.get_objects_from_xml(annotation_file)
-        
-        ground_truth = [o['name'] for o in objects]
+        if self.training:
+            ground_truth = [o['name'] for o in objects if o['name'] in self.classes]
+        else:
+            ground_truth = [o['name'] for o in objects]
         return ground_truth
     
     def get_objects_from_xml(self,annotation_file):
@@ -175,15 +181,12 @@ class VOCDetection(VOC):
             p.ParseFile(af)
         # Get the objects encountered
         return xp.get_objects()
+        
+    def toggle_training(self):
+        self.training = not self.training
+        return self.training
 
 class VOCClassification(VOCDetection):
-    
-    def __init__(self, classes, trainset_file, testset_file, image_path,
-            gt_annotation_path):
-        super(VOCClassification,self).__init__(classes,trainset_file, \
-            testset_file, image_path, gt_annotation_path)
-        self.training = True
-    
     
     def get_segmentation(self, im_path):
         """Load annotation file of an image, and parse the xml to find all
@@ -223,10 +226,7 @@ class VOCClassification(VOCDetection):
         
         ground_truth = list(set([o['name'] for o in objects]))
         return ground_truth
-    
-    def toggle_training(self):
-        self.training = not self.training
-        return self.training
+
     
 class CaltechClassification(Dataset):
     
