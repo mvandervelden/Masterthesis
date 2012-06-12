@@ -74,7 +74,7 @@ class VOCDetection(VOC):
                 
                 """
                 
-                self.blist = ['xmin','ymin','xmax','ymax']
+                self.bboxlist = ['xmin','ymin','xmax','ymax']
                 self.depth = -1
                 self.cur_id = 0
                 self.cur_field = None
@@ -93,14 +93,15 @@ class VOCDetection(VOC):
                 attrs - possible element attributes (non-existent in VOC)
                 
                 """
-
+                # Increase the depth in the xml we are in
                 self.depth += 1
-                #log.debug('start_element %d: %s'%(self.depth, name))
-                
+                # Set the current field (e.g. name,bndbox,object,difficult)
                 self.cur_field = name
                 if self.depth == 1 and name == 'object':
+                    # If we encounter an object, start a dict for it
                     self.cur_object = dict()
                 elif self.depth == 2 and name == 'bndbox':
+                    # If we encounter a bounding box, initialize it as a list
                     self.cur_object['bbox'] = [0]*4
                 
             def end_element(self,name):
@@ -112,16 +113,16 @@ class VOCDetection(VOC):
                 name - the name of the element that is ended.
                 
                 """
-
-                # logging.debug('end_element: %d: %s'%(self.depth,name))
-
+                # Decrease depth in the xml
                 self.depth -= 1
                 if self.depth == 0 and name == 'object':
-                    #log.debug(self.cur_object)
+                    # If we step out of an object, reset the current one and
+                    # append it to the list of objects if it is not difficult
+                    # (unless we decide to include difficult objects
+                    # ,self.difficult = True in that case
                     if self.difficult or not self.cur_object['difficult']:
                         self.objects.append(self.cur_object)
                     self.cur_object = None
-                    
                     
             def char_data(self,data):
                 """Callback function when the expat parser finds character data
@@ -132,39 +133,47 @@ class VOCDetection(VOC):
                 data - string that the parser found.
                 
                 """
+                # remove possible extra spaces or newlines
                 data = data.strip()
-                # print 'cd',repr(data),'dpth',self.depth
+
                 if not self.cur_object is None and not data == '':
+                    # If we have an object, and there is data (sometimes empty
+                    # lines are parsed in this function)
                     if self.depth == 2:
+                        # On the first object level, we parse name (class) and
+                        # difficulty
                         if self.cur_field == 'name':
-                            #log.debug('char_data (name): %s'%(data))
+                            # set name (self.cur_field) to the class (data)
                             self.cur_object[self.cur_field] = data
                         elif self.cur_field == 'difficult':
-                            #log.debug('char_data (diff): %s'%(data))
+                            # Set the difficulty: if it is '1', evaluate to True
+                            # else, evaluate to False
                             self.cur_object[self.cur_field] = data == '1'
-                            # else:
-                            #     self.cur_object[self.cur_field] = data
                     elif self.depth == 3 and \
                         self.cur_field in ['xmin','ymin','xmax','ymax']:
-                        #log.debug('char_data (bbox): %s'%(data))
-                        idx = self.blist.index(self.cur_field)
+                        # if we are at level 3 and have a bounding box item
+                        # (one field of [xmin,ymin,xmax,ymax]), set the current
+                        # value (data) of the bbox-coordinate (self.curfield)
+                        # get the correct list index of the bbox-coordinate
+                        idx = self.bboxlist.index(self.cur_field)
                         self.cur_object['bbox'][idx] = int(data)
             
             def get_objects(self):
                 """Getter that returns the list of objects.
                 
                 """
-                
                 return self.objects
-
+        # Create a parser
         p = expat.ParserCreate()
         xp = XParser()
+        # Add element handlers
         p.StartElementHandler = xp.start_element
         p.EndElementHandler = xp.end_element
         p.CharacterDataHandler = xp.char_data
         with open(annotation_file,'r') as af:
+            # Parse the file
             p.ParseFile(af)
-        
+        # Get the objects encountered
         return xp.get_objects()
 
 class VOCClassification(VOCDetection):
