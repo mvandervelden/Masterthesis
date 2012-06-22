@@ -1,6 +1,20 @@
 import logging, logging.config
 import os
 
+def get_confidence_values(distances):
+    cv = []
+    for d in distances:
+        no_descriptors = d.shape[0]
+        # Sum or Sum of squared?
+        cv.append(-d.sum()/no_descriptors)
+    return cv
+    
+def save_results_to_file(path, cls, images, confidence_values):
+    with open(path%cls, 'a') as f:
+        for image, cv in zip(images,confidence_values):
+            f.write('%s %f\n'%(image.im_id, cv))
+    log.info("Saved results to %s",path%cls)
+
 def init_log(logconfig):
     # Setup logger
     logging.config.fileConfig(logconfig, \
