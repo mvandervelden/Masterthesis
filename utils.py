@@ -1,5 +1,6 @@
 import logging, logging.config
 import os
+from nbnn.vocimage import *
 
 def get_confidence_values(distances):
     cv = []
@@ -19,11 +20,20 @@ def save_testinfo(filename, batches, classes):
         for cls in classes:
             testfile.write("%s\n"%cls)
 
-def save_results_to_file(file, images, confidence_values):
+def save_results_to_file(file, objects, confidence_values):
     log = logging.getLogger("__name__")
-    with open(file, 'a') as f:
-        for image, cv in zip(images,confidence_values):
-            f.write('%s %f\n'%(image.im_id, cv))
+    if isinstance(objects[0], VOCimage):
+        log.info('Saving image classification')
+        with open(file, 'a') as f:
+            for obj, cv in zip(objects,confidence_values):
+                f.write('%s %f\n'%(obj.im_id, cv))
+    elif isinstance(objects[0], Object):
+        log.info('Saving image detection files (by bbox)')
+        with open(file, 'a') as f:
+            for obj, cv in zip(objects,confidence_values):
+                f.write('%s %f %d %d %d %d\n'%(obj.image.im_id, cv, \
+                    obj.xmin, obj.ymin, obj.xmax, obj.ymax))
+                
     log.info("Saved results to %s",file)
 
 def init_log(logconfig):
