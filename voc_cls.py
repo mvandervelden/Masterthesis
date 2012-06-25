@@ -14,7 +14,7 @@ if __name__ == "__main__":
             "file as command line argument")
     configfile = sys.argv[1]
     logconfig = sys.argv[2]
-    testinfofile = sys.argv[3]
+    tmpdir = sys.argv[3]
     
     VOCopts = VOC.fromConfig(configfile)
     
@@ -28,7 +28,12 @@ if __name__ == "__main__":
     log = init_log(logconfig)
     
     # Make sure some folders exist
-    descriptor_dir = '/'.join(TESTopts['descriptor_path'].split('/')[:-1])
+    DESCRopts['cache_dir'] = '/'.join([tmpdir, DESCRopts['cache_dir']])
+    NBNNopts['nbnn_dir'] = '/'.join([tmpdir, NBNNopts['nbnn_dir']])
+    descriptor_dir = DESCRopts['cache_dir']
+    TESTopts['descriptor_path'] = '/'.join([tmpdir, TESTopts['descriptor_path']])
+    TESTopts['img_pickle_path'] = '/'.join([tmpdir, TESTopts['img_pickle_path']])
+    testinfofile = '/'.join([tmpdir,'testinfo.txt'])
     if not os.path.exists(descriptor_dir):
         os.mkdir(descriptor_dir)
     

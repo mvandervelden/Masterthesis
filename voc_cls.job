@@ -3,14 +3,16 @@
 #$ -cwd
 source ~/.bash_profile
 
-# Make sure $CFGFILE, $LOGFILECFG and $TESTFILE exist
+# Make sure $CFGFILE, $LOGFILECFG and $TMPFOLDER exist
 echo "Running training"
 rm -rfv /local/vdvelden
 mkdir /local/vdvelden
-python voc_cls.py $CFGFILE $LOGFILECFG $TESTFILE
-NO_BATCHES=`cat $TESTFILE | sed -n '1p'`
-NO_CLASSES=`cat $TESTFILE | sed -n '2p'`
-CLASSES=(`cat $TESTFILE | tail -n +3`)
+mkdir "/local/vdvelden/$TMPFOLDER"
+TMPFOLDER="/local/vdvelden/$TMPFOLDER"
+python voc_cls.py $CFGFILE $LOGFILECFG $TMPFOLDER
+NO_BATCHES=`cat $TMPFOLDER/testfile.txt | sed -n '1p'`
+NO_CLASSES=`cat $TMPFOLDER/testfile.txt | sed -n '2p'`
+CLASSES=(`cat $TMPFOLDER/testfile.txt | tail -n +3`)
 echo "No of batches: $NO_BATCHES"
 echo "No of classes: $NO_CLASSES"
 echo "Classes: ${CLASSES[@]}"
@@ -31,7 +33,7 @@ for B in `seq 1 $NO_BATCHES`; do
             echo "Running test on class no $P ($CLS)"
             NLOGCFG=`echo $LOGFILECFG | sed "s/.log/_$CLS.log/"`
             less $LOGFILECFG | sed "s/.log','w'/_$CLS.log',/" > $NLOGCFG
-            python voc_cls_test.py $CFGFILE $B $CLS $NLOGCFG&
+            python voc_cls_test.py $CFGFILE $TMPFOLDER $B $CLS $NLOGCFG&
         done
         wait
         START_CLS=$(($START_CLS+$SZ))

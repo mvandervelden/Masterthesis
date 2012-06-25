@@ -9,9 +9,10 @@ if __name__ == '__main__':
     if len(sys.argv) < 5:
         raise Exception("arguments expected: cfgfile batch_no class logcfg")
     configfile = sys.argv[1]
-    batch_no = int(sys.argv[2])
-    cls = sys.argv[3]
-    logconfig = sys.argv[4]
+    tmpfile = sys.argv[2]
+    batch_no = int(sys.argv[3])
+    cls = sys.argv[4]
+    logconfig = sys.argv[5]
     
     VOCopts = VOC.fromConfig(configfile)
     cfg = RawConfigParser()
@@ -22,6 +23,14 @@ if __name__ == '__main__':
 
     # Setup logger
     log = init_log(logconfig)
+    
+    DESCRopts['cache_dir'] = '/'.join([tmpdir, DESCRopts['cache_dir']])
+    NBNNopts['nbnn_dir'] = '/'.join([tmpdir, NBNNopts['nbnn_dir']])
+    descriptor_dir = DESCRopts['cache_dir']
+    TESTopts['descriptor_path'] = '/'.join([tmpdir, TESTopts['descriptor_path']])
+    TESTopts['img_pickle_path'] = '/'.join([tmpdir, TESTopts['img_pickle_path']])
+    
+    
     log.info("TEST cfg:%s, logcfg:%s, batch_no:%d, cls:%s",configfile, logconfig, batch_no,cls)
 
     log.info('==== LOAD IMAGE PICKLE ====')
