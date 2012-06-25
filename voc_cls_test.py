@@ -1,5 +1,6 @@
 from utils import *
 from nbnn import *
+from nbnn.voc import *
 import sys, cPickle
 from ConfigParser import RawConfigParser
 
@@ -12,10 +13,9 @@ if __name__ == '__main__':
     cls = sys.argv[3]
     logconfig = sys.argv[4]
     
-    VOCopts = voc.VOC.fromConfig(configfile)
+    VOCopts = VOC.fromConfig(configfile)
     cfg = RawConfigParser()
     cfg.read(configfile)
-    FLANNopts = dict(cfg.items("FLANN"))
     DESCRopts = dict(cfg.items("DESCRIPTOR"))
     NBNNopts = dict(cfg.items("NBNN"))
     TESTopts = dict(cfg.items("TEST"))
@@ -29,17 +29,17 @@ if __name__ == '__main__':
         images = cPickle.load(pklf)
     
     log.info('==== INIT DESCRIPTOR FUNCTION ====')
-    descriptor_function = DescriptorUint8(**DESCRopts)
+    descriptor_function = descriptor.DescriptorUint8(**DESCRopts)
     log.info('==== INIT ESTIMATOR ====')
-    nbnn = NBNNEstimator(**NBNNopts)
+    estimator = nbnn.NBNNEstimator(**NBNNopts)
     
     log.info('==== LOAD IMAGE DESCRIPTORS ====')
     descriptors = get_image_descriptors(images, descriptor_function, \
-        VOCopts['descriptor_path'])
+        TESTopts['descriptor_path'])
     log.info('==== GET ESTIMATES ====')
-    distances = nbnn.get_estimates([cls], descriptors)
+    distances = estimator.get_estimates([cls], [d for p,d in descriptors.values()])
     log.info('==== GET CONFIDENCE VALUES ====')
     conf_vals = get_confidence_values(distances)
     log.info('== SAVE CONFIDENCE VALUES ==')
-    save_results_to_file(TESTopts['result_path'], cls, images, conf_vals)
+    save_results_to_file(TESTopts['result_path']%cls, images, conf_vals)
     

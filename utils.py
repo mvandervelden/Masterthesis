@@ -8,12 +8,23 @@ def get_confidence_values(distances):
         # Sum or Sum of squared?
         cv.append(-d.sum()/no_descriptors)
     return cv
-    
-def save_results_to_file(path, cls, images, confidence_values):
-    with open(path%cls, 'a') as f:
+
+def save_testinfo(filename, batches, classes):
+    with open(filename,'w') as testfile:
+        # Save a file with information on how many iterations with how many
+        # classes, and which ones they are, for the multiple processes that are
+        # gonna run the tests
+        testfile.write("%d\n"%len(batches))
+        testfile.write("%d\n"%len(classes))
+        for cls in classes:
+            testfile.write("%s\n"%cls)
+
+def save_results_to_file(file, images, confidence_values):
+    log = logging.getLogger("__name__")
+    with open(file, 'a') as f:
         for image, cv in zip(images,confidence_values):
             f.write('%s %f\n'%(image.im_id, cv))
-    log.info("Saved results to %s",path%cls)
+    log.info("Saved results to %s",file)
 
 def init_log(logconfig):
     # Setup logger

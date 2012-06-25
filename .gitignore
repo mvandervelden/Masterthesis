@@ -13,3 +13,5 @@ bcal*
 bgraz*
 *.job.*
 *.png
+VOCdevkit
+VOCresults
