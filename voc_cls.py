@@ -16,26 +16,11 @@ if __name__ == "__main__":
     logconfig = sys.argv[2]
     tmpdir = sys.argv[3]
     
-    VOCopts = VOC.fromConfig(configfile)
     
-    cfg = RawConfigParser()
-    cfg.read(configfile)
-    DESCRopts = dict(cfg.items("DESCRIPTOR"))
-    NBNNopts = dict(cfg.items("NBNN"))
-    TESTopts = dict(cfg.items("TEST"))
+    VOCopts, DESCRopts, NBNNopts, TESTopts = getopts(configfile, tmpdir)
     
     # Setup logger
     log = init_log(logconfig)
-    
-    # Make sure some folders exist
-    DESCRopts['cache_dir'] = '/'.join([tmpdir, DESCRopts['cache_dir']])
-    NBNNopts['nbnn_dir'] = '/'.join([tmpdir, NBNNopts['nbnn_dir']])
-    descriptor_dir = DESCRopts['cache_dir']
-    TESTopts['descriptor_path'] = '/'.join([tmpdir, TESTopts['descriptor_path']])
-    TESTopts['img_pickle_path'] = '/'.join([tmpdir, TESTopts['img_pickle_path']])
-    testinfofile = '/'.join([tmpdir,'testinfo.txt'])
-    if not os.path.exists(descriptor_dir):
-        os.mkdir(descriptor_dir)
     
     log.info('==== INIT DESCRIPTOR FUNCTION ====')
     descriptor_function = descriptor.DescriptorUint8(**DESCRopts)
@@ -62,13 +47,12 @@ if __name__ == "__main__":
     test_images = read_image_set(VOCopts,'test')
     log.info('==== GENERATING AND SAVING TEST DESCRIPTORS =====')
     save_image_descriptors(test_images, descriptor_function, TESTopts['descriptor_path'])
-    batches = get_image_batches(VOCopts, test_images, \
-        int(TESTopts['batch_size']))
+    batches = get_image_batches(VOCopts, test_images, TESTopts['batch_size'])
     log.info('==== SAVING IMAGE OBJECTS PER BATCH =====')
     for b,batch in enumerate(batches):
         with open(TESTopts['img_pickle_path']%(b+1), 'wb') as pklfile:
             cPickle.dump(batch, pklfile)
     log.info('==== SAVING TESTINFORMATION =====')
-    save_testinfo(testinfofile, batches, VOCopts.classes)
+    save_testinfo(TESTopts['infofile'], batches, VOCopts.classes)
    
     

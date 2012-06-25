@@ -14,22 +14,10 @@ if __name__ == '__main__':
     cls = sys.argv[4]
     logconfig = sys.argv[5]
     
-    VOCopts = VOC.fromConfig(configfile)
-    cfg = RawConfigParser()
-    cfg.read(configfile)
-    DESCRopts = dict(cfg.items("DESCRIPTOR"))
-    NBNNopts = dict(cfg.items("NBNN"))
-    TESTopts = dict(cfg.items("TEST"))
+    VOCopts, DESCRopts, NBNNopts, TESTopts = getopts(configfile, tmpfile)
 
     # Setup logger
     log = init_log(logconfig)
-    
-    DESCRopts['cache_dir'] = '/'.join([tmpdir, DESCRopts['cache_dir']])
-    NBNNopts['nbnn_dir'] = '/'.join([tmpdir, NBNNopts['nbnn_dir']])
-    descriptor_dir = DESCRopts['cache_dir']
-    TESTopts['descriptor_path'] = '/'.join([tmpdir, TESTopts['descriptor_path']])
-    TESTopts['img_pickle_path'] = '/'.join([tmpdir, TESTopts['img_pickle_path']])
-    
     
     log.info("TEST cfg:%s, logcfg:%s, batch_no:%d, cls:%s",configfile, logconfig, batch_no,cls)
 

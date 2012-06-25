@@ -1,6 +1,40 @@
 import logging, logging.config
-import os
+import os, os.path
 from nbnn.vocimage import *
+from nbnn.voc import VOC
+
+def getopts(configfile, tmpdir):
+    VOCopts = VOC.fromConfig(configfile)
+    
+    cfg = RawConfigParser()
+    cfg.read(configfile)
+    DESCRopts = dict(cfg.items("DESCRIPTOR"))
+    NBNNopts = dict(cfg.items("NBNN"))
+    TESTopts = dict(cfg.items("TEST"))
+    
+    DESCRopts['cache_dir'] = '/'.join([tmpdir, DESCRopts['cache_dir']])
+    NBNNopts['nbnn_dir'] = '/'.join([tmpdir, NBNNopts['nbnn_dir']])
+    TESTopts['descriptor_path'] = '/'.join([tmpdir, TESTopts['descriptor_path']])
+    TESTopts['img_pickle_path'] = '/'.join([tmpdir, TESTopts['img_pickle_path']])
+    # Add the infofile for the test as variable
+    TESTopts['infofile'] = '/'.join([tmpdir,'testinfo.txt'])
+    
+    # Set the datatypes of some variables
+    if 'target_precision' in NBNNopts:
+        NBNNopts['target_precision'] = float(NBNNopts['target_precision'])
+    if 'checks' in NBNNopts:
+        NBNNopts['checks'] = int(NBNNopts['checks'])
+    if 'batch_size' in TESTopts:
+        TESTopts['batch_size'] = int(TESTopts['batch_size'])
+    
+    # Make sure some folders exist
+    if not os.path.exists(DESCR_opts['cache_dir']):
+        os.mkdir(descriptor_dir)
+    res_folder = '/'.join(DESCR_opts['results_path'].split('/')[:-1])
+    if not os.path.exists(res_folder):
+        os.mkdir(res_folder)
+    
+    return VOCopts, DESCRopts, NBNNopts, TESTopts
 
 def get_confidence_values(distances):
     cv = []
