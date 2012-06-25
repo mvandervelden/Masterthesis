@@ -36,6 +36,10 @@ if __name__ == "__main__":
     descriptor_function = descriptor.DescriptorUint8(**DESCRopts)
     log.info('==== INIT ESTIMATOR ====')
     estimator = nbnn.NBNNEstimator(**NBNNopts)
+    # Perhaps we want to delete the 'checks' parameter to make sure enough
+    # precision is got
+    if 'target_precision' in NBNNopts:
+        del estimator.flann_args['checks']
     
     for i,cls in enumerate(VOCopts.classes):
         log.info('==== GET CLASS %d: %s IMAGES ====', i, cls)
