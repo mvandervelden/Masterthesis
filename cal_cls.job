@@ -1,0 +1,8 @@
+#! /bin/bash
+#$ -l h_rt=300:00:00
+#$ -cwd
+source ~/.bash_profile
+rm -rfv /local/vdvelden
+mkdir /local/vdvelden
+python caltech_class.py $SCRIPT
+rm -rfv /local/vdvelden
