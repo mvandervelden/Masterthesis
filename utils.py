@@ -34,6 +34,9 @@ def getopts(configfile, tmpdir):
     res_folder = '/'.join(TESTopts['result_path'].split('/')[:-1])
     if not os.path.exists(res_folder):
         os.mkdir(res_folder)
+    log_folder = '/'.join(TESTopts['log_path'].split('/')[:-1])
+    if not os.path.exists(log_folder):
+        os.mkdir(log_folder)
     
     return VOCopts, DESCRopts, NBNNopts, TESTopts
 
