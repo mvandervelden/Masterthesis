@@ -3,13 +3,13 @@
 #$ -cwd
 source ~/.bash_profile
 
-# Make sure $CFGFILE, $LOGFILECFG and $TMPFOLDER exist
+# Make sure $CFGFILE and $TMPFOLDER exist
 echo "Running training"
 rm -rfv /local/vdvelden
 mkdir /local/vdvelden
 mkdir "/local/vdvelden/$TMPFOLDER"
 TMPFOLDER="/local/vdvelden/$TMPFOLDER"
-python voc_cls.py $CFGFILE $LOGFILECFG $TMPFOLDER
+python voc_cls.py $CFGFILE $TMPFOLDER
 NO_BATCHES=`cat $TMPFOLDER/testfile.txt | sed -n '1p'`
 NO_CLASSES=`cat $TMPFOLDER/testfile.txt | sed -n '2p'`
 CLASSES=(`cat $TMPFOLDER/testfile.txt | tail -n +3`)
@@ -31,9 +31,7 @@ for B in `seq 1 $NO_BATCHES`; do
         for P in `seq $START_CLS $STOP_CLS`; do
             CLS=${CLASSES[$P]}
             echo "Running test on class no $P ($CLS)"
-            NLOGCFG=`echo $LOGFILECFG | sed "s/.log/_$CLS.log/"`
-            less $LOGFILECFG | sed "s/.log','w'/_$CLS.log',/" > $NLOGCFG
-            python voc_cls_test.py $CFGFILE $TMPFOLDER $B $CLS $NLOGCFG&
+            python voc_cls_test.py $CFGFILE $TMPFOLDER $B $CLS&
         done
         wait
         START_CLS=$(($START_CLS+$SZ))

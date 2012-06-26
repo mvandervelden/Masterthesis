@@ -1,15 +1,13 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 echo "Running training"
 CFGFILE=$1
-LOGFILECFG=$2
-TMPFOLDER=$3
-python voc_cls.py $CFGFILE $LOGFILECFG $TMPFOLDER
-mkdir "/local/vdvelden/$TMPFOLDER"
-TMPFOLDER="/local/vdvelden/$TMPFOLDER"
-NO_BATCHES=`cat $TMPFOLDER/testfile.txt | sed -n '1p'`
-NO_CLASSES=`cat $TMPFOLDER/testfile.txt | sed -n '2p'`
-CLASSES=(`cat $TMPFOLDER/testfile.txt | tail -n +3`)
+TMPFOLDER=$2
+mkdir "$TMPFOLDER"
+python voc_cls.py $CFGFILE $TMPFOLDER
+NO_BATCHES=`cat $TMPFOLDER/testinfo.txt | sed -n '1p'`
+NO_CLASSES=`cat $TMPFOLDER/testinfo.txt | sed -n '2p'`
+CLASSES=(`cat $TMPFOLDER/testinfo.txt | tail -n +3`)
 echo "No of batches: $NO_BATCHES"
 echo "No of classes: $NO_CLASSES"
 echo "Classes: ${CLASSES[@]}"
@@ -29,9 +27,7 @@ for B in `seq 1 $NO_BATCHES`; do
         for P in `seq $START_CLS $STOP_CLS`; do
             CLS=${CLASSES[$P]}
             echo "Running test on class no $P ($CLS)"
-            NLOGCFG=`echo $LOGFILECFG | sed "s/.log/_$CLS.log/"`
-            less $LOGFILECFG | sed "s/.log','w'/_$CLS.log',/" > $NLOGCFG
-            python voc_cls_test.py $CFGFILE $TMPFOLDER $B $CLS $NLOGCFG&
+            python voc_cls_test.py $CFGFILE $TMPFOLDER $B $CLS&
         done
         wait
         START_CLS=$(($START_CLS+$SZ))

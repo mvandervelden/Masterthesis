@@ -1,5 +1,6 @@
 import logging, logging.config
-import os, os.path
+import os, os.path, subprocess
+from ConfigParser import RawConfigParser
 from nbnn.vocimage import *
 from nbnn.voc import VOC
 
@@ -28,9 +29,9 @@ def getopts(configfile, tmpdir):
         TESTopts['batch_size'] = int(TESTopts['batch_size'])
     
     # Make sure some folders exist
-    if not os.path.exists(DESCR_opts['cache_dir']):
-        os.mkdir(descriptor_dir)
-    res_folder = '/'.join(DESCR_opts['results_path'].split('/')[:-1])
+    if not os.path.exists(DESCRopts['cache_dir']):
+        os.mkdir(DESCRopts['cache_dir'])
+    res_folder = '/'.join(TESTopts['result_path'].split('/')[:-1])
     if not os.path.exists(res_folder):
         os.mkdir(res_folder)
     
@@ -56,7 +57,7 @@ def save_testinfo(filename, batches, classes):
 
 def save_results_to_file(file, objects, confidence_values):
     log = logging.getLogger("__name__")
-    if isinstance(objects[0], VOCimage):
+    if isinstance(objects[0], VOCImage):
         log.info('Saving image classification')
         with open(file, 'a') as f:
             for obj, cv in zip(objects,confidence_values):
@@ -70,11 +71,17 @@ def save_results_to_file(file, objects, confidence_values):
                 
     log.info("Saved results to %s",file)
 
-def init_log(logconfig):
+def init_log(log_path, cls, mode='a'):
+
+    # Setup a config file
+    subprocess.call(["./setlog.sh", log_path%cls, mode])
+    
     # Setup logger
-    logging.config.fileConfig(logconfig, \
+    logging.config.fileConfig(log_path%(cls)+'.cfg', \
         disable_existing_loggers=False)
     log = logging.getLogger('')
+    # Remove config file
+    os.remove(log_path%(cls)+'.cfg')
     f = MemuseFilter()
     log.handlers[0].addFilter(f)
     return log
@@ -141,21 +148,3 @@ class MemuseFilter(logging.Filter):
 
     def str_mem(self):
         return "Tot:%s,Swap:%s"%(self.memory(),self.swapsize() )
-
-if __name__ == "__main__":
-    from random import choice
-    import logging.config
-    levels = (logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR, logging.CRITICAL)
-    
-    # logging.basicConfig(level=logging.DEBUG,
-    #                     format='%(asctime)-15s %(name)-5s %(levelname)-8s Mem:%(memuse)s %(message)s')
-    
-    logging.config.fileConfig('blank.log.cfg')
-    # create logger
-    a1 = logging.getLogger('')
-    f = MemuseFilter()
-    a1.handlers[0].addFilter(f)
-    for x in range(10):
-        lvl = choice(levels)
-        lvlname = logging.getLevelName(lvl)
-        a1.log(lvl, 'A message at %s level with %d %s', lvlname, 2, 'parameters')
