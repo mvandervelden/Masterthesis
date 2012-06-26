@@ -75,7 +75,8 @@ def save_results_to_file(file, objects, confidence_values):
     log.info("Saved results to %s",file)
 
 def init_log(log_path, cls, mode='a'):
-
+    print "log_path: %s, log_file: %s"%(log_path, log_path%cls)
+    print "mode:", mode
     # Setup a config file
     subprocess.call(["./setlog.sh", log_path%cls, mode])
     
