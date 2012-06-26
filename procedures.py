@@ -18,6 +18,8 @@ def train_voc(descriptor_function, estimator, object_type, VOCopts, \
             log.info('==== GET %s OBJECTS ====', cls)
             objects = get_objects_by_class(img_set, cls)
             descriptors = get_bbox_descriptors(objects, descriptors)
+        elif object_type == 'image':
+            descriptors = [d for p,d in descriptors.values()]
         log.info('==== ADD %s DESCRIPTORS TO ESTIMATOR', cls)
         estimator.add_class(cls, descriptors)
     log.info('==== REMOVING TRAIN DESCRIPTORS FROM DISK ====')    
