@@ -14,7 +14,8 @@ if __name__ == '__main__':
     cls = sys.argv[4]
     
     # Get options into dicts
-    VOCopts, DESCRopts, NBNNopts, TESTopts = getopts(configfile, tmpfile)
+    VOCopts = VOC.fromConfig(configfile)
+    DESCRopts, NBNNopts, TESTopts = getopts(configfile, tmpfile)
     
     # Setup logger
     if batch_no == 1:

@@ -13,7 +13,8 @@ if __name__ == '__main__':
     batch_no = int(sys.argv[3])
     cls = sys.argv[4]
     
-    VOCopts, DESCRopts, NBNNopts, TESTopts = getopts(configfile, tmpfile)
+    VOCopts = VOC.fromConfig(configfile)
+    DESCRopts, NBNNopts, TESTopts = getopts(configfile, tmpfile)
 
     # Setup logger
     if batch_no == 1:

@@ -14,7 +14,8 @@ if __name__ == "__main__":
     configfile = sys.argv[1]
     tmpdir = sys.argv[2]
     
-    VOCopts, DESCRopts, NBNNopts, TESTopts = getopts(configfile, tmpdir)
+    VOCopts = VOC.fromConfig(configfile)
+    DESCRopts, NBNNopts, TESTopts = getopts(configfile, tmpdir)
     
     # Setup logger
     log = init_log(TESTopts['log_path'], 'main', 'w')

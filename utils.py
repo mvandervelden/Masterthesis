@@ -3,10 +3,9 @@ import os, os.path, subprocess
 from ConfigParser import RawConfigParser
 from nbnn.vocimage import *
 from nbnn.voc import VOC
+from cal import *
 
 def getopts(configfile, tmpdir):
-    VOCopts = VOC.fromConfig(configfile)
-    
     cfg = RawConfigParser()
     cfg.read(configfile)
     DESCRopts = dict(cfg.items("DESCRIPTOR"))
@@ -27,6 +26,10 @@ def getopts(configfile, tmpdir):
         NBNNopts['checks'] = int(NBNNopts['checks'])
     if 'batch_size' in TESTopts:
         TESTopts['batch_size'] = int(TESTopts['batch_size'])
+    if 'train_size' in TESTopts:
+        TESTopts['train_size'] = int(TESTopts['train_size'])
+    if 'test_size' in TESTopts:
+        TESTopts['test_size'] = int(TESTopts['test_size'])
     
     # Make sure some folders exist
     if not os.path.exists(DESCRopts['cache_dir']):
@@ -38,7 +41,7 @@ def getopts(configfile, tmpdir):
     if not os.path.exists(log_folder):
         os.mkdir(log_folder)
     
-    return VOCopts, DESCRopts, NBNNopts, TESTopts
+    return DESCRopts, NBNNopts, TESTopts
 
 def get_confidence_values(distances):
     cv = []
@@ -60,7 +63,7 @@ def save_testinfo(filename, batches, classes):
 
 def save_results_to_file(file, objects, confidence_values):
     log = logging.getLogger("__name__")
-    if isinstance(objects[0], VOCImage):
+    if isinstance(objects[0], VOCImage) or isinstance(objects[0], CalImage):
         log.info('Saving image classification')
         with open(file, 'a') as f:
             for obj, cv in zip(objects,confidence_values):

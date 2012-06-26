@@ -22,7 +22,6 @@ def train_voc(descriptor_function, estimator, object_type, VOCopts, \
             descriptors = [d for p,d in descriptors.values()]
         log.info('==== ADD %s DESCRIPTORS TO ESTIMATOR', cls)
         estimator.add_class(cls, descriptors)
-    log.info('==== REMOVING TRAIN DESCRIPTORS FROM DISK ====')    
 
 def make_voc_tests(descriptor_function, VOCopts, TESTopts):
     log.info('==== GENERATING TEST IMAGES =====')
@@ -37,3 +36,26 @@ def make_voc_tests(descriptor_function, VOCopts, TESTopts):
             cPickle.dump(batch, pklfile)
     log.info('==== SAVING TESTINFORMATION =====')
     save_testinfo(TESTopts['infofile'], batches, VOCopts.classes)
+
+def train_cal(train_images, descriptor_function, estimator, CALopts, TESTopts):
+    for cls, images in train_images.items():
+        log.info('==== GET %s DESCRIPTORS ====', cls)
+        descriptors = get_image_descriptors(images, descriptor_function, \
+            TESTopts['descriptor_path'])
+        descriptors = [d for p,d in descriptors.values()]
+        log.info('==== ADD %s DESCRIPTORS TO ESTIMATOR', cls)
+        estimator.add_class(cls, descriptors)
+
+def make_cal_tests(test_images, descriptor_function, CALopts, TESTopts):
+    log.info('==== FLATTEN TEST_IMAGES TO LIST ====')
+    test_images = [image for clslist in test_images.values() for image in clslist]
+    log.info('==== GENERATING AND SAVING TEST DESCRIPTORS =====')
+    save_image_descriptors(test_images, descriptor_function, \
+        TESTopts['descriptor_path'])
+    batches = get_image_batches(CALopts, test_images, TESTopts['batch_size'])
+    log.info('==== SAVING IMAGE OBJECTS PER BATCH =====')
+    for b,batch in enumerate(batches):
+        with open(TESTopts['img_pickle_path']%(b+1), 'wb') as pklfile:
+            cPickle.dump(batch, pklfile)
+    log.info('==== SAVING TESTINFORMATION =====')
+    save_testinfo(TESTopts['infofile'], batches, CALopts.classes)
