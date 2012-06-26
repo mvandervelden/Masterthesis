@@ -10,9 +10,9 @@ mkdir /local/vdvelden
 mkdir "/local/vdvelden/$TMPFOLDER"
 TMPFOLDER="/local/vdvelden/$TMPFOLDER"
 python voc_cls.py $CFGFILE $TMPFOLDER
-NO_BATCHES=`cat $TMPFOLDER/testfile.txt | sed -n '1p'`
-NO_CLASSES=`cat $TMPFOLDER/testfile.txt | sed -n '2p'`
-CLASSES=(`cat $TMPFOLDER/testfile.txt | tail -n +3`)
+NO_BATCHES=`cat $TMPFOLDER/testinfo.txt | sed -n '1p'`
+NO_CLASSES=`cat $TMPFOLDER/testinfo.txt | sed -n '2p'`
+CLASSES=(`cat $TMPFOLDER/testinfo.txt | tail -n +3`)
 echo "No of batches: $NO_BATCHES"
 echo "No of classes: $NO_CLASSES"
 echo "Classes: ${CLASSES[@]}"
