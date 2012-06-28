@@ -14,6 +14,7 @@ def get_equal_error_rate(confmat):
     # Get the true positive rate for each class by dividing the amounts of true
     # positives by their amounts
     truth_rates = corrects/ssums
+    print truth_rates
     # The sum of true positive rates times their prior over the classes defines
     # the equal error rate (with 2 classes, this is p1*tpr + p2*(1-fpr)[=tnr])
     return (truth_rates*priors).sum()
@@ -27,22 +28,20 @@ if __name__ == '__main__':
     confmat = np.zeros([len(rows)-1,len(rows)-1])
     for i,row in enumerate(rows):
         strvals = row.split(' ')
-        if not len(strvals) == len(rows):
+        if not len(strvals) == len(rows)-1:
             continue
         rvals = np.zeros(len(rows)-1)
         for j,elem in enumerate(strvals):
             if not elem == '':
                 rvals[j] = int(elem)
         confmat[i]= rvals
-
     eer = get_equal_error_rate(confmat)
     print "Mean Recognition Rate: ", eer
     trues = confmat.sum(0)
     norm_cf = confmat/trues
     
-    
-    classes = np.asarray(["Faces","Faces_easy","Leopards",\
-        "Motorbikes","accordion","airplanes","anchor","ant","barrel",\
+    clss = ["faces","faces_easy","leopards",\
+        "motorbikes","accordion","airplanes","anchor","ant","barrel",\
         "bass","beaver","binocular","bonsai","brain","brontosaurus",\
         "buddha","butterfly","camera","cannon","car_side","ceiling_fan",\
         "cellphone","chair","chandelier","cougar_body","cougar_face","crab",\
@@ -58,10 +57,13 @@ if __name__ == '__main__':
         "schooner","scissors","scorpion","sea_horse","snoopy","soccer_ball",\
         "stapler","starfish","stegosaurus","stop_sign","strawberry",\
         "sunflower","tick","trilobite","umbrella","watch","water_lilly",\
-        "wheelchair","wild_cat","windsor_chair","wrench","yin_yang"])
-
+        "wheelchair","wild_cat","windsor_chair","wrench","yin_yang"]
+    clss.sort()
+    classes = np.asarray(clss)
+    print classes
     norm_tp = np.diag(norm_cf)
     tp_idxs = np.argsort(norm_tp)
+    print tp_idxs
     fiveworst = classes[tp_idxs[:10]]
     worstvals = norm_tp[tp_idxs[:10]]
     print "The 5 worst classes: ", zip(fiveworst, worstvals)
@@ -73,7 +75,7 @@ if __name__ == '__main__':
     fig = plt.figure()
     plt.clf()
     ax = fig.add_subplot(111)
-    # ax.set_aspect(1)
+    ax.set_aspect(1)
     res = ax.imshow(norm_cf, cmap=plt.cm.jet, 
                     interpolation='nearest')
     
@@ -85,10 +87,10 @@ if __name__ == '__main__':
     #          ax.annotate(str(confmat[x, y]), xy=(y, x), 
     #                      horizontalalignment='center',
     #                      verticalalignment='center')
-    # 
+    
     cb = fig.colorbar(res)
-    # alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-    # plt.xticks(range(width), alphabet[:width])
-    # plt.yticks(range(height), alphabet[:height])
+    alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+    plt.xticks(range(width), alphabet[:width])
+    plt.yticks(range(height), alphabet[:height])
     plt.savefig(filename+'.png', format='png')
     print "Confusion matrix saved to "+filename+".png"

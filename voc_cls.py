@@ -10,7 +10,7 @@ if __name__ == "__main__":
     # Get config settings
     if len(sys.argv) < 3:
         raise Exception("Please give a config file, tmpdir" 
-            "file as command line argument")
+            " file as command line argument")
     configfile = sys.argv[1]
     tmpdir = sys.argv[2]
     
@@ -31,6 +31,7 @@ if __name__ == "__main__":
     
     log.info('==== REMOVING TRAIN DESCRIPTORS FROM DISK ====')
     delete_descriptor_file(TESTopts['descriptor_path'])
+
     
     # Save descriptors of test set to disk
     make_voc_tests(descriptor_function, VOCopts, TESTopts)

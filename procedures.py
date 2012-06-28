@@ -2,30 +2,37 @@ import cPickle
 import logging
 from utils import *
 from nbnn.voc import *
+import os.path
 
 log = logging.getLogger("__name__")
 
 def train_voc(descriptor_function, estimator, object_type, VOCopts, \
         descriptor_path=None):
     for i,cls in enumerate(VOCopts.classes):
-        log.info('==== GET CLASS %d: %s IMAGES ====', i, cls)
-        img_set = read_image_set(VOCopts,cls+'_train')
-        log.info('==== GET %s DESCRIPTORS ====', cls)
-        descriptors = get_image_descriptors(img_set, descriptor_function, \
-            descriptor_path)
-        if object_type == 'bbox':
-            # Get descriptor's objects (bboxes):
-            log.info('==== GET %s OBJECTS ====', cls)
-            objects = get_objects_by_class(img_set, cls)
-            descriptors = get_bbox_descriptors(objects, descriptors)
-        elif object_type == 'image':
-            descriptors = [d for p,d in descriptors.values()]
-        log.info('==== ADD %s DESCRIPTORS TO ESTIMATOR', cls)
-        estimator.add_class(cls, descriptors)
+        if not cls in estimator.classes:
+            log.info('==== GET CLASS %d: %s IMAGES ====', i, cls)
+            img_set = read_image_set(VOCopts,cls+'_train')
+            if not descriptor_path is None:
+                for im in img_set:
+                    if os.path.exists(descriptor_path%im.im_id):
+                        # Make sure not to calculate descriptors again if they already exist
+                        im.descriptor_file.append(descriptor_path%im.im_id)
+            log.info('==== GET %s DESCRIPTORS ====', cls)
+            descriptors = get_image_descriptors(img_set, descriptor_function, \
+                descriptor_path)
+            if object_type == 'bbox':
+                # Get descriptor's objects (bboxes):
+                log.info('==== GET %s OBJECTS ====', cls)
+                objects = get_objects_by_class(img_set, cls)
+                descriptors = get_bbox_descriptors(objects, descriptors)
+            elif object_type == 'image':
+                descriptors = [d for p,d in descriptors.values()]
+            log.info('==== ADD %s DESCRIPTORS TO ESTIMATOR', cls)
+            estimator.add_class(cls, descriptors)
 
 def make_voc_tests(descriptor_function, VOCopts, TESTopts):
     log.info('==== GENERATING TEST IMAGES =====')
-    test_images = read_image_set(VOCopts,'test')
+    test_images = read_image_set(VOCopts,TESTopts['test_set'])
     log.info('==== GENERATING AND SAVING TEST DESCRIPTORS =====')
     save_image_descriptors(test_images, descriptor_function, \
         TESTopts['descriptor_path'])

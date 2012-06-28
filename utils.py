@@ -14,6 +14,7 @@ def getopts(configfile, tmpdir):
     
     DESCRopts['cache_dir'] = '/'.join([tmpdir, DESCRopts['cache_dir']])
     NBNNopts['nbnn_dir'] = '/'.join([tmpdir, NBNNopts['nbnn_dir']])
+    
     TESTopts['descriptor_path'] = '/'.join([tmpdir, TESTopts['descriptor_path']])
     TESTopts['img_pickle_path'] = '/'.join([tmpdir, TESTopts['img_pickle_path']])
     # Add the infofile for the test as variable
@@ -30,7 +31,9 @@ def getopts(configfile, tmpdir):
         TESTopts['train_size'] = int(TESTopts['train_size'])
     if 'test_size' in TESTopts:
         TESTopts['test_size'] = int(TESTopts['test_size'])
-    
+    if 'keep_descriptors' in TESTopts:
+        TESTopts['keep_descriptors'] = TESTopts['keep_descriptors'] == 'True'
+        
     # Make sure some folders exist
     if not os.path.exists(DESCRopts['cache_dir']):
         os.mkdir(DESCRopts['cache_dir'])
