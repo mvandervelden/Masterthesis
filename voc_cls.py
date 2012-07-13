@@ -16,7 +16,7 @@ if __name__ == "__main__":
     
     VOCopts = VOC.fromConfig(configfile)
     DESCRopts, NBNNopts, TESTopts = getopts(configfile, tmpdir)
-    
+    print NBNNopts
     # Setup logger
     log = init_log(TESTopts['log_path'], 'main', 'w')
     
@@ -24,13 +24,13 @@ if __name__ == "__main__":
     descriptor_function = descriptor.DescriptorUint8(**DESCRopts)
     log.info('==== INIT ESTIMATOR ====')
     estimator = nbnn.NBNNEstimator(**NBNNopts)
-    
+    print estimator.flann_args
     # Train
     train_voc(descriptor_function, estimator, 'image', VOCopts, \
         TESTopts['descriptor_path'])
     
-    log.info('==== REMOVING TRAIN DESCRIPTORS FROM DISK ====')
-    delete_descriptor_file(TESTopts['descriptor_path'])
+    #log.info('==== REMOVING TRAIN DESCRIPTORS FROM DISK ====')
+    #delete_descriptor_file(TESTopts['descriptor_path'])
 
     
     # Save descriptors of test set to disk

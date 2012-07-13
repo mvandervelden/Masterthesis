@@ -11,7 +11,9 @@ def getopts(configfile, tmpdir):
     DESCRopts = dict(cfg.items("DESCRIPTOR"))
     NBNNopts = dict(cfg.items("NBNN"))
     TESTopts = dict(cfg.items("TEST"))
-    
+    DESCRopts['outputFormat'] = DESCRopts['outputformat']
+    del DESCRopts['outputformat']
+    print DESCRopts['outputFormat']
     DESCRopts['cache_dir'] = '/'.join([tmpdir, DESCRopts['cache_dir']])
     NBNNopts['nbnn_dir'] = '/'.join([tmpdir, NBNNopts['nbnn_dir']])
     
@@ -33,7 +35,8 @@ def getopts(configfile, tmpdir):
         TESTopts['test_size'] = int(TESTopts['test_size'])
     if 'keep_descriptors' in TESTopts:
         TESTopts['keep_descriptors'] = TESTopts['keep_descriptors'] == 'True'
-        
+    if 'log_level' in NBNNopts:
+        NBNNopts['log_level'] = int(NBNNopts['log_level'])
     # Make sure some folders exist
     if not os.path.exists(DESCRopts['cache_dir']):
         os.mkdir(DESCRopts['cache_dir'])
