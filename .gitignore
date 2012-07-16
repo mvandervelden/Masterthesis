@@ -16,3 +16,11 @@ bgraz*
 VOCdevkit
 VOCresults
 Caltech
+*.aux
+*.bbl
+*.blg
+*.dvi
+*.out
+*.pdf
+*.ps
+*.synctex.gz

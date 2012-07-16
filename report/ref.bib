@@ -1,0 +1,342 @@
+NBNN PAPERS
+
+Boiman 2008 (NBNN)
+
+Basis of the thesis. Naive Bayes Nearest Neighbor by applying NN on the descriptor space (densely sampled) and calculating image-to-class distances. Performs very well on Caltech101 (and -256 and Graz-01) 
+
+@inproceedings{boiman2008defense,
+  title={In defense of nearest-neighbor based image classification},
+  author={Boiman, O. and Shechtman, E. and Irani, M.},
+  booktitle={Computer Vision and Pattern Recognition, 2008. CVPR 2008. IEEE Conference on},
+  pages={1--8},
+  year={2008},
+  organization={Ieee}
+}
+Behmo 2010 (optimal NBNN)
+
+Optimal NBNN. Original NBNN assumption (local descriptors are drwan from class-dependent probability measure, and normalization factor is class-independent) degrades generalization ability. oNBNN adds training of class- (and channel-) dependent parameters: minimize hinge loss to find these.
+Classification by detection (efficient sub-window search).
+
+For classification this is not very relevant (I rank the images per class, I don't really choose one class), but it might be when using fg/bg per class, perhaps within an image to find bbox.
+
+@article{behmo2010towards,
+  title={Towards optimal naive bayes nearest neighbor},
+  author={Behmo, R. and Marcombes, P. and Dalalyan, A. and Prinet, V.},
+  journal={Computer Vision--ECCV 2010},
+  pages={171--184},
+  year={2010},
+  publisher={Springer}
+}
+McCann 2011 (local NBNN)
+
+Improvement of NBNN. Only local neighborhood of descriptors is relevant for probability estimation. Good speed up for large numbers of classes. 
+
+The NBNN classification rule is recast using log-odds increments (are the posterior odds for a class higher or lower than the prior odds). So, only only significant positive log-odds updates have to be taken.
+
+Very useful paper for the settings of NBNN. For VOC it seems less useful: lNBNN does not compensate for differences in sampling over classes, which is fine for Caltech, but not for VOC where the distribution of classes is far from uniform. Would only be useful if you compensate somewhere for skewed distributions over classes. Speedup is not very large with small amounts of classes, as in VOC. 
+
+@article{mccann2011local,
+  title={Local Naive Bayes Nearest Neighbor for Image Classification},
+  author={McCann, S. and Lowe, D.G.},
+  journal={Arxiv preprint arXiv:1112.0059},
+  year={2011}
+}
+Tuytelaars 2011 (NBNN kernel)
+
+Extension of NBNN. Use the NBNN estimates as kernel for SVM. Possible to combine with other kernels, Works well. Also: how to speed up NBNN computations.
+
+They stress the shortcoming of NBNN that it only regards local features on their own, not the image composition. Likely that limo=car=tyres. (share most of eachother's features)
+The solution is to combine it with BoF. As kernel, for each image the vector of image-to-class distances is used to compare images. (Mercer kernel).
+
+Also a proposal to sample less densely on test set to improve speed.
+
+Subtle differences in distance measure for an image: Boiman uses the sum of distances of individual descriptors, Tuytelaars uses two measures: 1) the average of distances to NN's of the descriptors (similar to Boiman) and 2) the NN-dist minus the distance to the one-but-closest class, which gives a likelihood ratio for each class and descriptor, which is summed. Method 2 gives superior results, so it is interesting to use this measure too for my experiments. (This approach gives more weight to descriptors that are more distinctly of one class, it is very similar to LocalNBNN of McCann (odds ratio)).
+
+It might be interesting to use this method for detection, because it can be combined with all kinds of SVM-based methods. This way, it might improve results on BoF methods (as it is complementary, as Tuytelaars says).
+
+@inproceedings{tuytelaars2011nbnn,
+  title={The NBNN kernel},
+  author={Tuytelaars, T. and Fritz, M. and Saenko, K. and Darrell, T.},
+  booktitle={Computer Vision (ICCV), 2011 IEEE International Conference on},
+  pages={1824--1831},
+  year={2011},
+  organization={IEEE}
+}
+Becker 2012 (NBNN/Exemplar Part Based model  object detection)
+
+Adaptation of NBNN into an exemplar model for object detection. It models a two class problem (fg/bg) per class, and for each densely sampled feature within a bbox, an exemplar is stored (location & size w.r.t. the bbox' center and scale). During the test, each features that would be classified as fg (NBNN), gets to make a vote for the bbox: the corresponding exemplar of its NN is used to get a bbox in the test image. Then, votes for bboxes are clustered and the clusters are ranked by a) amount of votes and b) relative distance of the features to the fg (vs dist 2 bg). Scores well compared to ISM (Leibe 2004, see below)
+
+Interesting approach, seems to be very useful to start detection in this way. Looks like a combination with Behmo would be good because it should compensate for the difference in samples of fg and bg. Would also be interesting to se what combinations with Felzenszwalb could be made (also part based).
+
+@inproceedings{becker2012codebook,
+  title={Codebook-free exemplar models for object detection},
+  author={Becker, J.H. and Tuytelaars, T. and Van Gool, L.},
+  booktitle={Image Analysis for Multimedia Interactive Services (WIAMIS), 2012 13th International Workshop on},
+  pages={1--4},
+  year={2012},
+  organization={IEEE}
+}
+Timofte 2012 (Iterative NN)
+
+This paper introduces Iterative NN, combining kNN with l1 and l2 regularized least squares. This is claimed to be both quick and powerful. The representation is applied to (among others) NBNN, and tested on (among others) VOC2007, and seems to improve. It should also work faster because of the dimensionality reduction.
+
+The paper seems to be of no great use in the thesis, because it seems to be a lot of work to implement, and the paper is not very clear on the details of how they implemented NBINN and tested it on VOC2007. They don't mention the difficulty NBNN has with classifying under skewed distributions of features among the classes, which makes it difficult to reproduce their results (do they cope with this, and if yes, how?)
+
+R. Timofte and L. Van Gool. Iterative Nearest Neighbors for Classification and Dimensionality Reduction. In 2012 IEEE Computer Society Conference on Computer Vision and Pattern Recognition (CVPR 2012), June 2012, USA (draft version)
+
+Wang 2009 (instance-to-class distance for human action recognition)
+
+NBNN with a learning phase to estimate weights for each image and each class. Looks similar to Behmo, but with weights for individual images too (but only scales (alpha), no translation (beta)). Optimizes the weights such that all training images would be classified correctly (by the largest margin possible). It is solved using SVM. Lot of images needed for all weights (CxNx(C-1), C=no_classes, N=no_images per class).
+
+Behmo seems to be the mathematically more correct way to achieve the same, and is better written. This is not cited in Behmo though..
+
+@inproceedings{wang2009learning,
+  title={Learning instance-to-class distance for human action recognition},
+  author={Wang, Z. and Hu, Y. and Chia, L.T.},
+  booktitle={Image Processing (ICIP), 2009 16th IEEE International Conference on},
+  pages={3545--3548},
+  year={2009},
+  organization={IEEE}
+}
+Wang 2010 (Image-to-Class metric learning)
+
+Like Wang 2009: metric learning on I2C distance. The basic idea is the same, but it is worked out more formally. They use Mahalanobis distance instead of Euclidean distance. They solve using gradient descent and a spatial pyramid (Lazebnik).
+
+Same as above.
+
+@article{wang2010image,
+  title={Image-to-class distance metric learning for image classification},
+  author={Wang, Z. and Hu, Y. and Chia, L.T.},
+  journal={Computer Vision--ECCV 2010},
+  pages={706--719},
+  year={2010},
+  publisher={Springer}
+}
+Wang 2011 (Improved I2C)
+
+Same as Wang 2010, soe different names of methods. Mahalanobis -> weighted Euclidean distance (they do the same). They reference Behmo, but don't cover its content. Speedup NN: spatial division (inspired by Lazebnik). At different levels, restrict NN search to same subregions (2x2 and 4x4 subregions). Second speedup: hubness score. Hubness is no of times points are NN of another point. Points with low hubness are removed. Redefinition of hubness as ratio between positive and negative hubness.
+
+The speedup ideas might be useful, Spatial pyramids also improve accuracy. Hubness ratio might be good for speedup, and also remove 'noise'.
+
+@article{wang2011improved,
+  title={Improved learning of I2C distance and accelerating the neighborhood search for image classification},
+  author={Wang, Z. and Hu, Y. and Chia, L.T.},
+  journal={Pattern Recognition},
+  year={2011},
+  publisher={Elsevier}
+}
+
+D Zhang 2010 (Random sampling image to class distance)
+
+Zhang uses NBNN normalization to compare dists over classes and images. (they want to label images, and multi-label imgaes are possible). Also, he randomly samples all classes to compensate for imbalanced training sets.
+
+Article is very short, very small contribution. Random sampling always hurts performance because less data is available, which is very important for NBNN. Random sampling does compensate for sampling rates, but it also changes the prior probability of classes, which is not wanted if you assume the prior distribution is the same in training and test sets. (Possibility of classifying too little images to the most frequent occuring class).  
+
+@article{zhang2010random,
+  title={Random Sampling Image to Class Distance for Photo Annotation},
+  author={Zhang, D. and Liu, B. and Sun, C. and Wang, X.},
+  journal={Working Notes of CLEF},
+  year={2010},
+  publisher={Citeseer}
+}
+NBNN? Classification
+
+Jain 2012 (Hamming Embedding, Similarity-based Image classification)
+
+The authors state their method is similar to NBNN (more to Tuytelaars: NBNN-kernel), but it basically uses a refined version of BoF (Hamming Embedding: adding a binary description to each descriptor defining not only to which visual word it belongs, but where in the cluster it lies). These binary vectors are matched for similarity and a SVM is trained on these similarity values for each image.
+
+This paper is only comparable with NBNN in that it uses a similarity measure to classify. It uses BoF, but in a different way than Tuytelaars, because they take BoF and add the HE vectors, on which they use the similarity vectors for SVM, as in Tuytelaars. The simple elegance of NBNN is lost this way.
+
+@inproceedings{jain2012hamming,
+  title={Hamming embedding similarity-based image classification},
+  author={Jain, M. and Benmokhtar, R. and J{\'e}gou, H. and Gros, P.},
+  booktitle={Proceedings of the 2nd ACM International Conference on Multimedia Retrieval},
+  pages={19},
+  year={2012},
+  organization={ACM}
+}
+Fernando 2012 (Logistic Regression Feature Fusion)
+
+Combine multiple cues with logistic regression to consider statistical dependence between the cues. Also, new kind of marginalized kernel, using image to class distance and class similarity. 
+
+Only the part of image to class similarity is equivalent to NBNN, the method is quite different.
+@article{fernando2012discriminative,
+  title={Discriminative Feature Fusion for Image Classification},
+  author={Fernando, B. and Fromont, E. and Muselet, D. and Sebban, M. and others},
+  journal={Proceedings of CVPR 2012},
+  year={2012}
+}
+Ziming Zhang 2012 (Parametric NN)
+
+Local linear classifier, with parameterized NN. Training using max-margin. Mention NBNN, but state their method is more efficient (linearly growing with training set size). Based on prototypes (got iteratively, learn prototypes and parameters alternatively).
+
+Interesting to mention as related work. Lot of papers mentioned that use NN-like selection (local linear classifiers). Perhaps mention as a class of classification algorithms.
+
+Efﬁcient Discriminative Learning of Parametric Nearest Neighbor Classiﬁers
+Ziming Zhang, Paul Sturgess, Sunando Sengupta, Nigel Crook and Philip Torr
+In: CVPR 2012, 18-20 June 2012., Rhode Island.
+DETECTION METHODS
+
+Chum 2007 (exemplar based detection) [not yet printed]
+
+Adapted in Becker 2012.
+
+@inproceedings{chum2007exemplar,
+  title={An exemplar model for learning object classes},
+  author={Chum, O. and Zisserman, A.},
+  booktitle={Computer Vision and Pattern Recognition, 2007. CVPR'07. IEEE Conference on},
+  pages={1--8},
+  year={2007},
+  organization={IEEE}
+}
+Leibe 2004 (ISM detection) [not yet printed]
+
+Compaired with in Becker 2012
+
+@inproceedings{leibe2004combined,
+  title={Combined object categorization and segmentation with an implicit shape model},
+  author={Leibe, B. and Leonardis, A. and Schiele, B.},
+  booktitle={Workshop on Statistical Learning in Computer Vision, ECCV},
+  pages={17--32},
+  year={2004}
+}
+Mickolajczyk 2005 [to print]
+
+
+Felzenszwalb 2010 (Discriminatively trained part based models)
+
+Part based model, root filter, setof part filters, spatial model, pictorial structure (spring-like cost of arrangement of subparts), HOG features, simplified by PCA, 'analytic features'. Mixture models to model different appearances of classes. Matching using dynamic programming & generalized distance transforms. EM for learning parameters: part locations and model parameters. Latent SVM: maximize over latent part locations. Data mining hard examples.-> using bootstrapping: use positive instances and negative instances that are hard to classify correctly to compensate for the large amount of negatives (background). 
+
+Would be interesting if I could use (parts of) this approach as detection pipeline. Even though it is successful, it is quite a collection of methods. COmpared to this, the part-based model Becker uses is more 'clean', with less parameters/assumptions. Would be possible to use the part filter (& mixture model) idea though, and perhaps finding hard negatives is an idea for solving the problem of skewed feature distributions among classes. Furthermore: dimensionality reduction? Bounding Box Prediction?
+
+
+@article{felzenszwalb2010object,
+  title={Object detection with discriminatively trained part-based models},
+  author={Felzenszwalb, P.F. and Girshick, R.B. and McAllester, D. and Ramanan, D.},
+  journal={Pattern Analysis and Machine Intelligence, IEEE Transactions on},
+  volume={32},
+  number={9},
+  pages={1627--1645},
+  year={2010},
+  publisher={IEEE}
+}
+Murphy 2006 (Detection using local & Global features)
+
+Local features (13 mask filters) classified with boosted decision stumps. Global image features (gist): steerable pyramid, using EM. 
+
+Not very interesting. Combination as i.e. Tuytelaars does looks more promising for NN.
+
+@article{murphy2006object,
+  title={Object detection and localization using local and global features},
+  author={Murphy, K. and Torralba, A. and Eaton, D. and Freeman, W.},
+  journal={Toward Category-Level Object Recognition},
+  pages={382--400},
+  year={2006},
+  publisher={Springer}
+}
+Lampert 2008 (efficient subwindow search)
+
+This is what Behmo does. Branch-and-Bound-Search. For multiple objects, remove first one. Iterate required amount of times. applied to BoF (VOC set), Spatial Pyramids, Chi2 distance.
+
+Downside: in VOC you don't know the required amount of objects in an image. On the other hand, the score can be used as confidence factor.
+
+@inproceedings{lampert2008beyond,
+  title={Beyond sliding windows: Object localization by efficient subwindow search},
+  author={Lampert, C.H. and Blaschko, M.B. and Hofmann, T.},
+  booktitle={Computer Vision and Pattern Recognition, 2008. CVPR 2008. IEEE Conference on},
+  pages={1--8},
+  year={2008},
+  organization={Ieee}
+}
+Zhiqi Zhang 2010 (free-shape subwindow search)
+
+Localization using edge detector. Define free-shape contours to localize single objects.
+Downside: handmade contours as ground-truth.
+
+@inproceedings{zhang2010free,
+  title={Free-shape subwindow search for object localization},
+  author={Zhang, Z. and Cao, Y. and Salvi, D. and Oliver, K. and Waggoner, J. and Wang, S.},
+  booktitle={Computer Vision and Pattern Recognition (CVPR), 2010 IEEE Conference on},
+  pages={1086--1093},
+  year={2010},
+  organization={IEEE}
+}
+Blaschko 2010 (simultaneous detection & ranking)
+
+Structured output formulation (latent variables) & optimize ranking function to use negative images effectively. Extension of regression on SVM method. Trains to optimize a ranking function in order to increase precision (maximize margin). This improves previous method (Blaschko & Lampert, 2008: Learning to localize...) because it makes a better assumption on negative examples (before it was p(class|image,class_present_in_image), now it is p(class|image)) by training on these too.
+
+Don't know if it's relevant for the thesis. Might give an improvement over the results, but is an extra learning step (costs time).
+
+@article{blaschko2010simultaneous,
+  title={Simultaneous object detection and ranking with weak supervision},
+  author={Blaschko, M. and Vedaldi, A. and Zisserman, A.},
+  year={2010}
+}
+Marques 2011 (context modelling)
+
+Large paper, overview of Context modelling. Interesting background information about kinds of context, why it is important, what kinds of models there are. Priors, applications.
+
+Not read fully (36 pages), but can be useful resource to write stuff on fg/bg or something?
+
+@article{marques2011context,
+  title={Context modeling in computer vision: techniques, implications, and applications},
+  author={Marques, O. and Barenholtz, E. and Charvillat, V.},
+  journal={Multimedia Tools and Applications},
+  volume={51},
+  number={1},
+  pages={303--339},
+  year={2011},
+  publisher={Springer}
+}
+Yeh 2009 (Fast Concurrent localization)
+
+Perform recognition and detection simultaneously, iteratively. Uses branch-and-bound, and refines possible classes during branching. Looks a bit like Lampert 2008, but then concurrent version.
+
+Not very interesting for thesis, perhaps as reference to other (fast window search methods) methods
+
+@inproceedings{yeh2009fast,
+  title={Fast concurrent object localization and recognition},
+  author={Yeh, T. and Lee, J.J. and Darrell, T.},
+  booktitle={Computer Vision and Pattern Recognition, 2009. CVPR 2009. IEEE Conference on},
+  pages={280--287},
+  year={2009},
+  organization={IEEE}
+}
+Pedersoli 2011 (Coarse-to-fine object deformable detection)
+
+@inproceedings{pedersoli2011coarse,
+  title={A Coarse-to-fine approach for fast deformable object detection},
+  author={Pedersoli, M. and Vedaldi, A. and Gonzalez, J.},
+  booktitle={Computer Vision and Pattern Recognition (CVPR), 2011 IEEE Conference on},
+  pages={1353--1360},
+  year={2011},
+  organization={IEEE}
+}
+
+Other
+
+Lazebnik 2006 (BoF spatial pyramid)
+
+van Gemert 2011 (generalizing spatial pyramid)
+
+@inproceedings{pedersoli2011coarse,
+  title={A Coarse-to-fine approach for fast deformable object detection},
+  author={Pedersoli, M. and Vedaldi, A. and Gonzalez, J.},
+  booktitle={Computer Vision and Pattern Recognition (CVPR), 2011 IEEE Conference on},
+  pages={1353--1360},
+  year={2011},
+  organization={IEEE}
+}
+
+Galleguillos 2010 (combining local contextual interactions)
+
+Use context on 3 levels: pixel, region, object interactions, and 3 types: semantic, boundary support, contextual neighborhoods. First (they claim) to do this together. Multi-Class, Multi-Kernel. Uses Large-Margin NN. (learn Mahalanobis distance metric) Perform segmentation labeling with this framework. More a segmentation approach, uses SVM for smoothing and a 
+
+@inproceedings{galleguillos2010multi,
+  title={Multi-class object localization by combining local contextual interactions},
+  author={Galleguillos, C. and McFee, B. and Belongie, S. and Lanckriet, G.},
+  booktitle={Computer Vision and Pattern Recognition (CVPR), 2010 IEEE Conference on},
+  pages={113--120},
+  year={2010},
+  organization={IEEE}
+}
