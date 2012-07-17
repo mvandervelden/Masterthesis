@@ -83,7 +83,13 @@ This paper introduces Iterative NN, combining kNN with l1 and l2 regularized lea
 The paper seems to be of no great use in the thesis, because it seems to be a lot of work to implement, and the paper is not very clear on the details of how they implemented NBINN and tested it on VOC2007. They don't mention the difficulty NBNN has with classifying under skewed distributions of features among the classes, which makes it difficult to reproduce their results (do they cope with this, and if yes, how?)
 
 R. Timofte and L. Van Gool. Iterative Nearest Neighbors for Classification and Dimensionality Reduction. In 2012 IEEE Computer Society Conference on Computer Vision and Pattern Recognition (CVPR 2012), June 2012, USA (draft version)
-
+@inproceedings{timofte2012iterative,
+    title={Iterative Nearest Neighbors for Classification and Dimensionality Reduction},
+    author={Timofte, R. and Van Gool, L.},
+    booktitle={IEEE Computer Society Conference on Computer Vision and Pattern Recognition (CVPR 2012)},
+    year={2012},
+    organization={IEEE}
+}
 Wang 2009 (instance-to-class distance for human action recognition)
 
 NBNN with a learning phase to estimate weights for each image and each class. Looks similar to Behmo, but with weights for individual images too (but only scales (alpha), no translation (beta)). Optimizes the weights such that all training images would be classified correctly (by the largest margin possible). It is solved using SVM. Lot of images needed for all weights (CxNx(C-1), C=no_classes, N=no_images per class).
@@ -316,16 +322,24 @@ Pedersoli 2011 (Coarse-to-fine object deformable detection)
 Other
 
 Lazebnik 2006 (BoF spatial pyramid)
-
+@inproceedings{lazebnik2006beyond,
+  title={Beyond bags of features: Spatial pyramid matching for recognizing natural scene categories},
+  author={Lazebnik, S. and Schmid, C. and Ponce, J.},
+  booktitle={Computer Vision and Pattern Recognition, 2006 IEEE Computer Society Conference on},
+  volume={2},
+  pages={2169--2178},
+  year={2006},
+  organization={Ieee}
+}
 van Gemert 2011 (generalizing spatial pyramid)
 
-@inproceedings{pedersoli2011coarse,
-  title={A Coarse-to-fine approach for fast deformable object detection},
-  author={Pedersoli, M. and Vedaldi, A. and Gonzalez, J.},
-  booktitle={Computer Vision and Pattern Recognition (CVPR), 2011 IEEE Conference on},
-  pages={1353--1360},
+@inproceedings{van2011exploiting,
+  title={Exploiting photographic style for category-level image classification by generalizing the spatial pyramid},
+  author={van Gemert, J.C.},
+  booktitle={Proceedings of the 1st ACM International Conference on Multimedia Retrieval},
+  pages={14},
   year={2011},
-  organization={IEEE}
+  organization={ACM}
 }
 
 Galleguillos 2010 (combining local contextual interactions)

@@ -2,7 +2,10 @@
 \usepackage{amsmath}
 \usepackage{url}
 \usepackage{hyperref}
+\usepackage[shadow]{todonotes}
 
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\argmin}{arg\,min}
 
 %opening
 \title{Object Detection using NBNN}
@@ -25,48 +28,159 @@
 \begin{abstract}
     bla
 \end{abstract}
+
 \section{Introduction} % (fold)
 \label{sec:introduction}
-\cite{boiman2008defense}
+In Computer Vision, object detection is the task of indicating what kinds of objects occur in an image, and where these objects are in the image. It is similar to image classification (saying whether or not an image shows an object of a certain kind) and image segmentation (subdividing the image into segments and say for each segment what is shown). Object detection is useful in many areas of computer vision, for it is often very useful to know where in the image the objects of interest are. Examples of practical use of object detection are \todo[inline]{Add examples \ldots (face detection, surveillance, detection less focused on one class), use references}.
+
+In this thesis I will focus on the task of multi-class object detection. The goal is to find which objects (of various classes) appear on an image, and to give a rough indication of the location and size of each object. This is usually done by placing a rectangular bounding box around each object found. \todo[fancyline]{Reference?}
+
+To be able to find objects in an image, it is necessary to know what to look for. Therefore, some kind of description or model has to be made of the objects that might be found in an image. Then, parts of the image can be matched with the object descriptions to find out what is present and what not. There are many ways of performing each of these steps, each with their own benefits and limitations.
+
+\todo[inline]{Explain the research question and layout of the paper here? or after the other introductory items shown below?}
+In this thesis, I will apply the relatively novel approach of Naive Bayes Nearest Neighbor (NBNN) image classification \cite{boiman2008defense} \todo[fancyline]{perhaps refer to image2class distance?} to the task of object detection. I will use part-based modeling \todo[fancyline]{reference} to make the translation from classification to localization. The goal is to find out whether, and how, the NBNN approach can be useful for object detection using part-based models.
+
+I expect this goal to be achievable even though there seem to be some pitfalls to be taken care of. Therefore it is useful to review the details of the NBNN method, the assumptions under which it works and compare these with the differences between image classification and object detection. This will be the subject of Section \ref{sec:naive_bayes_nearest_neighbor}. In Section \ref{sec:object_detection} the theory behind part-based modeling will be explained. The link between the two methods will be made in Section \ref{sec:linking}. In Section \ref{sec:experimental_setup} the setup for the experiment will be elaborated, the results of which are given in Section \ref{sec:results}. Finally, in Sections \ref{sec:conclusion} and \ref{sec:discussion} conclusions will be drawn and discussed.
+
+The remainder of this section will be used to describe the object detection task in more detail, and to give some related work on (parts of) this task. 
+\todo[inline]{Is it needed to put in the following fairly general subsections? My reasoning is: In my thesis I have to show my acquired knowledge during the Master, so it should be a bit broader than in the case of a paper/article, therefore put it in. Also: good for a broad audience(?)}
+\subsection{Image Descriptors} % (fold)
+\label{sub:image_descriptors}
+To be able to make a description of each object type, or class, a representation of each (part of an) image is needed that best captures the informative aspects of the objects. The most basic descriptor type is to use the pixel values of the image. These capture the image exactly and might therefore seem very useful as descriptors of object types. The problem however with pixel values, is that images tend to vary wildly in them, even though the exact same object might pictured.
+
+There are a number of types of variation that may be expected when comparing arbitrary images of the same object type:
+\begin{description}
+    \item[Camera] Use of different cameras and compression algorithms (image filetypes) will cause a change of pixel values. Images might be darker or lighter, have a different balance of colors, more or less color depth, etc.
+    \item[Scene] Lighting of the scene may cause big changes in pixel values, because of the change in intensity or in spectrum. Also, the background behind the object might change
+    \item[Orientation] Transformation of the object with respect to the image frame. An object might be on an arbitrary location in the image, rotated in various angles, viewed from up close or from far away.
+    \item[Occlusion] Objects might be partially out of sight, because they are not framed entirely, or because something is in front of them.
+    \item[Intra-class-variation] Objects from a single class may vary wildly in appearance. Imagine a number of objects that qualify as a chair, and how different these might look.
+\end{description}
+Therefore, raw pixel values might not be a very good choice as description on its own, even though it might help.
+
+In general, there are three kinds of descriptor types: global, regional and local descriptors. Pixel values are a form local of descriptors. These descriptors capture the local information (in this case at pixel level) very well, but they don't take their context into account. This is what regional descriptors do. They describe in a concise way what is to be derived from a small region of pixels in an image. Usually, these describe local changes in intensity (HOG, Gabor filters), edges, lines, corners or blobs (Canny, Hough, \ldots\todo[fancyline]{add examples}), and are very popular in computer vision. Global features describe characteristics of the image as a whole. Examples are the size or filename of an image, the color histogram, or \todo[fancyline]{examples}.
+
+Very often, multiple kinds of descriptors are used together to make a description of an image, and of objects.
+
+% subsection image_descriptors (end)
+
+\subsection{Training Methods} % (fold)
+\label{sub:training_methods}
+With the representation of images, it becomes possible to make a model for each object class to be detected. In this way, test images (using the same image representation) can be matched with each class model to find out which is the most likely.
+
+To be able to make a class description, sample images are needed, annotated with a description of what the image represents. This is the training set. From this set, the descriptors found can be labeled with the correct class, so a description of each can be made. Usually this is done in a learning phase.
+
+There is a broad range of training methods. A very simple one is called Nearest Neighbor, which actually has no learning phase. Here, the description of each class is simply the collection of all descriptors of that class. At test time, for each new descriptor the distance to (the difference between) each class is measured and the nearest one is most likely the class of the descriptor at hand. \cite{boiman2008defense}
+
+Bag of Words is another popular method \cite{lazebnik2006beyond, van2011exploiting} \todo[fancyline]{continue this as an overview}
+
+% subsection training_methods (end)
+\subsection{Detection methods} % (fold)
+\label{sub:detection_methods}
+With a choice of image descriptors, a kind of class description and a training method, image classification can be performed. For object localization within an image however, a strategy is needed to estimate classifications for parts of images instead of images as a whole.
+
+The most straightforward method, which also has had many applications, is to take a window on a test image, and to classify that part of the image as if it were an image in itself. This sliding window approach \todo[fancyline]{reference} is just a small conceptual step, but generates a lot of possible windows to be classified, therefore costing much computation. This hampers the applicability of this naive method. Smarter versions of this approach include include a divide-and-conquer tactic called branch-and-bound search. \cite{lampert2008beyond} In this method, a fitness (response) of the current window is calculated, and then the window is subdivided in two non-overlapping windows, the most promising of which is iteratively subdivided until the globally highest fitness is found. However being much faster than the vanilla sliding window approach, it has the disadvantage of covering hard boundaries between subwindows, making it hard to find exact locations of objects.
+
+Part-based models have a different approach. This method models classes with special regional descriptors which define the relative orientation and scale of parts of an object with respect to the location and size of the object as a whole. \cite{leibe2004combined, chum2007exemplar, felzenszwalb2010object} These descriptors enable the detection algorithm to look for the arrangement of descriptors in a test image, and to define the most likely locations of objects. Some methods expand this into trying to create 3D models of classes, to make matching rotation independent. \todo[fancyline]{reference}
+% subsection detection_methods (end)
+
+\subsection{VOC data set} % (fold)
+\label{sub:voc_data_set}
+The Visual Object Classes (VOC) challenge of the PASCAL network \todo[fancyline]{reference} provides a popular data set annotated for image detection \todo[fancyline]{reference}, and will form the main task to perform. Because it is popular, a lot of comparison with other methods is possible, among which some state of the art methods and similar approaches.
+
+\todo[inline]{Needs more elaboration, or not really?}
+% subsection voc_data_set (end)
 
 % section introduction (end)
 
 \section{Related Work} % (fold)
 \label{sec:related_work}
-
+\todo[inline]{Write Related Work. Perhaps this can better be incorporated in the previous subsections, otherwise it will be too much repetition...}
 % section related_work (end)
 
 \section{Naive Bayes Nearest Neighbor} % (fold)
 \label{sec:naive_bayes_nearest_neighbor}
 
+Boiman \emph{et al.} \cite{boiman2008defense} coined the term Naive Bayes Nearest Neighbor (NBNN) for their image classification algorithm, that used a combination of Nearest-Neighbor (NN) comparison and Naive Bayes classification to classify images in a multi-class setting. The approach works well because of the non-parametric character of the approach, which means no learning of parameters is required. This makes it easy to use the method on a problem with a large number of classes (parametric methods usually (not always) model multi-class problems as multiple 2-class problems), and that the risk of overfitting is small because there are no parameters to be overfit. They achieved results competitive to the (then) state of the art Bag of Words methods\todo[fancyline]{reference} because of two requirements their method meets: Avoiding feature quantization and the use of image-to-class distance instead of image-to-image distances. They theorize that earlier attempts to use NN \todo[fancyline]{references} for image classification failed because these do not meet both of these requirements.
+
+Descriptor or feature quantization is a means of creating compact image descriptions, such as the ones used in the BoW methods. In BoW, all descriptors of an image are clustered into visual words, and histograms are constructed counting the occurrence of each word in an image. Image matching is based on comparing these histograms. Boiman shows that, while being useful in learning-based methods, quantization is harmful for a NN approach because the most informative descriptors get the highest quantization error while being necessary for finding nearest neighbors. NBNN uses every single descriptor of each image to perform NN on.
+
+Kernel methods (such as SVM) are based on image-to-image distances to create decision boundaries. For NN, image-to-image distances do not enable much generalization, as no inference is done from the training images. It would mean only test images close to known images will be classified correctly. Therefore, image-to-class distance should be used. While an image might be close to another one, it might be far removed from the whole class of that image. \todo[fancyline]{add image like in Boiman or Wang2009?}\cite{wang2009learning}
+
+The NBNN decision rule is defined under the Naive Bayes assumption that all descriptors $d$ of a query image $Q$ are independent given its class $C$.\todo[fancyline]{make a critical note of this assumptions or not?} This results in Maximum Likelihood classifier 
+\begin{align}
+    \hat C &= \argmax_C p(Q|C)\\
+           &= \argmax_C \frac{1}{n}\sum_{i=1}^{n} \log p(d_i|C).
+\end{align}
+
+Boiman densely samples the training set to get a very high number of descriptors per class $L = |d^C|$. This enables him to model $p(d|C)$ using Parzen likelihood estimation:
+\begin{equation}
+    \hat p(d|C) = \frac{1}{L}\sum_{j=1}^L K(d-d_j^C),
+\end{equation}
+where $K(\cdot)$ usually is a Gaussian Parzen kernel function defining the distance between $d$ and $d_j^C$. When $L$ goes to infinity, $\hat p(d|C)$ approaches $p(d|C)$.
+
+This approach entails calculating the distance of $d$ to all $L$ descriptors of each class, which would be very costly. Because only a small minority of the descriptors can be expected to be significantly close to $d$, taking into account only the nearest descriptors is a safe approximation, which enables using nearest neighbors (NN) to find these descriptors. Even more so, Boiman shows that taking only the 1 nearest neighbor hurts performance but little. Because of this the Parzen estimate of $d$ to class $C$ reduces to the distance of $d$ to its nearest neighbor in $C$: $\|d - \text{NN}_C(d)\|^2$, resulting in the following log likelihood and classifier: 
+\begin{align}
+    \log P(Q|C) &\propto -\sum_{i=1}^n \|d_i - \text{NN}_C(d_i)\|^2 \\
+    \hat C      &= \argmin_C \sum_{i=1}^n \|d_i - \text{NN}_C(d_i)\|^2
+\end{align}
+
+Now, classification comes down to calculating descriptors for all images in each class and for the query image, estimating the nearest neighbor of each query descriptor for each class, calculating the sum of distances for each class for the query image and selecting the lowest distance. This approach is both very simple and intuitive. It also enables use of different kinds and combinations of descriptors.
+
+\subsection{Limitations and extensions} % (fold)
+\label{sub:limitations_and_extensions}
+
+Even though the algorithm of \cite{boiman2008defense} is very simple and requires no training phase, it does have its scalability issues because of its high memory use. Because all densely computed descriptors for each image in the training set have to be stored, and the nearest neighbor for each descriptor of each query image on each class has to be found, the memory usage is much higher than for example BoW methods, which use a more compact representation of images. Calculating NN can be sped up by using sophisticated Approximations of the Nearest Neighbor algorithm, such as \todo[fancyline]{cite FLANN, ANN}. The memory issue remains however.
+
+Other limitations have been shown by various authors. \cite{behmo2010towards, wang2011improved,mccann2011local,tuytelaars2011nbnn,timofte2012iterative}
+
+\todo[inline]{Write stuff on behmo, mccann, tuytelaars, becker, wang, timofte, should perhaps include illustrations of the idea.}
+% subsection limitations_and_extensions (end)
+
 % section naive_bayes_nearest_neighbor (end)
 
-\section{Object Detection} % (fold)
+\section{Object Detection Using Part-Based Models} % (fold)
 \label{sec:object_detection}
 
+\todo[inline]{Write Theory on Part-Based Modeling. Focus on ISM (Leibe), Becker/ Chum, Felzenszwalb, perhaps roots of the method? Show images of the idea (perhaps comparing the methods)}
+
+\section{Foreground-Background classification} % (fold)
+\label{sec:foreground_background_classification}
+\todo[inline]{Write something about fg/bg classification (is that the right term?). This is the main addition to Becker's method, so make it clear. Show some images illustrating the idea}
+% section foreground_background_classification (end)
 % section object_detection (end)
+\section{Use of NBNN in a Part-Based Model} % (fold)
+\label{sec:linking}
+\todo[inline]{Show how NN can be used in a part-based model (perhaps diverge a little to other methods that use NN and detection, but in a different way (SVM-kNN, galleguillos, etc.), !perhaps not here but in related work section!). Focus on Becker's method, then emphasize the difference here, by using fg/bg, including Behmo's normalization}
+% section linking (end)
 
 \section{Experimental Setup} % (fold)
 \label{sec:experimental_setup}
+\todo[inline]{[IDEA: Perhaps split up the setup/results sections differently: first classification + results, then detection + results???]\\
+Write Setup of experiment. Experiments on classification (caltech, VOC) first to show the workings (NBNN with fg/bg, with and without behmo), and then on detection. Explain the evaluation method of VOC, explain to what the results are compared}
 
 % section experimental_setup (end)
 
 \section{Results} % (fold)
 \label{sec:results}
+\todo[inline]{IDEA: See Setup section\\
+Write down results of classification and detection tests. Show images of results, and visualizations of what has actually been done. Compare results with other methods' results (such as boiman, simple BoW, Becker, McCann\&Lowe)}
 
 % section results (end)
 
 \section{Conclusion} % (fold)
 \label{sec:conclusion}
+\todo[inline]{Write Conclusion. Give explanation of the results, compared to each other and others. Relate back to the theory, Answer the main question and explain why predictions have or have not come true}
 
 % section conclusion (end)
 
 \section{Discussion} % (fold)
 \label{sec:discussion}
+\todo[inline]{IDEA: perhaps as subsection, or integrated with Conclusion? Perhaps put it before Conclusion and see conclusion more as a small wrap-up? Or first wrap-up, then elaborate the causes? Give future work etc.}
 
 % section discussion (end)
 
-\bibliographystyle{ieeetr}
+\bibliographystyle{is-plain}
 \bibliography{ref}
 
 \end{document}
