@@ -44,6 +44,7 @@ I expect this goal to be achievable even though there seem to be some pitfalls t
 
 The remainder of this section will be used to describe the object detection task in more detail, and to give some related work on (parts of) this task. 
 \todo[inline]{Is it needed to put in the following fairly general subsections? My reasoning is: In my thesis I have to show my acquired knowledge during the Master, so it should be a bit broader than in the case of a paper/article, therefore put it in. Also: good for a broad audience(?)}
+
 \subsection{Image Descriptors} % (fold)
 \label{sub:image_descriptors}
 To be able to make a description of each object type, or class, a representation of each (part of an) image is needed that best captures the informative aspects of the objects. The most basic descriptor type is to use the pixel values of the image. These capture the image exactly and might therefore seem very useful as descriptors of object types. The problem however with pixel values, is that images tend to vary wildly in them, even though the exact same object might pictured.
@@ -134,7 +135,7 @@ Even though the algorithm of \cite{boiman2008defense} is very simple and require
 
 Other limitations have been shown by various authors. \cite{behmo2010towards, wang2011improved,mccann2011local,tuytelaars2011nbnn,timofte2012iterative}
 
-\todo[inline]{Write stuff on behmo, mccann, tuytelaars, becker, wang, timofte, should perhaps include illustrations of the idea.}
+\todo[inline]{Write stuff on behmo, mccann, tuytelaars, becker, wang, timofte, should perhaps include illustrations of the idea. Emphasise the large amount of assumptions and approximations in Boiman's method (NB assumption, Parzen estimation itself, simplification of Parzen, Approximate NN, dependence not only on equal priors but also on sampling densities which gives problems with skewed distributions over classes (Behmo/Wang)) }
 % subsection limitations_and_extensions (end)
 
 % section naive_bayes_nearest_neighbor (end)
