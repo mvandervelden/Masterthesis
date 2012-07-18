@@ -20,15 +20,24 @@ def train_voc(descriptor_function, estimator, object_type, VOCopts, \
             log.info('==== GET %s DESCRIPTORS ====', cls)
             descriptors = get_image_descriptors(img_set, descriptor_function, \
                 descriptor_path)
-            if object_type == 'bbox':
+            if not object_type == 'fgbg':
+                if object_type == 'bbox':
+                    # Get descriptor's objects (bboxes):
+                    log.info('==== GET %s OBJECTS ====', cls)
+                    objects = get_objects_by_class(img_set, cls)
+                    descriptors = get_bbox_descriptors(objects, descriptors)
+                elif object_type == 'image':
+                    descriptors = [d for p,d in descriptors.values()]
+                log.info('==== ADD %s DESCRIPTORS TO ESTIMATOR', cls)
+                estimator.add_class(cls, descriptors)
+            else:
                 # Get descriptor's objects (bboxes):
                 log.info('==== GET %s OBJECTS ====', cls)
                 objects = get_objects_by_class(img_set, cls)
-                descriptors = get_bbox_descriptors(objects, descriptors)
-            elif object_type == 'image':
-                descriptors = [d for p,d in descriptors.values()]
-            log.info('==== ADD %s DESCRIPTORS TO ESTIMATOR', cls)
-            estimator.add_class(cls, descriptors)
+                fg_descriptors = get_bbox_descriptors(objects, descriptors)
+                estimator.add_class(cls+'_fg', fg_descriptors)
+                bg_descriptors = get_background_descriptors(img_set, descriptors)
+                estimator.add_class(cls+'_bg', bg_descriptors)
 
 def make_voc_tests(descriptor_function, VOCopts, TESTopts):
     log.info('==== GENERATING TEST IMAGES =====')

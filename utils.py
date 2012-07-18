@@ -41,6 +41,7 @@ def getopts(configfile, tmpdir):
     if not os.path.exists(DESCRopts['cache_dir']):
         os.mkdir(DESCRopts['cache_dir'])
     res_folder = '/'.join(TESTopts['result_path'].split('/')[:-1])
+    TESTopts['res_folder'] = res_folder
     if not os.path.exists(res_folder):
         os.mkdir(res_folder)
     log_folder = '/'.join(TESTopts['log_path'].split('/')[:-1])
