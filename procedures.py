@@ -7,7 +7,7 @@ import os.path
 log = logging.getLogger("__name__")
 
 def train_voc(descriptor_function, estimator, object_type, VOCopts, \
-        descriptor_path=None):
+        descriptor_path=None, exemplar_path=None):
     for i,cls in enumerate(VOCopts.classes):
         if not cls in estimator.classes:
             log.info('==== GET CLASS %d: %s IMAGES ====', i, cls)
@@ -34,10 +34,18 @@ def train_voc(descriptor_function, estimator, object_type, VOCopts, \
                 # Get descriptor's objects (bboxes):
                 log.info('==== GET %s OBJECTS ====', cls)
                 objects = get_objects_by_class(img_set, cls)
-                fg_descriptors = get_bbox_descriptors(objects, descriptors)
-                estimator.add_class(cls+'_fg', fg_descriptors)
-                bg_descriptors = get_background_descriptors(img_set, descriptors)
+                bg_descriptors = get_bbox_bg_descriptors(objects, descriptors)
                 estimator.add_class(cls+'_bg', bg_descriptors)
+                if not exemplar_path is None:
+                    fg_descriptors, exemplars = get_bbox_descriptors(objects, descriptors, exemplars=True)
+                    estimator.add_class(cls+'_fg', fg_descriptors)
+                    log.info('==== SAVING EXEMPLARS to %s ====', exemplar_path)
+                    with open(exemplar_path%cls,'wb') as ef:
+                        cPickle.dump(exemplars, ef)
+                else:
+                    fg_descriptors = get_bbox_descriptors(objects, descriptors)
+                    estimator.add_class(cls+'_fg', fg_descriptors)
+
 
 def make_voc_tests(descriptor_function, VOCopts, TESTopts):
     log.info('==== GENERATING TEST IMAGES =====')

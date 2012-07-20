@@ -39,12 +39,16 @@ if __name__ == '__main__':
     log.info('==== LOAD IMAGE DESCRIPTORS ====')
     descriptors = get_image_descriptors(images, descriptor_function, \
         TESTopts['descriptor_path'])
+    descr_list = [(im_id, p[:,:3], d) for im_id, (p, d) in descriptors.items()]
     log.info('==== GET ESTIMATES ====')
     # Getting fgbg estimates for full image
-    distances = estimator.get_estimates([cls+'_fg',cls+'_bg'], descriptors)
+    distances = estimator.get_estimates([cls+'_fg',cls+'_bg'], [d for i,p,d in descr_list])
     log.info('==== SAVE DISTANCES ====')
     with open (TESTopts['res_folder']+'/distances_%s.pkl'%cls, 'wb') as dfile:
-        cPickle.dump((distances, images),dfile)
+        cPickle.dump(distances, dfile)
+        cPickle.dump([p for i,p,d in descr_list], dfile)
+        cPickle.dump([im_id for im_id,p,d in descr_list], dfile)
+        cPickle.dump(images, dfile)
     # log.info('==== GET OBJECT DESCRIPTORS FROM IMAGES ====')
     # objects = get_objects(images)
     # descriptors = get_bbox_descriptors(objects, descriptors)

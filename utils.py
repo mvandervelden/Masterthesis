@@ -11,9 +11,7 @@ def getopts(configfile, tmpdir):
     DESCRopts = dict(cfg.items("DESCRIPTOR"))
     NBNNopts = dict(cfg.items("NBNN"))
     TESTopts = dict(cfg.items("TEST"))
-    DESCRopts['outputFormat'] = DESCRopts['outputformat']
-    del DESCRopts['outputformat']
-    print DESCRopts['outputFormat']
+
     DESCRopts['cache_dir'] = '/'.join([tmpdir, DESCRopts['cache_dir']])
     NBNNopts['nbnn_dir'] = '/'.join([tmpdir, NBNNopts['nbnn_dir']])
     
@@ -37,6 +35,11 @@ def getopts(configfile, tmpdir):
         TESTopts['keep_descriptors'] = TESTopts['keep_descriptors'] == 'True'
     if 'log_level' in NBNNopts:
         NBNNopts['log_level'] = int(NBNNopts['log_level'])
+    if 'outputformat' in DESCRopts:
+        DESCRopts['outputFormat'] = DESCRopts['outputformat']
+        del DESCRopts['outputformat']
+        print DESCRopts['outputFormat']
+
     # Make sure some folders exist
     if not os.path.exists(DESCRopts['cache_dir']):
         os.mkdir(DESCRopts['cache_dir'])
@@ -49,6 +52,18 @@ def getopts(configfile, tmpdir):
         os.mkdir(log_folder)
     
     return DESCRopts, NBNNopts, TESTopts
+
+def get_detection_opts(configfile, tmpdir):
+    DESCRopts, NBNNopts, TESTopts = getopts(configfile, tmpdir)
+    cfg = RawConfigParser()
+    cfg.read(configfile)
+    DETECTIONopts = dict(cfg.items("DETECTION"))
+    DETECTIONopts['exemplar_path'] = '/'.join([tmpdir, DETECTIONopt['exemplar_path']])
+    exemplar_dir = '/'.join(DETECTIONopts['exemplar_path'].split('/')[:-1])
+    if not os.path.exists(exemplar_dir):
+        os.mkdir(exemplar_dir)
+    return DESCRopts, NBNNopts, TESTopts, DETECTIONopts
+    
 
 def get_confidence_values(distances):
     cv = []
@@ -83,6 +98,19 @@ def save_results_to_file(file, objects, confidence_values):
                     obj.xmin, obj.ymin, obj.xmax, obj.ymax))
                 
     log.info("Saved results to %s",file)
+
+def save_detections_to_file(file, detections):
+    log = logging.getLogger("__name__")
+    with open(file,'a')
+    elif isinstance(objects[0], Object):
+        log.info('Saving image detection files (by bbox)')
+        with open(file, 'a') as f:
+            for obj, cv in zip(objects,confidence_values):
+                f.write('%s %f %d %d %d %d\n'%(obj.image.im_id, cv, \
+                    obj.xmin, obj.ymin, obj.xmax, obj.ymax))
+                
+    log.info("Saved results to %s",file)
+
 
 def init_log(log_path, cls, mode='a'):
     print "log_path: %s, log_file: %s"%(log_path, log_path%cls)

@@ -3,8 +3,8 @@
 echo "Running training"
 CFGFILE=$1
 TMPFOLDER=$2
-mkdir "$TMPFOLDER"
-python voc_fgbg_bcls.py $CFGFILE $TMPFOLDER
+# mkdir "$TMPFOLDER"
+# python voc_fgbg_bcls.py $CFGFILE $TMPFOLDER
 NO_BATCHES=`cat $TMPFOLDER/testinfo.txt | sed -n '1p'`
 NO_CLASSES=`cat $TMPFOLDER/testinfo.txt | sed -n '2p'`
 CLASSES=(`cat $TMPFOLDER/testinfo.txt | tail -n +3`)
