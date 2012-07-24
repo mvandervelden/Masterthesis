@@ -128,7 +128,7 @@ if __name__ == '__main__':
             best_cluster_idx = cluster_hypotheses(overlap, indexes, DETECTIONopts['theta_m'])
             # merge the biggest cluster of hypotheses into a detection, and append it
             log.debug(' Best cluster size: %d',best_cluster_idx.shape[0])
-            detections.append(merge_cluster(hypotheses[best_cluster_idxs], im_ids[i]))
+            detections.append(merge_cluster(hypotheses[best_cluster_idx], im_ids[i]))
             # Select hypotheses to remove based on the cluster and the removal threshold theta_p
             hypotheses, overlap, indexes = remove_clusters(best_cluster_idx, detection[3:], hypotheses,overlap, indexes, DETECTIONopts['theta_p'])
             
