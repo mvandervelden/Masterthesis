@@ -61,18 +61,22 @@ def cluster_hypotheses(overlapvals, index_arr, threshold=0.8):
     # (reverse sorting)
     srt_idx = overlapvals.argsort()[::-1]
     
-    clustered_idx = dict()
-    clusters = dict()
-    cur_clust = 1
-    
     if overlapvals[srt_idx[0]] < threshold:
         # If no hypotheses have overlap >= threshold, return the first one
         return [index_arr[srt_idx[0],[0]]]
     
+    # Remove superfluous indexes (below threshold)
+    srt_idx = srt_idx[overlapvals[srt_idx] >= threshold]
+    clustered_idx = dict()
+    # clusters = dict()
+    cur_clust = 1
+    log.debug(" No of overlaps above threshold: %d",srt_idx.shape[0])
     for idx in srt_idx:
+        if cur_clust%10 == 0:
+            log.debug("No of clusters: %d, no. of idx covered: %d", cur_clust-1, len(clustered_idx.keys()))
         if overlapvals[idx] < threshold:
-            # Return the then biggest cluster
-            return np.array(sorted([(len(v),v) for v in clusters.values()], reverse=True)[0][1],np.uint32)
+            # Return the then biggest cluster, not used if correct
+            return get_largest_cluster(clustered_idx)
         else:
             # Add next two overlapping hypotheses to a cluster
             i = index_arr[idx,0]
@@ -84,32 +88,48 @@ def cluster_hypotheses(overlapvals, index_arr, threshold=0.8):
                     # log.debug('Adding cluster %d, merging i=%d and j=%d'%(cur_clust,i,j))
                     clustered_idx[i] = cur_clust
                     clustered_idx[j] = cur_clust
-                    clusters[cur_clust] = [i,j]
+                    # clusters[cur_clust] = [i,j]
                     cur_clust += 1
                 else:
                     # If j has a cluster, but i not: Add i to cluster of j
                     # log.debug('Adding i=%d to cluster %d of j=%d'%(i,clustered_idx[j],j))
                     clustered_idx[i] = clustered_idx[j]
-                    clusters[clustered_idx[j]].append(i)
+                    # clusters[clustered_idx[j]].append(i)
             else:
                 if not j in clustered_idx:
                     # If i has a cluster, but j not: Add j to cluster of i
                     # log.debug('Adding j=%d to cluster %d of i=%d'%(j,clustered_idx[i],i))
                     clustered_idx[j] = clustered_idx[i]
-                    clusters[clustered_idx[i]].append(j)
+                    # clusters[clustered_idx[i]].append(j)
                 elif not clustered_idx[i] == clustered_idx[j]:
                     # If both are clustered, but not yet in to the same
                     # cluster, merge them
                     # print 'Merging cluster %d=%s with %d=%s into %d=%s'%(clustered_idx[i],clusters[clustered_idx[i]],clustered_idx[j],clusters[clustered_idx[j]],cur_clust,clusters[clustered_idx[i]] + clusters[clustered_idx[j]])
-                    clusters[cur_clust] = clusters[clustered_idx[i]] + clusters[clustered_idx[j]]
-                    clustered_idx[i] = cur_clust
-                    clustered_idx[j] = cur_clust
-                    cur_clust += 1
+                    # clusters[cur_clust] = clusters[clustered_idx[i]] + clusters[clustered_idx[j]]
+                    c1 = clustered_idx[i]
+                    c2 = clustered_idx[j]
+                    for k,v in clustered_idx.items():
+                        if v == c2:
+                            # Add c2 to c1
+                            clustered_idx[k] = c1
                 #else:
                 # already clustered to the same cluster. Not needed to cluster
     # If the for-loop runs out, all overlaps are above threshold:
-    return np.array(sorted([(len(v),v) for v in clusters.values()], reverse=True)[0][1])
+    return get_largest_cluster(clustered_idx)
 
+def get_largest_cluster(idxs):
+    log.debug("Calculating largest cluster of %d indexes", len(idxs.keys()))
+    clusters = dict()
+    for v in idxs.values():
+        if not v in clusters:
+            clusters[v] = 1
+        else:
+            clusters[v] += 1
+    largest = sorted([(sz,k) for (k,sz) in clusters.items()], reverse=True)[0]
+    log.debug("Found %d clusters, largest is %d: sz %d", len(clusters.keys()), largest[1],largest[0])
+    cluster = [idx for (idx,clust) in idxs.items() if clust == largest[1]]
+    return cluster
+    
 """Below the implementation using hcluster
 Own implementation seems more useful"""
 # def cluster_hypotheses(hypotheses, threshold=0.8):
