@@ -29,9 +29,9 @@ if __name__ == "__main__":
     train_voc(descriptor_function, estimator, 'bbox',  VOCopts, \
         TESTopts['descriptor_path'])
     
-    log.info('==== REMOVING TRAIN DESCRIPTORS FROM DISK ====')
-    delete_descriptor_file(TESTopts['descriptor_path'])
-    
+    # log.info('==== REMOVING TRAIN DESCRIPTORS FROM DISK ====')
+    # delete_descriptor_file(TESTopts['descriptor_path'])
+    # 
     # Save descriptors of test set to disk
     make_voc_tests(descriptor_function, VOCopts, TESTopts)
     
