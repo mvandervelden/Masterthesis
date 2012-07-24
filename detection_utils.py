@@ -195,6 +195,8 @@ def remove_cluster(cluster, det_bbox, hypotheses, overlap, indexes, threshold=0.
         elif get_overlap(hypotheses[i,1:], det_bbox) > threshold:
             # If overlap too big, remove too
             to_be_removed.append(i)
+    log.debug('  hypotheses to be removed: %d out of %d', len(to_be_removed), n)
+    hypotheses = hypotheses[~to_be_removed]
     if len(to_be_removed) == n:
         # Nothing to do anymore: everything is clustered.
         return None, None, None
@@ -204,5 +206,5 @@ def remove_cluster(cluster, det_bbox, hypotheses, overlap, indexes, threshold=0.
         for i in xrange(indexes.shape[0]):
             if indexes[i,0] in to_be_removed or indexes[i,1] in to_be_removed:
                 overlap_to_be_removed.append(i)
-
-        return hypotheses[~to_be_removed], overlap[~overlap_to_be_removed], indexes[~overlap_to_be_removed]
+        log.debug('  overlaps to be removed: %d out of %d', len(overlap_to_be_removed), n)
+        return hypotheses, overlap[~overlap_to_be_removed], indexes[~overlap_to_be_removed]
