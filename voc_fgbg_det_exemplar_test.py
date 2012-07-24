@@ -130,7 +130,7 @@ if __name__ == '__main__':
             log.debug(' Best cluster size: %d',best_cluster_idx.shape[0])
             detections.append(merge_cluster(hypotheses[best_cluster_idx], im_ids[i]))
             # Select hypotheses to remove based on the cluster and the removal threshold theta_p
-            hypotheses, overlap, indexes = remove_clusters(best_cluster_idx, detection[3:], hypotheses,overlap, indexes, DETECTIONopts['theta_p'])
+            hypotheses, overlap, indexes = remove_cluste(best_cluster_idx, detection[3:], hypotheses,overlap, indexes, DETECTIONopts['theta_p'])
             
     log.debug(' Found %d Detections', len(detections))
     # Save detections of image to resultsfiles
