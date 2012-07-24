@@ -1,5 +1,5 @@
 import logging, logging.config
-import os, os.path, subprocess
+import os, os.path, subprocess, cPickle
 from ConfigParser import RawConfigParser
 from nbnn.vocimage import *
 from nbnn.voc import VOC
@@ -38,7 +38,6 @@ def getopts(configfile, tmpdir):
     if 'outputformat' in DESCRopts:
         DESCRopts['outputFormat'] = DESCRopts['outputformat']
         del DESCRopts['outputformat']
-        print DESCRopts['outputFormat']
 
     # Make sure some folders exist
     if not os.path.exists(DESCRopts['cache_dir']):
@@ -58,7 +57,13 @@ def get_detection_opts(configfile, tmpdir):
     cfg = RawConfigParser()
     cfg.read(configfile)
     DETECTIONopts = dict(cfg.items("DETECTION"))
-    DETECTIONopts['exemplar_path'] = '/'.join([tmpdir, DETECTIONopt['exemplar_path']])
+    
+    if 'theta_m' in DETECTIONopts:
+        DETECTIONopts['theta_m'] = float(DETECTIONopts['theta_m'])
+    if 'theta_p' in DETECTIONopts:
+        DETECTIONopts['theta_p'] = float(DETECTIONopts['theta_p'])
+    
+    DETECTIONopts['exemplar_path'] = '/'.join([tmpdir, DETECTIONopts['exemplar_path']])
     exemplar_dir = '/'.join(DETECTIONopts['exemplar_path'].split('/')[:-1])
     if not os.path.exists(exemplar_dir):
         os.mkdir(exemplar_dir)
@@ -99,22 +104,21 @@ def save_results_to_file(file, objects, confidence_values):
                 
     log.info("Saved results to %s",file)
 
-def save_detections_to_file(file, detections):
-    log = logging.getLogger("__name__")
-    with open(file,'a')
-    elif isinstance(objects[0], Object):
-        log.info('Saving image detection files (by bbox)')
-        with open(file, 'a') as f:
-            for obj, cv in zip(objects,confidence_values):
-                f.write('%s %f %d %d %d %d\n'%(obj.image.im_id, cv, \
-                    obj.xmin, obj.ymin, obj.xmax, obj.ymax))
-                
-    log.info("Saved results to %s",file)
+def save_to_pickle(filename,data):
+    if not os.path.exists(filename):
+        with open(filename,'wb') as pklfile:
+            cPickle.dump(data, pklfile)
+    else:
+        with open(filename,'rb') as pklfile:
+            data_old = cPickle.load(pklfile)
+        data_old.extend(data)
+        with open(filename, 'wb') as pklfile:
+            cPickle.dump(data_old, pklfile)
 
 
 def init_log(log_path, cls, mode='a'):
-    print "log_path: %s, log_file: %s"%(log_path, log_path%cls)
-    print "mode:", mode
+    # print "log_path: %s, log_file: %s"%(log_path, log_path%cls)
+    # print "mode:", mode
     # Setup a config file
     subprocess.call(["./setlog.sh", log_path%cls, mode])
     

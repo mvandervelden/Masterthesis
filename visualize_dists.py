@@ -79,7 +79,7 @@ if __name__ == '__main__':
         plt.savefig(path[:-4]+'_diff.png')
         plt.clf()
     
-    for i,im_id in enumerate(im_ids):
+    for i,im_id in enumerate([im_ids[0]] ):
         print im_id
         points = np.asarray(allpoints[i])
         fg_distances = distances[i][:,0]
@@ -90,12 +90,13 @@ if __name__ == '__main__':
                 break
         
         # plot dist ratio, to compare: redder = closer to bg, bluer = closer to fg
-        diff_d = (bg_distances-fg_distances)/fg_distances
+        # diff_d = (bg_distances-fg_distances)/fg_distances
+        diff_d = bg_distances-fg_distances
         plt.imshow(imarr)
-        plt.hexbin(points[:,0], points[:,1],C=diff_d,alpha=.2,gridsize=xsize/8 ,bins='log')
+        plt.hexbin(points[:,0], points[:,1],C=diff_d,alpha=.2,gridsize=xsize/8) # ,bins='log')
         cb = plt.colorbar()
-        cb.set_label('log10((bgd-fgd)/fgd)')
-        plt.savefig(path[:-4]+'_%s_quality.png'%im_id)
+        cb.set_label('bg_dist - fg_dist')
+        plt.savefig(path[:-4]+'_%s_quality2.png'%im_id)
         plt.clf()
     
     
