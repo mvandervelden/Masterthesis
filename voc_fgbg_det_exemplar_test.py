@@ -114,6 +114,8 @@ if __name__ == '__main__':
         # ymax = point_y + (rel_y * rel_bb_h * point_sigma)
         hypotheses[:,4] = fg_points[:,1]+(im_exemplars[:,3] * im_exemplars[:,1] * fg_points[:,2])
         
+        """Consider saving hypotheses and doing clustering later on..."""
+        
         # get pairwise overlap (don't have to calculate each time)
         overlap, indexes = get_pairwise_overlap(hypotheses)
         log.debug('Mean overlap:%.5f',overlap.mean())

@@ -5,6 +5,8 @@ import logging
 log = logging.getLogger("__name__")
 
 def get_pairwise_overlap(hyp):
+    # Can do to with scipy.spatial.distance.pdist, but does not give index array back
+    
     n = hyp.shape[0]
     
     log.debug('--Trying to get pairwise overlap of %d combinations',n/2.0 * (n-1))
