@@ -127,7 +127,7 @@ def get_largest_cluster(idxs):
             clusters[v] += 1
     largest = sorted([(sz,k) for (k,sz) in clusters.items()], reverse=True)[0]
     log.debug("Found %d clusters, largest is %d: sz %d", len(clusters.keys()), largest[1],largest[0])
-    cluster = np.array([idx for (idx,clust) in idxs.items() if clust == largest[1]]
+    cluster = np.array([idx for (idx,clust) in idxs.items() if clust == largest[1]])
     return cluster
     
 """Below the implementation using hcluster
