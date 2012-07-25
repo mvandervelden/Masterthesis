@@ -5,9 +5,9 @@ CFGFILE=$1
 CFGTESTFILE=$2
 TMPFOLDER=$3
 
-mkdir "$TMPFOLDER"
-
-python voc_fgbg_det_exemplar.py $CFGFILE $TMPFOLDER
+# mkdir "$TMPFOLDER"
+# 
+# python voc_fgbg_det_exemplar.py $CFGFILE $TMPFOLDER
 NO_BATCHES=`cat $TMPFOLDER/testinfo.txt | sed -n '1p'`
 NO_CLASSES=`cat $TMPFOLDER/testinfo.txt | sed -n '2p'`
 CLASSES=(`cat $TMPFOLDER/testinfo.txt | tail -n +3`)
