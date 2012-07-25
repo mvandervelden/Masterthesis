@@ -9,7 +9,7 @@ def get_pairwise_overlap(hyp):
     
     n = hyp.shape[0]
     
-    log.debug('--Trying to get pairwise overlap of %d combinations',n/2.0 * (n-1))
+    log.debug('--Trying to get pairwise overlap of %.1f combinations',n/2.0 * (n-1))
     # Overlap = intersection/union of 2 hypotheses
     
     # make a vector representing the upper right triangle of a distance matrix

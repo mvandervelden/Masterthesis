@@ -52,7 +52,7 @@ if __name__ == '__main__':
     
     # Getting fgbg estimates for full image
 
-    log.info("Getting estimates for %s descriptors."%descriptors_array.shape[0])
+    log.info("Getting estimates for %s descriptors.", descriptors_array.shape[0])
 
     cls_dst = np.zeros((descriptors_array.shape[0], 2), np.double)
     cls_dst[:,0], nn_descr_idxs = estimator.get_class_estimates(cls+'_fg', descriptors_array, return_result=True)
@@ -120,7 +120,7 @@ if __name__ == '__main__':
         hypotheses[:,4] = fg_points[:,1]+(im_exemplars[:,3] * im_exemplars[:,1] * fg_points[:,2])
         log.debug(" --- First 10 hypotheses:")
         for t in range(10):
-            log.debug(" ---    hyp: %s, fg_point: %s, exemplar: %s",(hypotheses[t,:], fg_points[t,:], im_exemplars[t,:]))
+            log.debug(" ---    hyp: %s, fg_point: %s, exemplar: %s",hypotheses[t,:], fg_points[t,:], im_exemplars[t,:])
         
         log.info('==== SAVING HYPOTHESES ETC. ====')
         with open(DETECTIONopts['hypotheses_path']%(cls,im_ids[i]), 'wb') as dfile:
