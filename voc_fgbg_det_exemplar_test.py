@@ -126,5 +126,4 @@ if __name__ == '__main__':
         with open(DETECTIONopts['hypotheses_path']%(cls,im_ids[i]), 'wb') as dfile:
             cPickle.dump(hypotheses, dfile)
             cPickle.dump(fg_points, dfile)
-            cPickle.dump(im_exemplars[:.3])
-            cPickle.dump(dist_arr, fdile)
+            cPickle.dump(im_exemplars, dfile)
