@@ -70,9 +70,9 @@ def cluster_hypotheses(overlapvals, index_arr, threshold=0.8):
     clustered_idx = dict()
     # clusters = dict()
     cur_clust = 1
-    log.debug(" No of overlaps above threshold: %d",srt_idx.shape[0])
+    log.debug(" --- No of overlaps above threshold: %d",srt_idx.shape[0])
     for idx in srt_idx:
-        if cur_clust%10 == 0:
+        if cur_clust%100 == 0:
             log.debug("No of clusters: %d, no. of idx covered: %d", cur_clust-1, len(clustered_idx.keys()))
         if overlapvals[idx] < threshold:
             # Return the then biggest cluster, not used if correct
@@ -118,7 +118,7 @@ def cluster_hypotheses(overlapvals, index_arr, threshold=0.8):
     return get_largest_cluster(clustered_idx)
 
 def get_largest_cluster(idxs):
-    log.debug("Calculating largest cluster of %d indexes", len(idxs.keys()))
+    log.debug(" --- Calculating largest cluster of %d indexes", len(idxs.keys()))
     clusters = dict()
     for v in idxs.values():
         if not v in clusters:
@@ -126,7 +126,7 @@ def get_largest_cluster(idxs):
         else:
             clusters[v] += 1
     largest = sorted([(sz,k) for (k,sz) in clusters.items()], reverse=True)[0]
-    log.debug("Found %d clusters, largest is %d: sz %d", len(clusters.keys()), largest[1],largest[0])
+    log.debug(" --- Found %d clusters, largest is %d: sz %d", len(clusters.keys()), largest[1],largest[0])
     cluster = np.array([idx for (idx,clust) in idxs.items() if clust == largest[1]])
     return cluster
     
@@ -178,8 +178,13 @@ Own implementation seems more useful"""
 def merge_cluster(cluster_of_hyp, im_id):
     """Make a detection, a tuple of (Qd, Qh, im_id, xmin,ymin,xmax,ymax)
     """
+
     Qd = cluster_of_hyp.shape[0]
     rest = cluster_of_hyp.mean(0)
+    log.debug(" --- Merged cluster of size: %s. Qd=%d",cluster_of_hyp.shape, Qd)
+    log.debug(" ---  max values per row: %s", cluster_of_hyp.max(0))
+    log.debug(" ---  min values per row: %s", cluster_of_hyp.min(0))
+    log.debug(" ---  mean values per row: %s (= detection)", cluster_of_hyp.min(0))
     return (Qd,rest[0], im_id, rest[1], rest[2], rest[3], rest[4])
     
 def remove_cluster(cluster, det_bbox, hypotheses, overlap, indexes, threshold=0.0):
@@ -195,9 +200,10 @@ def remove_cluster(cluster, det_bbox, hypotheses, overlap, indexes, threshold=0.
         elif get_overlap(hypotheses[i,1:], det_bbox) > threshold:
             # If overlap too big, remove too
             to_be_removed.append(i)
-    log.debug('  hypotheses to be removed: %d out of %d', len(to_be_removed), n)
-    hypotheses = hypotheses[~np.array(to_be_removed)]
+    log.debug(' ---  hypotheses to be removed: %d out of %d', len(to_be_removed), n)
+    hypotheses = hypotheses[~np.array(to_bex_removed)]
     if len(to_be_removed) == n:
+        log.debug(" ---  all is clustered, returning None")
         # Nothing to do anymore: everything is clustered.
         return None, None, None
     else:
@@ -206,6 +212,6 @@ def remove_cluster(cluster, det_bbox, hypotheses, overlap, indexes, threshold=0.
         for i in xrange(indexes.shape[0]):
             if indexes[i,0] in to_be_removed or indexes[i,1] in to_be_removed:
                 overlap_to_be_removed.append(i)
-        log.debug('  overlaps to be removed: %d out of %d', len(overlap_to_be_removed), n)
+        log.debug(' ---  overlaps to be removed: %d out of %d', len(overlap_to_be_removed), n)
         overlap_to_be_removed = np.array(overlap_to_be_removed)
         return hypotheses, overlap[~overlap_to_be_removed], indexes[~overlap_to_be_removed]

@@ -26,7 +26,7 @@ if __name__ == "__main__":
     estimator = nbnn.NBNNEstimator(**NBNNopts)
     
     # Train
-    exemplars = train_voc(descriptor_function, estimator, 'fgbg',  VOCopts, \
+    train_voc(descriptor_function, estimator, 'fgbg',  VOCopts, \
         TESTopts['descriptor_path'], exemplar_path=DETECTIONopts['exemplar_path'])
 
     #log.info('==== REMOVING TRAIN DESCRIPTORS FROM DISK ====')

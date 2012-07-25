@@ -20,7 +20,7 @@ if [ $THREADS -eq 1 ]; then
     for B in `seq 1 $NO_BATCHES`; do
         echo "Running batch $B"
         START_CLS=0
-        for P in `seq 1 $NO_CLASSES`; do
+        for P in `seq 0 $(($NO_CLASSES-1))`; do
             CLS=${CLASSES[$P]}
             echo "Running test on class no $P ($CLS)"
             python voc_fgbg_det_exemplar_test.py $CFGTESTFILE $TMPFOLDER $B $CLS

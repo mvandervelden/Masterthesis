@@ -58,6 +58,9 @@ def make_voc_tests(descriptor_function, VOCopts, TESTopts):
     for b,batch in enumerate(batches):
         with open(TESTopts['img_pickle_path']%(b+1), 'wb') as pklfile:
             cPickle.dump(batch, pklfile)
+        with open(TESTopts['img_pickle_path']%(b+1)+'.txt', 'w') as txtf:
+            for im in batch:
+                txtf.write(im.im_id+'\n')
     log.info('==== SAVING TESTINFORMATION =====')
     save_testinfo(TESTopts['infofile'], batches, VOCopts.classes)
 

@@ -64,9 +64,15 @@ def get_detection_opts(configfile, tmpdir):
         DETECTIONopts['theta_p'] = float(DETECTIONopts['theta_p'])
     
     DETECTIONopts['exemplar_path'] = '/'.join([tmpdir, DETECTIONopts['exemplar_path']])
+
     exemplar_dir = '/'.join(DETECTIONopts['exemplar_path'].split('/')[:-1])
     if not os.path.exists(exemplar_dir):
         os.mkdir(exemplar_dir)
+    DETECTIONopts['hypotheses_path'] = '/'.join([tmpdir, DETECTIONopts['hypotheses_path']])
+    hyp_dir = '/'.join(DETECTIONopts['hypotheses_path'].split('/')[:-1])
+    if not os.path.exists(hyp_dir):
+        os.mkdir(hyp_dir)
+    
     return DESCRopts, NBNNopts, TESTopts, DETECTIONopts
     
 
