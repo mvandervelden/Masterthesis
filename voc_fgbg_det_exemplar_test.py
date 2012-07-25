@@ -16,7 +16,7 @@ if __name__ == '__main__':
     
     # Get options into dicts
     VOCopts = VOC.fromConfig(configfile)
-    DESCRopts, NBNNopts, TESTopts, DETECTIONopts = get_detection_opts(configfile, tmpfile)
+    DESCRopts, NBNNopts, TESTopts, DETECTIONopts, test_scalings = get_detection_opts(configfile, tmpdir)
     
     # Setup logger
     if batch_no == 1:
@@ -91,7 +91,7 @@ if __name__ == '__main__':
         QH = (dist_arr[positives,1]-dist_arr[positives,0])/dist_arr[positives,0]
         log.debug(' --- Average QH value (rel dist d+ to d-) of positives: %f', QH.mean())
         log.debug(' --- Max QH value (rel dist d+ to d-) of positives: %f', QH.max())
-        log.debug(' --- Min QH value (rel dist d+ to d-) of positives: %f > 0.0', QH.max())
+        log.debug(' --- Min QH value (rel dist d+ to d-) of positives: %f > 0.0', QH.min())
         # Get the foreground points
         fg_points = points_list[i][positives,:]
         # get the indexes of the class's exemplars
@@ -115,9 +115,9 @@ if __name__ == '__main__':
         # ymin = point_y - (rel_y * rel_bb_h * point_sigma)
         hypotheses[:,2] = fg_points[:,1]-(im_exemplars[:,3] * im_exemplars[:,1] * fg_points[:,2])
         # xmax = point_x + (rel_x * rel_bb_w * point_sigma)
-        hypotheses[:,3] = fg_points[:,0]+(im_exemplars[:,2] * im_exemplars[:,0] * fg_points[:,2])
+        hypotheses[:,3] = fg_points[:,0]+((1.0/im_exemplars[:,2]) * im_exemplars[:,0] * fg_points[:,2])
         # ymax = point_y + (rel_y * rel_bb_h * point_sigma)
-        hypotheses[:,4] = fg_points[:,1]+(im_exemplars[:,3] * im_exemplars[:,1] * fg_points[:,2])
+        hypotheses[:,4] = fg_points[:,1]+((1.0/im_exemplars[:,3]) * im_exemplars[:,1] * fg_points[:,2])
         log.debug(" --- First 10 hypotheses:")
         for t in range(10):
             log.debug(" ---    hyp: %s, fg_point: %s, exemplar: %s",hypotheses[t,:], fg_points[t,:], im_exemplars[t,:])

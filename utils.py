@@ -73,7 +73,10 @@ def get_detection_opts(configfile, tmpdir):
     if not os.path.exists(hyp_dir):
         os.mkdir(hyp_dir)
     
-    return DESCRopts, NBNNopts, TESTopts, DETECTIONopts
+    # remove test scalings from DECRopts, put it apart
+    test_scalings = DESCRopts['ds_scales_tst']
+    del DESCRopts['ds_scales_tst']
+    return DESCRopts, NBNNopts, TESTopts, DETECTIONopts, test_scalings
     
 
 def get_confidence_values(distances):

@@ -15,7 +15,7 @@ if __name__ == "__main__":
     tmpdir = sys.argv[2]
     
     VOCopts = VOC.fromConfig(configfile)
-    DESCRopts, NBNNopts, TESTopts, DETECTIONopts = get_detection_opts(configfile, tmpdir)
+    DESCRopts, NBNNopts, TESTopts, DETECTIONopts, test_scalings = get_detection_opts(configfile, tmpdir)
     
     # Setup logger
     log = init_log(TESTopts['log_path'], 'main', 'w')
@@ -32,6 +32,8 @@ if __name__ == "__main__":
     #log.info('==== REMOVING TRAIN DESCRIPTORS FROM DISK ====')
     #delete_descriptor_file(TESTopts['descriptor_path'])
     
+    
+    DESCRopts['ds_scales'] = test_scalings
     # Save descriptors of test set to disk
     make_voc_tests(descriptor_function, VOCopts, TESTopts)
     

@@ -16,7 +16,7 @@ if __name__ == '__main__':
     im_id = sys.argv[5]
     # Get options into dicts
     VOCopts = VOC.fromConfig(configfile)
-    DESCRopts, NBNNopts, TESTopts, DETECTIONopts = get_detection_opts(configfile, tmpfile)
+    DESCRopts, NBNNopts, TESTopts, DETECTIONopts, test_scalings = get_detection_opts(configfile, tmpdir)
     
     # Setup logger
     if batch_no == 1:
