@@ -41,7 +41,8 @@ def train_voc(descriptor_function, estimator, object_type, VOCopts, \
                     estimator.add_class(cls+'_fg', fg_descriptors)
                     log.info('==== SAVING EXEMPLARS to %s ====', exemplar_path)
                     with open(exemplar_path%cls,'wb') as ef:
-                        cPickle.dump(exemplars, ef)
+                        np.save(ef, np.vstack(exemplars))
+                        # cPickle.dump(exemplars, ef)
                 else:
                     fg_descriptors = get_bbox_descriptors(objects, descriptors)
                     estimator.add_class(cls+'_fg', fg_descriptors)

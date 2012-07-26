@@ -19,7 +19,7 @@ def get_pairwise_overlap(hyp):
     indexes = np.zeros([n/2.0 * (n-1),2],np.uint32)
     o_idx = 0
     for i in xrange(n-1):
-        if i%10 == 0:
+        if i%100 == 0:
             log.debug('---row i= %d, total j=%d cols', i, n-(i+1))
         for j in xrange(i+1,n):
             # The intersection box exists (>0) when the rightmost xmin is
@@ -71,9 +71,14 @@ def cluster_hypotheses(overlapvals, index_arr, threshold=0.8):
     # clusters = dict()
     cur_clust = 1
     log.debug(" --- No of overlaps above threshold: %d",srt_idx.shape[0])
+    flag = True
     for idx in srt_idx:
         if cur_clust%100 == 0:
-            log.debug("No of clusters: %d, no. of idx covered: %d", cur_clust-1, len(clustered_idx.keys()))
+            if flag:
+                flag = False
+                log.debug("No of clusters: %d, no. of idx covered: %d, current overlap: %.2f", cur_clust-1, len(clustered_idx.keys()), overlapvals[idx])
+        else:
+            flag = True
         if overlapvals[idx] < threshold:
             # Return the then biggest cluster, not used if correct
             return get_largest_cluster(clustered_idx)
@@ -201,7 +206,7 @@ def remove_cluster(cluster, det_bbox, hypotheses, overlap, indexes, threshold=0.
             # If overlap too big, remove too
             to_be_removed.append(i)
     log.debug(' ---  hypotheses to be removed: %d out of %d', len(to_be_removed), n)
-    hypotheses = hypotheses[~np.array(to_bex_removed)]
+    hypotheses = hypotheses[~np.array(to_be_removed)]
     if len(to_be_removed) == n:
         log.debug(" ---  all is clustered, returning None")
         # Nothing to do anymore: everything is clustered.

@@ -4,13 +4,14 @@ from nbnn import *
 from nbnn.voc import *
 import sys, cPickle
 from ConfigParser import RawConfigParser
+import numpy as np
 
 if __name__ == '__main__':
     # Get config settings
     if len(sys.argv) < 5:
         raise Exception("arguments expected: cfgfile batch_no class")
     configfile = sys.argv[1]
-    tmpfile = sys.argv[2]
+    tmpdir = sys.argv[2]
     batch_no = int(sys.argv[3])
     cls = sys.argv[4]
     
@@ -76,7 +77,9 @@ if __name__ == '__main__':
     log.info('==== GET EXEMPLARS ====')
     
     with open(DETECTIONopts['exemplar_path']%cls, 'rb') as exf:
-        exemplars = np.vstack(cPickle.load(exf))
+        # USing np save instead of cPickle
+        exemplars = np.load(exf)
+        # exemplars = np.vstack(cPickle.load(exf))
         # exemplars is an np.array, nx4, where n=no of exemplars in a class
         # the cols are [rel_bb_w, rel_bb_h, rel_x, rel_y]
     
