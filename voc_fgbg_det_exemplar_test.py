@@ -118,9 +118,9 @@ if __name__ == '__main__':
         # ymin = point_y - (rel_y * rel_bb_h * point_sigma)
         hypotheses[:,2] = fg_points[:,1]-(im_exemplars[:,3] * im_exemplars[:,1] * fg_points[:,2])
         # xmax = point_x + (rel_x * rel_bb_w * point_sigma)
-        hypotheses[:,3] = fg_points[:,0]+((1.0/im_exemplars[:,2]) * im_exemplars[:,0] * fg_points[:,2])
+        hypotheses[:,3] = fg_points[:,0]+((1.0 - im_exemplars[:,2]) * im_exemplars[:,0] * fg_points[:,2])
         # ymax = point_y + (rel_y * rel_bb_h * point_sigma)
-        hypotheses[:,4] = fg_points[:,1]+((1.0/im_exemplars[:,3]) * im_exemplars[:,1] * fg_points[:,2])
+        hypotheses[:,4] = fg_points[:,1]+((1.0 - im_exemplars[:,3]) * im_exemplars[:,1] * fg_points[:,2])
         log.debug(" --- First 10 hypotheses:")
         for t in range(10):
             log.debug(" ---    hyp: %s, fg_point: %s, exemplar: %s",hypotheses[t,:], fg_points[t,:], im_exemplars[t,:])
