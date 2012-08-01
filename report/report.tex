@@ -31,9 +31,8 @@
 
 \section{Introduction} % (fold)
 \label{sec:introduction}
-\todo[inline]{OVERDENKSEL: IK DENK DAT BOIMAN'S PUNT OVER QUANTIZATION ERROR ERG BELANGRIJK IS OM NADRUK TE LEGGEN (als je kritisch kijkt: waarom is dense samplen beter dan goede punten uitkiezen?, want wel veel trager, Chum original is ook met POI en edges). Lijkt me ook belangrijk als ik probeer te denken wat Leo Dorst ervan zal vinden. Lijkt me erg nuttig om door te rekenen/redeneren wat het effect van dense sampling en de NB-assumption is op de exemplars, hypotheses en detections}
+\todo[inline]{At the end, review the introduction to see whether the emphasis is correct: should be on the benefits of NBNN, and exemplar model detection..}
 
-\todo{I rewrote the first bit of the introduction to comply with the remarks}
 Finding objects in images is a main topic in the research area of computer vision. Various approaches to solve this task have been proposed and exploited, resulting in methods of increasing quality over the years. Most methods for finding objects are designed specifically for certain subtopics, such as retrieving one type of objects only, categorizing the scene of the image, or discerning foreground objects from the background. For each of these subtopics, the object finding task is modeled in certain way. Three very common models are image classification, image segmentation, and object detection.
 
 In image classification, the object finding task is represented as the task of predicting the class of a whole image. The prediction is some measure of how likely it is for an image to belong to a certain class. This task is useful when the scene of the image has to be found, or when a user is looking for images of a topic.
@@ -46,7 +45,7 @@ Object detection is similar to both image classification and segmentation, and l
 
 For image classification, recently the Naive Bayes Nearest Neighbor (NBNN) \cite{boiman2008defense} approach has gained popularity. \todo{give citations to other NBNN papers}. Boiman \emph{et al.} apply the simple nature of nearest-neighbor classification to build a state-of-the-art image classification method. They show that a Nearest-Neighbor based approach for image classification should meet two requirements. \todo[inline]{explain about image to class distance and quantization, shortly, later more in detail, also add a simple image that shows these things, also talk about Behmo introduce oNBNN) and his improvements because that is important in my approach too}
 
-In this thesis I will explore the possibilities of extending the NBNN method from image classification to object detection. Some preliminary research in this direction has been done very recently\cite{becker2012codebook}, which will be used as a starting point. Following Becker \emph{et al.}\cite{becker2012codebook}, I combine NBNN based object-to-class distance estimation with exemplar-based object detection\cite{chum2007exemplar}. However, where Becker \emph{et al.} show their method works, I will investigate what it means mathematically to make the combination of NBNN with exemplar-based detection. Furthermore, I will compare results of NBNN on this task with Behmo's optimal-NBNN\cite{behmo2010towards} and test performance on the popular VOC detection data set \todo{cite, also I think the end of the paragraph is not very beautiful, should be revised later on}
+In this thesis I will explore the possibilities of extending the NBNN method from image classification to object detection. Some preliminary research in this direction has been done very recently\cite{becker2012codebook}, which will be used as a starting point. Following Becker \emph{et al.}\cite{becker2012codebook}, I combine NBNN based object-to-class distance estimation with exemplar-based object detection\cite{chum2007exemplar}. Furthermore, I will compare results of NBNN on this task with Behmo's optimal-NBNN\cite{behmo2010towards} and test performance on the popular VOC detection data set \todo{cite, also I think the end of the paragraph is not very beautiful, should be revised later on}
 
 The remainder of this introduction will be used to describe the object detection task in more detail, and to give some related work on (parts of) this task. In Section \ref{sec:naive_bayes_nearest_neighbor} I will discuss the details of the NBNN method, and the assumptions under which it works. In Section \ref{sec:object_detection} the theory behind exemplar-based modeling will be explained. The link between the two methods will be made in Section \ref{sec:linking}. In Section \ref{sec:experimental_setup} the setup for the experiment will be elaborated, the results of which are given in Section \ref{sec:results}. Finally, in Sections \ref{sec:conclusion} and \ref{sec:discussion} conclusions will be drawn and discussed.
 
@@ -63,7 +62,8 @@ There are a number of types of variation that may be expected when comparing arb
     \item[Occlusion] Objects might be partially out of sight, because they are not framed entirely, or because something is in front of them.
     \item[Intra-class-variation] Objects from a single class may vary wildly in appearance. Imagine a number of objects that qualify as a chair, and how different these might look.
 \end{description}
-Therefore, raw pixel values might not be a very good choice as description on its own.\todo[inline]{connect this with other descriptors, be shorter than now, focus on sift as that's what I'll use, give SIFT's advantages and limitations. Meaning TODO: revision of the following}
+Therefore, raw pixel values might not be a very good choice as description on its own
+\todo[inline]{connect this with other descriptors, be shorter than now, focus on sift as that's what I'll use, give SIFT's advantages and limitations. Meaning TODO: revision of the following}
 
 In general, there are three kinds of descriptor types: global, regional and local descriptors. Pixel values are a type of local descriptors. These descriptors capture the local information (in this case at pixel level) very well, but they don't take their context into account. This is what regional descriptors do. They describe in a concise way what is to be derived from a small region of pixels in an image. Usually, these describe local changes in intensity, edges, lines, corners or blobs, and are very popular in computer vision. Global features describe characteristics of the image as a whole. 
 
@@ -73,110 +73,244 @@ Very often, multiple kinds of descriptors are used together to make a descriptio
 
 \subsection{Training Methods} % (fold)
 \label{sub:training_methods}
-\todo{TODO revision of section, perhaps move NN to NBNN section, more examples of different methods, maybe combine this and next into related work on detection/classifcation?}
+\todo[inline]{TODO revision of this section and the next into one kind of related work on detection/classification section?}
+
+\todo[inline]{Better be incorporated in the previous subsections, otherwise it will be too much repetition... small piece on BoF and similar methods. small piece on the following subsection. Perhaps at the end of the NBNN section, as `other classification methods'??}
+
+\todo[inline]{(perhaps diverge a little to other methods that use NN and detection, but in a different way (SVM-kNN, galleguillos, etc.), !related work section!, but I dropped that, lets see later on).}
+
+
 With the representation of images, it becomes possible to make a model for each object class to be detected. In this way, test images can be matched with each class model to find out which is the most likely.
 
 To be able to make a class description, sample images are needed, annotated with a description of what the image represents. This is the training set. From this set, the descriptors found can be labeled with the correct class, so a description of each can be made. Usually this is done in a learning phase.
 
-There is a broad range of training methods. A very simple one is called Nearest Neighbor, which actually has no learning phase. Here, the description of each class is simply the collection of all descriptors of that class. At test time, for each new descriptor the distance to (the difference between) each class is measured and the nearest one is most likely the class of the descriptor at hand. \cite{boiman2008defense}
 
 Bag of Words is another popular method \cite{lazebnik2006beyond, van2011exploiting} \todo[fancyline]{continue this as an overview}
 
 % subsection training_methods (end)
 \subsection{Detection methods} % (fold)
 \label{sub:detection_methods}
-With a choice of image descriptors, a kind of class description and a training method, image classification can be performed. For object localization within an image however, a strategy is needed to estimate classifications for parts of images instead of images as a whole.
+With a choice of image descriptors, a class description and a training method, image classification can be performed. For object localization within an image however, a strategy is needed to estimate classifications for parts of images instead of images as a whole.
 
-The most straightforward method, which also has had many applications, is to take a window on a test image, and to classify that part of the image as if it were an image in itself. This sliding window approach \todo[fancyline]{reference} is just a small conceptual step, but generates a lot of possible windows to be classified, therefore costing much computation. This hampers the applicability of this naive method. Smarter versions of this approach include include a divide-and-conquer tactic called branch-and-bound search. \cite{lampert2008beyond} In this method, a fitness (response) of the current window is calculated, and then the window is subdivided in two non-overlapping windows, the most promising of which is iteratively subdivided until the globally highest fitness is found. However being much faster than the vanilla sliding window approach, it has the disadvantage of covering hard boundaries between subwindows, making it hard to find exact locations of objects.
+The most straightforward method is to take a window on a test image, and to classify that part of the image as if it were an image in itself. This sliding window approach \todo[fancyline]{reference} is just a small conceptual step, but generates a lot of possible windows to be classified, therefore costing much computation. This hampers the applicability of this naive method. Smarter versions of this approach include include a divide-and-conquer tactic called branch-and-bound search. \cite{lampert2008beyond} In this method, a fitness (response) of the current window is calculated, and then the window is subdivided in two non-overlapping windows, the most promising of which is iteratively subdivided until the globally highest fitness is found. However being much faster than the vanilla sliding window approach, it has the disadvantage of covering hard boundaries between sub-windows, making it hard to find exact locations of objects.
 
 Part-based models have a different approach. This method models classes with special regional descriptors which define the relative orientation and scale of parts of an object with respect to the location and size of the object as a whole. \cite{leibe2004combined, chum2007exemplar, felzenszwalb2010object} These descriptors enable the detection algorithm to look for the arrangement of descriptors in a test image, and to define the most likely locations of objects. Some methods expand this into trying to create 3D models of classes, to make matching rotation independent. \todo[fancyline]{reference}
 % subsection detection_methods (end)
 
-\subsection{VOC data set} % (fold)
-\label{sub:voc_data_set}
-The Visual Object Classes (VOC) challenge of the PASCAL network \todo[fancyline]{reference} provides a popular data set annotated for image detection\todo[fancyline]{reference}, and will form the main task to perform. Because it is popular, a lot of comparison with other methods is possible, among which some state of the art methods and similar approaches.
-
-\todo[inline]{Needs more elaboration, or not really?}
-% subsection voc_data_set (end)
-
 % section introduction (end)
 
-\section{Related Work} % (fold)
-\label{sec:related_work}
-\todo[inline]{Better be incorporated in the previous subsections, otherwise it will be too much repetition...}
-% section related_work (end)
 
 \section{Naive Bayes Nearest Neighbor} % (fold)
 \label{sec:naive_bayes_nearest_neighbor}
-\todo[inline]{perhaps add a small section on NN (and NB?) to make the connection}
-Boiman \emph{et al.} \cite{boiman2008defense} coined the term Naive Bayes Nearest Neighbor (NBNN) for their image classification algorithm, that used a combination of Nearest-Neighbor (NN) comparison and Naive Bayes classification to classify images in a multi-class setting. The approach works well because of the non-parametric character of the approach, which means no learning of parameters is required. This makes it easy to use the method on a problem with a large number of classes (parametric methods usually (not always) model multi-class problems as multiple 2-class problems), and that the risk of overfitting is small because there are no parameters to be overfit. They achieved results competitive to the (then) state of the art Bag of Words methods\todo[fancyline]{reference} because of two requirements their method meets: Avoiding feature quantization and the use of image-to-class distance instead of image-to-image distances. They theorize that earlier attempts to use NN \todo[fancyline]{references} for image classification failed because these do not meet both of these requirements.
 
-Descriptor or feature quantization is a means of creating compact image descriptions, such as the ones used in the BoW methods. In BoW, all descriptors of an image are clustered into visual words, and histograms are constructed counting the occurrence of each word in an image. Image matching is based on comparing these histograms. Boiman shows that, while being useful in learning-based methods, quantization is harmful for a NN approach because the most informative descriptors get the highest quantization error while being necessary for finding nearest neighbors. NBNN uses every single descriptor of each image to perform NN on.
+\todo[inline]{short introduction of a paragraph or so?}
 
-Kernel methods (such as SVM) are based on image-to-image distances to create decision boundaries. For NN, image-to-image distances do not enable much generalization, as no inference is done from the training images. It would mean only test images close to known images will be classified correctly. Therefore, image-to-class distance should be used. While an image might be close to another one, it might be far removed from the whole class of that image. \todo[fancyline]{add image like in Boiman or Wang2009?}\cite{wang2009learning}
+\subsection{$k$-Nearest Neighbor classification} % (fold)
+\label{sub:_k_nearest_neighbor}
 
-The NBNN decision rule is defined under the Naive Bayes assumption that all descriptors $d$ of a query image $Q$ are independent given its class $C$.\todo[fancyline]{make a critical note of this assumptions or not?} This results in Maximum Likelihood classifier 
+The $k$-Nearest-Neighbor algorithm is one of the earliest approaches for classification in machine learning. Given a set of items $n \in \mathcal{N}$, labeled with a designated number of classes $c_n \in \mathcal{C}$, an unlabeled query item $q$ and a distance measure to calculate pairwise differences between items $d(x_1\|x_2)$, the nearest neighbors of $q$ are the $k$ items in $\mathcal{N}$ for which $d(q\|n)$ is lowest. In turn, sets $\text{NN}_c(q)$ contain those nearest neighbors of $q$ that belong to class $c$. This way, $k$NN classification comes down to
 \begin{align}
-    \hat C &= \argmax_C p(Q|C)\\
-           &= \argmax_C \frac{1}{n}\sum_{i=1}^{n} \log p(d_i|C).
+    \hat c_q &= \argmax_c |\text{NN}_c(q)|,
 \end{align}
+being the class of which the most items are within the $k$ nearest neighbors of $q$.
 
-Boiman densely samples the training set to get a very high number of descriptors per class $L = |d^C|$. This enables him to model $p(d|C)$ using Parzen likelihood estimation:
-\begin{equation}
-    \hat p(d|C) = \frac{1}{L}\sum_{j=1}^L K(d-d_j^C),
-\end{equation}
-where $K(\cdot)$ usually is a Gaussian Parzen kernel function defining the distance between $d$ and $d_j^C$. When $L$ goes to infinity, $\hat p(d|C)$ approaches $p(d|C)$.
+In contrast to other classification algorithms, $k$NN is relatively simple. It does not require any for of training to make a model from the labeled images. The algorithm only estimates the probability density of the classes locally, within $k$, which means it does not assume a global probability density distribution underneath the data, which makes it non-parametric, and a cheap way of making a non-linear classifier.
 
-This approach entails calculating the distance of $d$ to all $L$ descriptors of each class, which would be very costly. Because only a small minority of the descriptors can be expected to be significantly close to $d$, taking into account only the nearest descriptors is a safe approximation, which enables using nearest neighbors (NN) to find these descriptors. Even more so, Boiman shows that taking only the 1 nearest neighbor hurts performance but little. Because of this the Parzen estimate of $d$ to class $C$ reduces to the distance of $d$ to its nearest neighbor in $C$: $\|d - \text{NN}_C(d)\|^2$, resulting in the following log likelihood and classifier: 
+\subsection{Naive Bayes classification} % (fold)
+\label{sub:NB}
+
+Naive Bayes is another rather simple ,probabilistic, classification algorithm, which is based on the idea that a simplification of Bayes' Theorem can be made using the assumption that all features of an item $d_{n,i} \in \mathcal{D}_n$ appear conditionally independent of each other. This means that $p(d_{n,i} | c_n, d_{n,j}) = p(d_{n,i}|c_n)$ is assumed for all $n,c,i,j$. 
+
+If Bayes' Theorem is modeled to predict the probability of a class $c$ of an item $q$, we can say
 \begin{align}
-    \log P(Q|C) &\propto -\sum_{i=1}^n \|d_i - \text{NN}_C(d_i)\|^2 \\
-    \hat C      &= \argmin_C \sum_{i=1}^n \|d_i - \text{NN}_C(d_i)\|^2
+    \label{eq:bayes}
+    p(c|q)      &= \frac{p(q|c)\,p(c)}{p(q)}\\
+                &\propto p(q|c)\,p(c),
+\end{align}
+because the probability is to be compared among all classes $\mathcal{C}$, for the same item $q$, which makes $p(q)$ constant. Furthermore, if $q$ is represented by $m$ features $d_q$, \eqref{eq:bayes} can be rewritten as
+\begin{equation}
+    p(c|d_{q,1},\dotsc,d_{q,m}) = p(d_{q,1}, \dotsc,d_{q,m}|c)\,p(c),
+\end{equation}
+which is equivalent to the joint probability
+\begin{align}\begin{split}
+    p(c|d_{q,1},\dotsc,d_{q,m}) &\propto p(c,d_{q,1}, \dotsc,d_{q,m}\\
+        &\propto p(c)\,p(d_{q,1}|c)\, p(d_{q,2}|c,d_{q,1}), \dotsc,p(d_{q,m}|c,d_{q,1},d_{q,2},\dotsc,\\&\quad d_{q,m-1}).
+    \end{split} 
+\end{align}
+By the conditional dependence assumption made above, this can be reduced into
+\begin{equation}
+    p(c|q) \propto p(c)\prod_{i=1}^m p(d_{q,i}|c).
+\end{equation}
+With this equation, a decision rule can be made as follows
+\begin{equation} \label{eq:map}
+    \hat c_q = \argmax_c \frac{1}{m}\,p(c)\prod_{i=1}^m p(d_{q,i}|c),
+\end{equation}
+which is called a maximum a-posteriori (MAP) classifier. In this formulation of a classification problem, a probability density estimation is needed to model all features. All kinds of distributions can be used for this.
+
+\subsection{Boiman's NBNN} % (fold)
+\label{sub:boiman_s_nbnn}
+Boiman \emph{et al.} \cite{boiman2008defense} coined the term Naive Bayes Nearest Neighbor (NBNN) for their image classification algorithm, that used a combination of Nearest-Neighbor (NN) comparison and Naive Bayes classification to classify images in a multi-class setting. The approach works well because of the non-parametric character of the approach, which means no learning of parameters is required. This makes it easy to use the method on a problem with a large number of classes (parametric methods typically model multi-class problems as multiple 2-class problems), and that the risk of overfitting is small because there are no parameters to be overfit. They achieved results competitive to the state of the art Bag of Features methods because of two requirements their method meets: (\emph{i}) Avoiding feature quantization and (\emph{ii}) the use of image-to-class distance instead of image-to-image distances. They theorize that earlier attempts to use NN \todo[fancyline]{references} for image classification failed because these do not meet both requirements.
+
+Feature quantization is a means of creating compact image descriptions, such as the ones used in the BoF methods. In BoF, all descriptors of an image are clustered into visual words, and histograms are constructed counting the occurrence of each word in an image. Image matching is based on comparing these histograms. This being useful in learning-based methods, quantization is harmful for a nearest neighbor approach because the most informative descriptors get the highest quantization error while being necessary for finding nearest neighbors. This becomes clear when the observation is made that for a descriptor to be more informative, it should appear only at certain circumstances, ideally only in images of one class. They should be fairly well recognizable among other descriptors, and therefore they tend to be outliers in descriptor space. When quantizing, these descriptors will mostly be incorporated into visual words that are rather unlike these descriptors, resulting in a large quantization error.
+
+In learning-based methods, like SVM, this disadvantage is outweighed by the benefit of dimensionality reduction which allows training on a large data set. Furthermore, when learning a BoF model, the problem itself is mitigated too. Therefore, NBNN uses every single descriptor of each image to perform NN on.
+
+Kernel methods such as SVM are based on image-to-image distances to create decision boundaries. For each image in the training set, a histogram of visual words is built, based on the features that appear in the image, and are matched with the visual words that resulted from quantizing all training features. 
+In a nearest neighbor approach, image-to-image distances do not enable much generalization, as no inference is done from the training images and their features. This would mean only test images close to known images will be classified correctly. Therefore, image-to-class distances should be used. While an image might be far removed from all others of a certain class, the individual features might all be close to features of different images of this class, making the image-to-image distances to a class large, but the image-to-class distance short. \cite{wang2009learning} 
+
+\begin{figure}[hbt]
+    \centering
+    \missingfigure[figwidth=0.8\textwidth]{image like in Boiman or Wang2009 representing image-to-class distance (an perhaps one with quantization explained)}
+\end{figure}
+
+Using the main points of no quantization an image-to-class distances, $k$-nearest neighbor can be performed for individual features, per class. Note that in this way, it is impossible to use $k$NN as a classifier, because no discrimination can be made between the classes. It is however useful to be able to compare the distances of a feature to the nearest neighbors in each class. this is used as the input of a Naive Bayes classifier.
+
+
+The NBNN decision rule is defined under the Naive Bayes assumption of Section \ref{sub:NB}. The MAP classifier from \eqref{eq:map}, when assuming uniform priors $p(c)$ over all classes, simplifies to Maximum Likelihood (ML) classifier 
+\begin{align}
+    \hat c &= \argmax_c \frac{1}{m}\prod_{i=1}^{m} p(d_{q,i}|c)\\
+           &\propto \argmax_c \frac{1}{n}\sum_{i=1}^{n} \log p(d_{q,i}|c),
+\end{align}
+Where the last formulation as a sum of log-probabilities is used in practice to compensate for the low probabilities typical for this classifier, which may cause rounding errors in computer applications.
+
+Using the notion that NN classification tends to the Bayes optimal classifier when the sample size tends to infinity\cite{cover1967nearest, boiman2008defense}, dense sampling can be used to get a high number of descriptors per class from the training set $Z = |\mathcal{D}_c|$. The class conditional probability of a feature $p(d_q|c)$ can be modeled using Parzen likelihood estimation, where
+\begin{equation} \label{eq:parzen}
+    \hat p(d_q|c) = \frac{1}{Z}\sum_{j=1}^L K(d_q-d_{c,j}).
+\end{equation}
+Parzen kernel function $K(\cdot)$, typically Gaussian, defines the distance between query descriptor $d_{q}$ and labeled descriptor $d_{c}$. When $Z$ goes to infinity, $\hat p(f|c)$ approaches $p(f|c)$. 
+
+This approach entails calculating the distance of $d$ to all $Z$ descriptors of each class, which would be very costly. Because only a small minority of the descriptors can be expected to be significantly close to $d_q$, taking into account only the nearest descriptors is a safe approximation, which enables using nearest neighbors (NN) to find these descriptors. Even more so, Boiman shows that taking only the 1 nearest neighbor hurts performance but little. Because of this the Parzen estimate of $d_q$ to class $c$ reduces to the distance of $d_q$ to its nearest neighbor in $c$: $\|d_q - \text{NN}_c(d_q)\|^2$, resulting in the following log likelihood and classifier: 
+\begin{align}
+    \label{eq:nbnnloglikelihood}
+    \log P(q|c) &\propto -\sum_{i=1}^m \|d_{q,i} - \text{NN}_c(d_{q,i})\|^2 \\
+    \label{eq:nbnnclass}
+    \hat c      &= \argmin_c \sum_{i=1}^m \|d_{q,i} - \text{NN}_c(d_{q,i})\|^2
 \end{align}
 
 Now, classification comes down to calculating descriptors for all images in each class and for the query image, estimating the nearest neighbor of each query descriptor for each class, calculating the sum of distances for each class for the query image and selecting the lowest distance. This approach is both very simple and intuitive. It also enables use of different kinds and combinations of descriptors.
 
+% subsection boiman_s_nbnn (end)
+
+
 \subsection{Limitations and extensions} % (fold)
 \label{sub:limitations_and_extensions}
 
-Even though the algorithm of \cite{boiman2008defense} is very simple and requires no training phase, it does have its scalability issues because of its high memory use. Because all densely computed descriptors for each image in the training set have to be stored, and the nearest neighbor for each descriptor of each query image on each class has to be found, the memory usage is much higher than for example BoW methods, which use a more compact representation of images. Calculating NN can be sped up by using sophisticated Approximations of the Nearest Neighbor algorithm, such as \todo[fancyline]{cite FLANN, ANN}. The memory issue remains however.
+Even though the algorithm of \cite{boiman2008defense} is very simple and requires no training phase, it does have its scalability issues because of its high memory use. Because all densely computed descriptors for each image in the training set have to be stored, and the nearest neighbor for each descriptor of each query image on each class has to be found, the memory usage is much higher than for example BoF methods, which use a more compact representation of images. Calculating NN can be sped up by using sophisticated Approximations of the Nearest Neighbor algorithm, such as \todo[fancyline]{cite FLANN, ANN}. The memory issue remains however.
 
-Other limitations have been shown by various authors. \cite{behmo2010towards, wang2011improved,mccann2011local,tuytelaars2011nbnn,timofte2012iterative}
+Other limitations have been shown by various authors.\cite{behmo2010towards, wang2011improved,mccann2011local,tuytelaars2011nbnn,timofte2012iterative}
 
-\todo[inline]{Write stuff on behmo, mccann, tuytelaars, becker, wang, timofte, should perhaps include illustrations of the idea. Emphasise the large amount of assumptions and approximations in Boiman's method (NB assumption, Parzen estimation itself, simplification of Parzen, Approximate NN, dependence not only on equal priors but also on sampling densities which gives problems with skewed distributions over classes (Behmo/Wang)) }
+Some authors \cite{behmo2010towards,wang2011improved} stress that NBNN is highly sensitive to differences in descriptor density over classes. Behmo \emph{et al.} for example state that this is caused by dropping the factor $\frac{1}{Z}$ from the classification rule, which normalizes for the descriptor density in the train set for a given class; compare Equations \eqref{eq:parzen} and \eqref{eq:nbnnloglikelihood}. This term is dropped because an equal kernel estimation is assumed, which does not hold for large differences in descriptor density over classes.\cite{behmo2010towards} Therefore, they propose to learn the density estimation parameters per class, variance $\sigma_c$ and normalization factor $Z_c$, as a linear problem. Rephrasing the general Parzen-based likelihood \eqref{eq:parzen} gives
+\begin{align}
+    - \log\big(p(d_q|c)\big) &= -\log\Bigg(\frac{1}{ Z_c}\exp\left( -\frac{ \|d_q - \text{NN}_c(d_q)\|^2}{2(\sigma_c)^2}\right)\!\Bigg) \\
+    &= \frac{ \|d_q - \text{NN}_c(d_q)\|^2}{2(\sigma_c)^2} + \log(Z_c),
+\end{align}
+and subsequently rephrasing and reparametrizing the Naive Bayes rule \eqref{eq:nbnnclass} gives
+\begin{align}
+    \hat c_q &= \argmin_c \sum_{i=1}^{m_q} \left(\frac{ \|d_q - \text{NN}_c(d_q)\|^2}{2(\sigma_c)^2} + \log(Z_c)\right)\\
+    &= \argmin_c \alpha_c \sum_{i=1}^{m_q} \|d_q - \text{NN}_c(d_q)\|^2 + m_q\beta_c,
+\end{align}
+using $\alpha_c = \frac{1}{2(\sigma_c)^2}$ and $\beta_c = \log(Z_c)$. This new formulation models an affine transformation on the distance measure used in NBNN. These two parameters can be seen as corrections for each class on the bias that arises when classes with the same priors are not equally sampled.
+
+$\alpha_c$ and $\beta_c$ can be estimated in a training phase, where the outcome of the vanilla NBNN distances are used as input for a linear energy optimization problem:
+
+\begin{align}\begin{split} \label{eq:energy}
+    E(W) = \sum_{j=1}^{K} \max_{c:c\neq c_j} \Big(1\,&+\,\alpha_{c_j} \sum_d \|d - \text{NN}_{c_j}(d)\|^2 + m\beta_{c_j}\\
+    &-\,\alpha_{c} \sum_d \|d - \text{NN}_{c}(d)\|^2 + m\beta_{c}\Big)_{+},
+\end{split}\end{align}
+
+where $E(W)$ is the energy of the current parameter set $W$, containing all $\alpha$ and $\beta$, and the equation represents the difference between the distance of all images in $K$ to its true class $c_j$ and to the nearest other class $max_{c:c\neq c_j}$. If this distance is minimized for all images, the hinge loss of the NBNN classifier is minimized, meaning that the decision boundary between the classes is optimized and that a suitable correction is found for the differences in sampling density over the classes.
+
+Equation \eqref{eq:energy} can be minimized when viewed as a linear program, equivalent to $\sum_i \xi_i$, with constraints:
+\begin{align}
+    \xi_i &\geq 1 +\alpha_{c_j} \sum_d \|d - \text{NN}_{c_j}(d)\|^2 + m\beta_{c_j}&\notag\\
+    \label{eq:linprog1}
+    &\quad-\alpha_{c} \sum_d \|d - \text{NN}_{c}(d)\|^2 + m\beta_{c}, &\forall i \in K, \forall c \neq c_i\\
+    \label{eq:linprog2}
+    \xi_i &\geq 0, &\forall i \in K\\
+    \label{eq:linprog3}
+    \alpha_c &\geq 0, &\forall c \in \mathcal{C}
+\end{align}
+
+\todo[inline]{Complete stuff on behmo, add a bit of wang, mccann, 
+perhaps some related work of others, and, maybe include illustrations of the idea.}
 % subsection limitations_and_extensions (end)
 
 % section naive_bayes_nearest_neighbor (end)
 
-\section{Object Detection Using Exemplar-based Models} % (fold)
+\section{Object Detection Using Exemplar Models} % (fold)
 \label{sec:object_detection}
-\todo[inline]{Write Theory on exemplar-Based Modeling. Focus on ISM (Leibe), Becker/ Chum, Felzenszwalb, perhaps roots of the method? Show images of the idea (perhaps comparing the methods)}
 
-Exemplar-based models for object detection, 
+\begin{figure}[hbt]
+    \centering
+    \missingfigure[figwidth=0.8\textwidth]{Show images of the idea comparing the methods discussed}
+\end{figure}
 
+The most intuitive way of thinking about object detection is probably to apply image classification at various windows within the image instead of on the image as a whole. This involves iterating over possible window locations, sizes and aspect ratios for the whole image, and determining the likelihood of each window of representing an object. This sliding window approach marks early detection methods.\cite{viola2004robust} The applicability of this approach however is fairly limited, because of the large number of possible windows to check. Therefore, lot of methods find a way to make this window search more efficient. Viola and Jones\cite{viola2004robust} propose a cascade approach, where a very simple classification method is used on the full set of hypotheses for bounding boxes in order to cast most of them away early. On the difficult hypotheses a more sophisticated classification is done to narrow down the search more and more, each step using a better, and much slower classification algorithm. In contrast, Efficient Sub-window Search methods\cite{lampert2008beyond,yeh2009fast,pedersoli2011coarse,behmo2010towards} model the problem into a branch-and-bound search method. They recursively split the window in two, find the response for the class on the current scale, and continue with the most promising leaf. When the response of both windows after a split is lower than the one above, the correct window is assumed to be on the above level.
 
-\section{Foreground-Background classification} % (fold)
-\label{sec:foreground_background_classification}
-\todo[inline]{Write something about fg/bg classification (is that the right term?). This is the main addition to Becker's method, so make it clear. Show some images illustrating the idea}
-% section foreground_background_classification (end)
+Another approach that recently gained more attention is that of detection by segmentation.\cite{van2011segmentation,zhang2010free} These methods rely on the fact that segmentation methods are meant to subdivide the image into segments that represent a semantic unity, like parts of objects or full objects. The resulting segments can be used as hypotheses for detecting objects. This means the amount of possible windows can be reduced heavily. Van de Sande \emph{et al.}\cite{van2011segmentation} use a hierarchical segmentation algorithm to make the detection scale invariant, and train discriminatively by focusing on hard examples. Zhang \emph{et al.}\cite{zhang2010free} do not explicitly segment the image, but just like many segmentation algorithms they do look for edges that enclose an object as a restraint for selecting it as a possible detection.
+
+Part-based models form a different approach on effectively finding hypothesis windows for objects.\cite{felzenszwalb2010object} These methods learn object models based on a combination and spatial organization of a number of designated, but unlabeled, parts. These parts are learned as a hidden variable during training, being groups of features reoccurring in the same formation in a certain area of bounding boxes of a class. Furthermore, the difference in scale between the full object window (the root) and its parts is fixed. In comparison with sliding-window approaches, this means a restriction in the number of possibilities for detection of objects. The relative scale of the parts should comply with that of the root scale. \todo{need to cite these, perhaps briefly mention them before...?}
+
+\subsection{Exemplar models} % (fold)
+\label{sub:exemplar_models}
+
+Related to part-based models are exemplar models. \cite{leibe2004combined, chum2007exemplar} In contrast with part-based models, exemplar models do not explicitly model object parts, but in a way they do this implicitly per feature. In this approach, for each object feature found during training, an exemplar is stored. The exemplar represents the size and location of the bounding box relative to the feature. The exemplars are aggregated into part models\cite{leibe2004combined} or visual words\cite{chum2007exemplar}. In this way a class is modeled by a set of exemplars that have a high probability of occurring in a certain location and at a certain scale of the image.
+
+At test time, each feature found in the test image is matched with the exemplars stored, and from this combination of the location and scale of the feature found, and the exemplar it is matched with, a hypothesis can be formed for the object's location in the test image. This way each feature gets a vote, weighted by the quality of its match, for a bounding box. These hypotheses can be clustered into detection windows. Experiments\cite{vedaldi2009multiple} show that this method performs well too as a first step in a cascade setting.
+
+In more detail, 
+
+\todo[inline,color=green]{part on why I choose exemplar models, little more explanation of theory of Chum to link it to the next section}
+% subsection exemplar_models (end)
+
 % section object_detection (end)
-\section{Use of NBNN in an exemplar-Based Model} % (fold)
+
+
+\section{Use of NBNN in an exemplar Model} % (fold)
 \label{sec:linking}
-\todo[inline]{Show how NN can be used in a part-based model (perhaps diverge a little to other methods that use NN and detection, but in a different way (SVM-kNN, galleguillos, etc.), !perhaps not here but in related work section!). Focus on Becker's method, then emphasize the difference here, by using fg/bg, including Behmo's normalization}
+\todo[inline]{In the end, explain that Becker's approahc is similar, but emphasize the difference here, by using  Behmo's normalization, but also taking im2class distances into account, which Becker does not really do.}
 % section linking (end)
+
+NBNN classification and Chum's exemplar model detection can be combined into a new detection method, because the exemplar model has more in common with the NBNN approach than most other detection methods. The reason is that the exemplar model is based on image-to-class distance, like NBNN. This provides a natural way of linking both methods.
+
+Chum \emph{et al.}\cite{chum2007exemplar} uses interest point detectors and a codebook approach for their exemplars. The descriptor space is quantized like regular codebook classification methods do, even though they take the location of the object relative to the descriptor as basis for clustering the visual words, and not the descriptors themselves.
+
+In contrast to classification methods however, the exemplar models use image-to-class distance when testing. While most codebook methods \todo{cite} compare images to each other, see Section \ref{sec:bof}, in exemplar model detection the individual features are compared to the quantized exemplars. Because these exemplars have a designated class, not the distance between images forms the basis for classification, but the distance of a query image to each class.
+
+This shows a way to use the NBNN representation within the exemplar model. The un-quantized descriptors of NBNN are used as exemplars, and each descriptor in the query image votes for the hypothesis calculated from its nearest exemplar in each class. 
+
+
+\todo[color=green,inline]{Finish this, it needs a lot back reference to earlier parts, so I'm finishing that first}
+
+this meets the requirements set in Section \ref{sec:naive_bayes_nearest_neighbor} rather well. The weight of each hypothesis defined by Chum can quite easily be exchanged for a weight based on the distance of the underlying descriptor to its nearest exemplar. The only difference is that, where classification is based on the full image, detection only has support from a subset of the image. This means NN detection may not be expected to come as near to the Bayes optimal classifier as classification does.
+
+
+The main difference between the methods would be that our new method would generate a great many more hypotheses, resulting from the dense sampling compared to interest point sampling. This hurts efficiency of the method, but it is not an option to drop the dense sampling, because NBNN relies on the large amount of descriptors. This also means that the separate descriptors of NBNN give less support to a hypothesis, on average, than interest point exemplars give. That is the reason why summing NN distances over a whole image works that well for classification, as seen in Equation \eqref{eq:nbnnclass}. From this equation, and from the observation that the more specific descriptors for a certain class generate the highest difference in distance, 
+
+
+\todo[inline]{weighted difference ( $\frac{d^- - d^+}{d^+}$ ) in distance is a bit difficult to justify, because the decision boundary is shifted, but it is compliant with boiman's statement that the biggest differences matter most}
+
+
+\subsection{Foreground-Background classification} % (fold)
+\label{sec:foreground_background_classification}
+\todo[inline]{Write something about fg/bg classification (is that the right term?). Show some images illustrating the idea}
+% subsection foreground_background_classification (end)
+
 
 \section{Experimental Setup} % (fold)
 \label{sec:experimental_setup}
-\todo[inline]{[IDEA: Perhaps split up the setup/results sections differently: first classification + results, then detection + results???]\\
-Write Setup of experiment. Experiments on classification (caltech, VOC) first to show the workings (NBNN with fg/bg, with and without behmo), and then on detection. Explain the evaluation method of VOC, explain to what the results are compared}
+\todo[inline]{Write Setup of experiment. Experiments on classification (caltech, VOC) first to show the workings (NBNN with fg/bg, with and without behmo), and then on detection. Explain the evaluation method of VOC, explain to what the results are compared}
+
+
 
 \subsection{Detection} % (fold)
 \label{sub:detection}
-NBNN-based-detection is tested on the VOC2012 \todo{and VOC2006/7? misschien goed voor vergelijkingen} data set. The performance of detection is measured both with and without optimization of the class-specific parameters defined by \cite{behmo2010towards}. A part of the training set was set apart as a optimization set, the rest was used as labeled examples. The full validation set was used for masuring performance.
+NBNN-based-detection is tested on the VOC2012 \todo{and VOC2007? misschien goed voor vergelijkingen, if there's time...} data set. The performance of detection is measured both with and without optimization of the class-\-specific pa\-ra\-me\-ters defined by \cite{behmo2010towards}. A part of the training set was set apart as a optimization set, the rest was used as labeled examples. The full validation set was used for measuring performance.
 
-SIFT descriptors were densely sampled with a spacing of 6\todo{3 would be ideal, try if that might work)} pixels and on 4 scales (1.33, 2.0, 3.0 and 4.5 \todo{what? sigma, lookup}) from all example images, just like \cite{mccan2011local} proposes in their setup. 
+SIFT descriptors were densely sampled with a spacing of 6\todo{3 would be ideal, try if that might work)} pixels and on 4 scales (1.33, 2.0, 3.0 and 4.5 \todo{what? sigma, lookup}) from all example images, just like \cite{mccann2011local} proposes in their setup. 
 
 
-Detection of each object class is modeled as a separate 2-class foreground/background detection problem. All images containing one or more objects of an object class are selected, and for each image, the descriptors inside the class's bounding boxes are added to the foreground-class, while the descriptors outside these boxes are added to the background-class.
+Detection of each object class is modeled as a separate 2-class foreground-background detection problem. All images containing one or more objects of an object class are selected, and for each image, the descriptors inside the class's bounding boxes are added to the foreground-class, while the descriptors outside these boxes are added to the background-class.
 
 For all foreground descriptors an exemplar is stored, containing the relative location of the object within its bounding box and the relative size of the bounding box compared with the descriptor's scale.
 
@@ -184,6 +318,15 @@ When oNBNN is used, the optimization set is used to do a
 \todo{tell about behmo}
 \todo[inline]{tell about testing -> first NN, then get exemplars, which makes hypotheses. Then find pairwise overlap between hypotheses, then cluster overlap, then take out largest cluster and make a detection of it, remove overlaps with this cluster, repeat clustering until no hypothesis left, ranking of detections (Qd, Qh)}
 % subsection detection (end)
+
+\subsection{VOC data set} % (fold)
+
+\label{sub:voc_data_set}
+The Visual Object Classes (VOC) challenge of the PASCAL network \todo[fancyline]{reference} provides a popular data set annotated for image detection\todo[fancyline]{reference}, and will form the main task to perform. Because it is popular, a lot of comparison with other methods is possible, among which some state of the art methods and similar approaches.
+
+\todo[inline]{Needs more elaboration, or not really?}
+% subsection voc_data_set (end)
+
 
 % section experimental_setup (end)
 
