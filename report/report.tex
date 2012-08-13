@@ -230,6 +230,10 @@ Equation \eqref{eq:energy} can be minimized when viewed as a linear program, equ
     \label{eq:linprog3}
     \alpha_c &\geq 0, &\forall c \in \mathcal{C}
 \end{align}
+A basic NBNN classifier is built with a labeled image set, on which a separate training set is used with the linear program, to learn the $\alpha_c$ and $\beta_c$ parameters for each class. For the test set, all resulting distances of the NBNN classifier are transformed using the trained parameters, and classified using these weighed distances.
+
+Wang \emph{et al.} take a slightly different approach to solve the same problem. 
+
 
 \todo[inline]{Complete stuff on behmo, add a bit of wang, mccann, 
 perhaps some related work of others, and, maybe include illustrations of the idea.}
