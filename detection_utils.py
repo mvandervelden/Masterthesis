@@ -63,7 +63,8 @@ def cluster_hypotheses(overlapvals, index_arr, threshold=0.8):
     
     if overlapvals[srt_idx[0]] < threshold:
         # If no hypotheses have overlap >= threshold, return the first one
-        return [index_arr[srt_idx[0],[0]]]
+        log.debug("No overlapping hypotheses, returning %s", index_arr[srt_idx[0],[0]])
+        return index_arr[srt_idx[0],[0]]
     
     # Remove superfluous indexes (below threshold)
     srt_idx = srt_idx[overlapvals[srt_idx] >= threshold]
@@ -189,7 +190,7 @@ def merge_cluster(cluster_of_hyp, im_id):
     log.debug(" --- Merged cluster of size: %s. Qd=%d",cluster_of_hyp.shape, Qd)
     log.debug(" ---  max values per row: %s", cluster_of_hyp.max(0))
     log.debug(" ---  min values per row: %s", cluster_of_hyp.min(0))
-    log.debug(" ---  mean values per row: %s (= detection)", cluster_of_hyp.min(0))
+    log.debug(" ---  mean values per row: %s (= detection)", cluster_of_hyp.mean(0))
     return (Qd,rest[0], im_id, rest[1], rest[2], rest[3], rest[4])
     
 def remove_cluster(cluster, det_bbox, hypotheses, overlap, indexes, threshold=0.0):
@@ -197,26 +198,31 @@ def remove_cluster(cluster, det_bbox, hypotheses, overlap, indexes, threshold=0.
     with just a little overlap is removed
     """
     n = hypotheses.shape[0]
-    to_be_removed = []
+    hyp_left = np.sum(~(hypotheses[:,0]==0))
+    to_be_removed = np.zeros(n,dtype=bool)
     for i in xrange(n):
         if i in cluster:
             # All hypotheses in the detection cluster have to be removed
-            to_be_removed.append(i)
-        elif get_overlap(hypotheses[i,1:], det_bbox) > threshold:
+            to_be_removed[i] = True
+        elif hypotheses[i,0] > 0 and get_overlap(hypotheses[i,1:], det_bbox) > threshold:
             # If overlap too big, remove too
-            to_be_removed.append(i)
-    log.debug(' ---  hypotheses to be removed: %d out of %d', len(to_be_removed), n)
-    hypotheses = hypotheses[~np.array(to_be_removed)]
-    if len(to_be_removed) == n:
+            to_be_removed[i] = True
+    log.debug(' ---  hypotheses to be removed: %d out of %d', to_be_removed.sum(), hyp_left)
+    
+    hypotheses[to_be_removed,0] = 0
+    log.debug(' ---  New length: %d (hypotheses actually removed: %d)', np.sum(~(hypotheses[:,0]==0)), hyp_left-np.sum(~(hypotheses[:,0]==0)))
+    if np.sum(~(hypotheses[:,0]==0)) == 0:
         log.debug(" ---  all is clustered, returning None")
         # Nothing to do anymore: everything is clustered.
         return None, None, None
     else:
         # Remove overlap values & indexes for hypotheses that will be removed
-        overlap_to_be_removed = []
+        overlap_to_be_removed = np.zeros(overlap.shape[0],dtype=bool)
         for i in xrange(indexes.shape[0]):
-            if indexes[i,0] in to_be_removed or indexes[i,1] in to_be_removed:
-                overlap_to_be_removed.append(i)
-        log.debug(' ---  overlaps to be removed: %d out of %d', len(overlap_to_be_removed), n)
-        overlap_to_be_removed = np.array(overlap_to_be_removed)
-        return hypotheses, overlap[~overlap_to_be_removed], indexes[~overlap_to_be_removed]
+            if to_be_removed[indexes[i,0]] or to_be_removed[indexes[i,1]]:
+                overlap_to_be_removed[i]=True
+        log.debug(' ---  overlaps to be removed: %d out of %d', overlap_to_be_removed.sum(), overlap.shape[0])
+        overlap =overlap[~overlap_to_be_removed]
+        log.debug(' ---  New length: %d (overlaps actually removed: %d)', overlap.shape[0], indexes.shape[0]-overlap.shape[0])
+        
+        return hypotheses, overlap, indexes[~overlap_to_be_removed]

@@ -40,9 +40,9 @@ IT_SIZES=`for it in $FULL_ITS; do echo $THREADS; done; echo $(($NO_CLASSES%$THRE
 for B in `seq 1 $NO_BATCHES`; do
     IMIDS=(`cat $TMPFOLDER/batch_$B.pkl.txt`)
     echo "Running batch $B on detection: img: ${IMIDS[@]}"
-    for CLS in $CLASSES; do
+    for CLS in ${CLASSES[@]}; do
         echo "Running detection on class $CLS"
-        for ID in $IMIDS; do
+        for ID in ${IMIDS[@]}; do
             echo "Running detection on image $ID"
             python voc_fgbg_det_exemplar_detect.py $CFGFILE $TMPFOLDER $B $CLS $ID
         done

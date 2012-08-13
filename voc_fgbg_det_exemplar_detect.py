@@ -31,18 +31,28 @@ if __name__ == '__main__':
     log.info('==== LOADING DISTANCES ====')
     with open(DETECTIONopts['hypotheses_path']%(cls,im_id), 'rb') as dfile:
         hypotheses = cPickle.load(dfile)
-        
+    
+    # Keep only the best 2000 descriptors (largest relative margin d+, d-)
+    hypotheses = hypotheses[hypotheses[:,0].argsort()[::-1][:2000]]
+    
     # get pairwise overlap (don't have to calculate each time)
     overlap, indexes = get_pairwise_overlap(hypotheses)
     log.debug('Mean overlap:%.5f',overlap.mean())
     log.info('  == CLUSTERING HYPOTHESES OF %s==',im_id)
     detections = []
-    while not hypotheses == None:
+    while not indexes == None:
         # Cluster hypotheses' overlap to get the biggest cluster (it's hypotheses' indexes)
-        log.debug('  no. of hypothesis left: %d',hypotheses.shape[0])
-        log.debug('  no. of overlaps left: %d, should be %d/2 * (%d-1)=%.1f',overlap.shape[0], hypotheses.shape[0],hypotheses.shape[0],hypotheses.shape[0]/2.0*(hypotheses.shape[0]-1))
+        left = np.sum(~(hypotheses[:,0] == 0))
+        log.debug('  no. of hypothesis left: %d',left)
+        log.debug('  no. of overlaps left: %d, should be %d/2 * (%d-1)=%.1f',overlap.shape[0], left, left,left/2.0*(left-1))
+        
+        if left > 1:
+            log.debug('  --  Clustering again')
+            best_cluster_idx = cluster_hypotheses(overlap, indexes, DETECTIONopts['theta_m'])
+        elif left == 1:
+            log.debug('  --  No need for clustering, only 1 hypothesis left:')
+            best_cluster_idx = np.array([(np.argsort(hypotheses[:,0] > 0))[-1]])
             
-        best_cluster_idx = cluster_hypotheses(overlap, indexes, DETECTIONopts['theta_m'])
         # merge the biggest cluster of hypotheses into a detection, and append it
         log.debug(' Best cluster size: %d',best_cluster_idx.shape[0])
         detection = merge_cluster(hypotheses[best_cluster_idx], im_id)
