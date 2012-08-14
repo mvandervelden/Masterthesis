@@ -47,6 +47,14 @@ if __name__ == '__main__':
     descriptors_array = np.vstack([d for i,p,d in image_list])
     points_list = [p for i,p,d in image_list]
     im_ids = [i for i,p,d in image_list]
+    imgs = []
+    for it1, ref_id in enumerate(im_ids):
+        for it2, im in enumerate(images):
+            if im.im_id == ref_id:
+                log.debug(' --- descr no %d (id:%s) == list no %d (id:%s)',it1,ref_id,it2,im.im_id)
+                imgs.append(im)
+                break
+    images = imgs
     del image_list
 
     log.info('==== GET ESTIMATES ====')
@@ -65,16 +73,26 @@ if __name__ == '__main__':
     log.debug("--max estimate for each class: %s"%np.max(cls_dst,0))
     log.debug("--min estimate for each class: %s"%np.min(cls_dst,0))
     log.debug("--min/max descr_idx for fg class:%d/%d",nn_descr_idxs.min(),nn_descr_idxs.max())
+    log.debug("--no of descr_indexes %s",nn_descr_idxs.shape)
     distances = []
+    nearest_exemplar_indexes = []
     index = 0
     for k in num_descriptors:
         distances.append(cls_dst[index:index+k,:])
+        nearest_exemplar_indexes.append(nn_descr_idxs[index:index+k])
         index += k
     del cls_dst
-    
+    del nn_descr_idxs
     """ get exemplars and hypotheses per image, save these per image"""
     
+    with open('/'.join(DETECTIONopts['hypotheses_path'].split('/')[:-1])+'/distances.pkl', 'wb') as dfile:
+        cPickle.dump(distances, dfile)
+        cPickle.dump(points_list, dfile)
+        cPickle.dump(images, dfile)
+        cPickle.dump(nearest_exemplar_indexes, dfile)
+    
     log.info('==== GET EXEMPLARS ====')
+    
     
     with open(DETECTIONopts['exemplar_path']%cls, 'rb') as exf:
         # USing np save instead of cPickle
@@ -86,7 +104,8 @@ if __name__ == '__main__':
     # Each detection will be a tuple (Qd, Qh, im_id, xmin, ymin, xmax, ymax)
         
     for i, dist_arr in enumerate(distances):
-        log.info("==== FINDING DETECTIONS FOR IMAGE %s", im_ids[i])
+        
+        log.info("==== FINDING DETECTIONS FOR IMAGE %s ====", im_ids[i])
         # Select all descriptors where d+ < d- (i.e. second col > first col)
         positives = dist_arr.argmax(1)==1
         log.debug(' --- No of positive descriptors: %d',positives.sum())
@@ -98,7 +117,7 @@ if __name__ == '__main__':
         # Get the foreground points
         fg_points = points_list[i][positives,:]
         # get the indexes of the class's exemplars
-        exemplar_idxs = nn_descr_idxs[positives]
+        exemplar_idxs = nearest_exemplar_indexes[i][positives]
         # Get the exemplars that are nn of the image's descriptors
         im_exemplars = exemplars[exemplar_idxs, :]
         log.debug(' --- No of positive exemplars in image %s: %s',im_ids[i],im_exemplars.shape)
@@ -114,6 +133,7 @@ if __name__ == '__main__':
         # converted with to the new scale (rel_bb_w * scale) times the relative
         # x_pos of the exemplar to its bbox]
         log.debug(" --- Trying to fill %s hypotheses from %s fg_points and %s im_exemplars",hypotheses.shape, fg_points.shape, im_exemplars.shape)
+        log.debug(" --- dtypes: hypotheses: %s, fg_points:%s, im_exemplars:%s",hypotheses.dtype, fg_points.dtype, im_exemplars.dtype)
         hypotheses[:,1] = fg_points[:,0]-(im_exemplars[:,2] * im_exemplars[:,0] * fg_points[:,2])
         # ymin = point_y - (rel_y * rel_bb_h * point_sigma)
         hypotheses[:,2] = fg_points[:,1]-(im_exemplars[:,3] * im_exemplars[:,1] * fg_points[:,2])

@@ -65,5 +65,5 @@ if __name__ == '__main__':
     # Save detections of image to resultsfiles
     # Save detections only, do not rank yet, because of batches...
     log.info('==== SAVE CONFIDENCE VALUES ====')
-    save_to_pickle(TESTopts['result_path']%cls, detections)
+    save_to_pickle(TESTopts['result_path'], detections)
     
