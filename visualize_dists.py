@@ -5,31 +5,37 @@ import matplotlib.image as mpimg
 import cPickle, sys
 
 if __name__ == '__main__':
-    path = sys.argv[1]
+    path = 'det_example_2_tmp/distances/distances.pkl'
+    im_id = sys.argv[1]
     with open(path,'rb') as f:
         distances = cPickle.load(f)
         allpoints = cPickle.load(f)
-        im_ids = cPickle.load(f)
-        im_objs = cPickle.load(f)
+        images = cPickle.load(f)
     
-    fg_distances = distances[0][:,0]
-    bg_distances = distances[0][:,1]
-    points = np.asarray(allpoints[0])
-    im_id = im_ids[0]
-    for img in im_objs:
-        if img.im_id == im_id:
-            image = img
+    im_it=0
+    image = None
+    for it,im in enumerate(images):
+        if im.im_id == im_id:
+            im_it = it
+            image = im
             break
     
-    xsize = image.width
+    fg_distances = distances[im_it][:,0]
+    bg_distances = distances[im_it][:,1]
+    points = np.asarray(allpoints[im_it])
+    
     
     n = points.shape[0]
     print "showing image %s, with file %s (%d points)"%(im_id, path, n)
-    print "image size: (%d,%d), from points(%d,%d)"%(image.width,image.height,points[:,0].max(), points[:,1].max() )
     
-    imf = Image.open(image.path)
+    imf = Image.open('ex_imgs2/%s.jpg'%im_id)
     imarr = np.asarray(imf)
-    if False:
+    xsize = imarr.shape[0]
+    plt.imshow(imarr)
+    plt.savefig('/'.join(path.split('/')[:-1])+'/'+im_id+'.png')
+    plt.clf()
+    print "image size: %s, from points(%d,%d)"%(imarr.shape,points[:,0].max(), points[:,1].max() )
+    if True:
     
         for i,scale in enumerate([1.33, 2., 3., 4.5]):
             print "plotting descriptor scale %f"%scale
@@ -40,22 +46,24 @@ if __name__ == '__main__':
             print "mindist, maxdist to bg: ",bg.min(),',',bg.max()
 
             plt.subplot(121)
-            plt.imshow(imarr)
-            plt.hexbin(pts[:,0], pts[:,1],C=fg,alpha=.2,gridsize=xsize/8 )
+            # plt.imshow(imarr)
+            plt.hexbin(pts[:,0], pts[:,1],C=fg,alpha=.2,gridsize=xsize/5 )
+            cb = plt.colorbar()
             plt.subplot(122)
-            plt.imshow(imarr)
-            plt.hexbin(pts[:,0], pts[:,1],C=bg,alpha=.2,gridsize=xsize/8 )
+            # plt.imshow(imarr)
+            plt.hexbin(pts[:,0], pts[:,1],C=bg,alpha=.2,gridsize=xsize/5 )
+            cb = plt.colorbar()
         
-            plt.savefig(path[:-4]+'_%.2f.png'%scale)
+            plt.savefig('/'.join(path.split('/')[:-1])+'/'+im_id+'_%.2f.png'%scale)
             plt.clf()
         # Plot averaged distances
         plt.subplot(121)
-        plt.imshow(imarr)
-        plt.hexbin(points[:,0], points[:,1],C=fg_distances,alpha=.2,gridsize=xsize/8 )
+        # plt.imshow(imarr)
+        plt.hexbin(points[:,0], points[:,1],C=fg_distances,alpha=.2,gridsize=xsize/10 )
         plt.subplot(122)
-        plt.imshow(imarr)
-        plt.hexbin(points[:,0], points[:,1],C=bg_distances,alpha=.2,gridsize=xsize/8 )
-        plt.savefig(path[:-4]+'_summedscales.png')
+        # plt.imshow(imarr)
+        plt.hexbin(points[:,0], points[:,1],C=bg_distances,alpha=.2,gridsize=xsize/10 )
+        plt.savefig('/'.join(path.split('/')[:-1])+'/'+im_id+'_summedscales.png')
         plt.clf()
     
         # Plot normalized distances, to compare
@@ -64,39 +72,31 @@ if __name__ == '__main__':
         norm_bgd = bg_distances/maxd
     
         plt.subplot(121)
-        plt.imshow(imarr)
-        plt.hexbin(points[:,0], points[:,1],C=norm_fgd,vmin=0,vmax=1,alpha=.2,gridsize=xsize/8 )
+        # plt.imshow(imarr)
+        plt.hexbin(points[:,0], points[:,1],C=norm_fgd,vmin=0,vmax=1,alpha=.2,gridsize=xsize/10 )
         plt.subplot(122)
-        plt.imshow(imarr)
-        plt.hexbin(points[:,0], points[:,1],C=norm_bgd,vmin=0,vmax=1,alpha=.2,gridsize=xsize/8 )
-        plt.savefig(path[:-4]+'_norm_scales.png')
+        # plt.imshow(imarr)
+        plt.hexbin(points[:,0], points[:,1],C=norm_bgd,vmin=0,vmax=1,alpha=.2,gridsize=xsize/10 )
+        plt.savefig('/'.join(path.split('/')[:-1])+'/'+im_id+'_norm_scales.png')
         plt.clf()
     
         # plot dist difference, to compare: redder = closer to bg, bluer = closer to fg
         diff_d = fg_distances-bg_distances
-        plt.imshow(imarr)
-        plt.hexbin(points[:,0], points[:,1],C=diff_d,alpha=.2,gridsize=xsize/8 )
-        plt.savefig(path[:-4]+'_diff.png')
+        # plt.imshow(imarr)
+        plt.hexbin(points[:,0], points[:,1],C=diff_d,alpha=.2,gridsize=xsize/10 )
+        plt.savefig('/'.join(path.split('/')[:-1])+'/'+im_id+'_diff.png')
         plt.clf()
     
-    for i,im_id in enumerate([im_ids[0]] ):
-        print im_id
-        points = np.asarray(allpoints[i])
-        fg_distances = distances[i][:,0]
-        bg_distances = distances[i][:,1]
-        for img in im_objs:
-            if img.im_id == im_id:
-                imarr = np.asarray(Image.open(img.path))
-                break
-        
-        # plot dist ratio, to compare: redder = closer to bg, bluer = closer to fg
-        # diff_d = (bg_distances-fg_distances)/fg_distances
-        diff_d = bg_distances-fg_distances
-        plt.imshow(imarr)
-        plt.hexbin(points[:,0], points[:,1],C=diff_d,alpha=.2,gridsize=xsize/8) # ,bins='log')
-        cb = plt.colorbar()
-        cb.set_label('bg_dist - fg_dist')
-        plt.savefig(path[:-4]+'_%s_quality2.png'%im_id)
-        plt.clf()
+
+    # plot dist ratio, to compare: redder = closer to bg, bluer = closer to fg
+    # diff_d = (bg_distances-fg_distances)/fg_distances
+    diff_d = bg_distances-fg_distances
+    # plt.imshow(imarr)
+    plt.hexbin(points[:,0], points[:,1],C=diff_d,alpha=.2,gridsize=xsize/10)
+    # ,bins='log')
+    cb = plt.colorbar()
+    cb.set_label('bg_dist - fg_dist')
+    plt.savefig('/'.join(path.split('/')[:-1])+'/'+im_id+'_quality.png')
+    plt.clf()
     
     
