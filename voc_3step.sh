@@ -6,7 +6,7 @@ TMPFOLDER=$2
 
 mkdir "$TMPFOLDER"
 
-python voc_det_exemplar.py $CFGFILE $TMPFOLDER
+python voc_det_exemplar_train.py $CFGFILE $TMPFOLDER
 NO_BATCHES=`cat $TMPFOLDER/testinfo.txt | sed -n '1p'`
 NO_CLASSES=`cat $TMPFOLDER/testinfo.txt | sed -n '2p'`
 CLASSES=(`cat $TMPFOLDER/testinfo.txt | tail -n 1`)
