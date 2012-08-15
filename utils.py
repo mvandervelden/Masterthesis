@@ -95,7 +95,7 @@ def save_testinfo(filename, batches, classes):
         testfile.write("%d\n"%len(batches))
         testfile.write("%d\n"%len(classes))
         for cls in classes:
-            testfile.write("%s\n"%cls)
+            testfile.write("%s "%cls)
 
 def save_results_to_file(file, objects, confidence_values):
     log = logging.getLogger("__name__")
