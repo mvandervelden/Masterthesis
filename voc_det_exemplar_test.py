@@ -134,13 +134,23 @@ if __name__ == '__main__':
         # x_pos of the exemplar to its bbox]
         log.debug(" --- Trying to fill %s hypotheses from %s fg_points and %s im_exemplars",hypotheses.shape, fg_points.shape, im_exemplars.shape)
         log.debug(" --- dtypes: hypotheses: %s, fg_points:%s, im_exemplars:%s",hypotheses.dtype, fg_points.dtype, im_exemplars.dtype)
+        
+        # Make sure hypotheses lie within image bounds!!!
+        # (therefore the stacks and min/max)
         hypotheses[:,1] = fg_points[:,0]-(im_exemplars[:,2] * im_exemplars[:,0] * fg_points[:,2])
+        hypotheses[:,1] = np.vstack([hypotheses[:,1], np.zeros(hypotheses.shape[0])]).max(0)
         # ymin = point_y - (rel_y * rel_bb_h * point_sigma)
         hypotheses[:,2] = fg_points[:,1]-(im_exemplars[:,3] * im_exemplars[:,1] * fg_points[:,2])
+        hypotheses[:,2] = np.vstack([hypotheses[:,2], np.zeros(hypotheses.shape[0])]).max(0)
         # xmax = point_x + (rel_x * rel_bb_w * point_sigma)
         hypotheses[:,3] = fg_points[:,0]+((1.0 - im_exemplars[:,2]) * im_exemplars[:,0] * fg_points[:,2])
+        hypotheses[:,3] = np.vstack([hypotheses[:,3], np.zeros(hypotheses.shape[0]) + images[i].width]).min(0)
         # ymax = point_y + (rel_y * rel_bb_h * point_sigma)
         hypotheses[:,4] = fg_points[:,1]+((1.0 - im_exemplars[:,3]) * im_exemplars[:,1] * fg_points[:,2])
+        hypotheses[:,4] = np.vstack([hypotheses[:,4], np.zeros(hypotheses.shape[0]) + images[i].height]).min(0)
+        
+        log.debug(" --- image dimensions: w:%d, h:%d, xmin, ymin, xmax,ymax over all hypotheses: (%d,%d,%d,%d)", \
+            images[i].width, images[i].height, hypotheses[:,1].min(), hypotheses[:,2].min(), hypotheses[:,3].max(), hypotheses[:,4].max())
         log.debug(" --- First 10 hypotheses:")
         for t in range(10):
             log.debug(" ---    hyp: %s, fg_point: %s, exemplar: %s",hypotheses[t,:], fg_points[t,:], im_exemplars[t,:])
