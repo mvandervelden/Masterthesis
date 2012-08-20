@@ -85,7 +85,7 @@ if __name__ == '__main__':
     del nn_descr_idxs
     """ get exemplars and hypotheses per image, save these per image"""
     
-    with open('/'.join(DETECTIONopts['hypotheses_path'].split('/')[:-1])+'/distances.pkl', 'wb') as dfile:
+    with open('/'.join(DETECTIONopts['hypotheses_path'].split('/')[:-1])+'/%s_distances.pkl'%cls, 'wb') as dfile:
         cPickle.dump(distances, dfile)
         cPickle.dump(points_list, dfile)
         cPickle.dump(images, dfile)

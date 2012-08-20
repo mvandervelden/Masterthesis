@@ -33,7 +33,12 @@ if __name__ == '__main__':
         hypotheses = cPickle.load(dfile)
     
     # Keep only the best 2000 descriptors (largest relative margin d+, d-)
-    hypotheses = hypotheses[hypotheses[:,0].argsort()[::-1][:2000]]
+    if not 'no_hypotheses' in DETECTIONopts:
+        DETECTIONopts['no_hypotheses'] = 2000
+    else:
+        DETECTIONopts['no_hypotheses'] = int(DETECTIONopts['no_hypotheses'])
+    log.info('Using $d hypotheses, out of %d', DETECTIONopts['no_hypotheses'], hypotheses.shape[0])
+    hypotheses = hypotheses[hypotheses[:,0].argsort()[::-1][:DETECTIONopts['no_hypotheses']]]
     
     # get pairwise overlap (don't have to calculate each time)
     overlap, indexes = get_pairwise_overlap(hypotheses)

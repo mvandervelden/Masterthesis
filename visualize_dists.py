@@ -38,7 +38,7 @@ if __name__ == '__main__':
     plt.savefig('/'.join(d_path.split('/')[:-2])+'/'+im_id+'.png')
     plt.clf()
     print "image size: %s, from points(%d,%d)"%(imarr.shape,points[:,0].max(), points[:,1].max() )
-    if True:
+    if False:
     
         for i,scale in enumerate([1.33, 2., 3., 4.5]):
             print "plotting descriptor scale %f"%scale
@@ -94,12 +94,21 @@ if __name__ == '__main__':
     # plot dist ratio, to compare: redder = closer to bg, bluer = closer to fg
     # diff_d = (bg_distances-fg_distances)/fg_distances
     diff_d = bg_distances-fg_distances
-    # plt.imshow(imarr)
+    plt.imshow(imarr)
+    plt.hexbin(points[:,0], points[:,1],C=diff_d,alpha=.2,gridsize=xsize/10)
+    # ,bins='log')
+    cb = plt.colorbar()
+    cb.set_label('bg_dist - fg_dist')
+    plt.savefig('/'.join(d_path.split('/')[:-2])+'/'+im_id+'_quality_im.png')
+    plt.clf()
+    
+    # plot dist ratio, to compare: redder = closer to bg, bluer = closer to fg
     plt.hexbin(points[:,0], points[:,1],C=diff_d,alpha=.2,gridsize=xsize/10)
     # ,bins='log')
     cb = plt.colorbar()
     cb.set_label('bg_dist - fg_dist')
     plt.savefig('/'.join(d_path.split('/')[:-2])+'/'+im_id+'_quality.png')
     plt.clf()
+    
     
     
