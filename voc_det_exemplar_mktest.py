@@ -19,6 +19,7 @@ if __name__ == "__main__":
     
     # Setup logger
     log = init_log(TESTopts['log_path'], 'main', 'w')
+    descriptor_function = descriptor.DescriptorUint8(**DESCRopts)
     
     log.info('==== INIT TEST ====')  
     
