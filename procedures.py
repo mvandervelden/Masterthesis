@@ -6,12 +6,12 @@ import os.path
 
 log = logging.getLogger("__name__")
 
-def train_voc(descriptor_function, estimator, object_type, VOCopts, \
-        descriptor_path=None, exemplar_path=None):
+def train_voc(descriptor_function, estimator, object_type, VOCopts,\
+        train_set='train', descriptor_path=None, exemplar_path=None):
     for i,cls in enumerate(VOCopts.classes):
         if not cls in estimator.classes:
             log.info('==== GET CLASS %d: %s IMAGES ====', i, cls)
-            img_set = read_image_set(VOCopts,cls+'_'+VOCopts['train_set'])
+            img_set = read_image_set(VOCopts,cls+'_'+ train_set)
             if not descriptor_path is None:
                 for im in img_set:
                     if os.path.exists(descriptor_path%im.im_id):
@@ -47,10 +47,11 @@ def train_voc(descriptor_function, estimator, object_type, VOCopts, \
                     fg_descriptors = get_bbox_descriptors(objects, descriptors)
                     estimator.add_class(cls+'_fg', fg_descriptors)
 
-def validate_behmo(estimator, VOCopts):
-    for i,cls in enumerate(VOCopts.classes):
-        log.info('==== GET CLASS %d: %s IMAGES ====', i, cls)
-        img_set = read_image_set(VOCopts,cls+'_'+VOCopts['train_set'])
+def load_behmo_estimator(descriptor_function, estimator, cls, VOCopts, \
+        train_set='train', descriptor_path=None, exemplar_path=None):
+    if not cls in estimator.classes:
+        log.info('==== GET CLASS %s IMAGES ====', cls)
+        img_set = read_image_set(VOCopts,cls+'_'+train_set)
         if not descriptor_path is None:
             for im in img_set:
                 if os.path.exists(descriptor_path%im.im_id):
@@ -59,32 +60,48 @@ def validate_behmo(estimator, VOCopts):
         log.info('==== GET %s DESCRIPTORS ====', cls)
         descriptors = get_image_descriptors(img_set, descriptor_function, \
             descriptor_path)
-        if not object_type == 'fgbg':
-            if object_type == 'bbox':
-                # Get descriptor's objects (bboxes):
-                log.info('==== GET %s OBJECTS ====', cls)
-                objects = get_objects_by_class(img_set, cls)
-                descriptors = get_bbox_descriptors(objects, descriptors)
-            elif object_type == 'image':
-                descriptors = [d for p,d in descriptors.values()]
-            log.info('==== ADD %s DESCRIPTORS TO ESTIMATOR', cls)
-            estimator.add_class(cls, descriptors)
+        # Get descriptor's objects (bboxes):
+        log.info('==== GET %s OBJECTS ====', cls)
+        objects = get_objects_by_class(img_set, cls)
+        bg_descriptors = get_bbox_bg_descriptors(objects, descriptors)
+        estimator.add_class(cls+'_bg', bg_descriptors)
+        if not exemplar_path is None:
+            fg_descriptors, exemplars = get_bbox_descriptors(objects, descriptors, exemplars=True)
+            estimator.add_class(cls+'_fg', fg_descriptors)
+            log.info('==== SAVING EXEMPLARS to %s ====', exemplar_path)
+            with open(exemplar_path%cls,'wb') as ef:
+                np.save(ef, np.vstack(exemplars))
+                # cPickle.dump(exemplars, ef)
         else:
-            # Get descriptor's objects (bboxes):
-            log.info('==== GET %s OBJECTS ====', cls)
-            objects = get_objects_by_class(img_set, cls)
-            bg_descriptors = get_bbox_bg_descriptors(objects, descriptors)
-            estimator.add_class(cls+'_bg', bg_descriptors)
-            if not exemplar_path is None:
-                fg_descriptors, exemplars = get_bbox_descriptors(objects, descriptors, exemplars=True)
-                estimator.add_class(cls+'_fg', fg_descriptors)
-                log.info('==== SAVING EXEMPLARS to %s ====', exemplar_path)
-                with open(exemplar_path%cls,'wb') as ef:
-                    np.save(ef, np.vstack(exemplars))
-                    # cPickle.dump(exemplars, ef)
-            else:
-                fg_descriptors = get_bbox_descriptors(objects, descriptors)
-                estimator.add_class(cls+'_fg', fg_descriptors) #TODO
+            fg_descriptors = get_bbox_descriptors(objects, descriptors)
+            estimator.add_class(cls+'_fg', fg_descriptors)
+    
+def train_behmo(descriptor_function, estimator, cls, VOCopts, val_set='val', \
+        descriptor_path=None):
+    
+    log.info('==== VALIDATE CLASS %s ====', cls)
+    img_set = read_image_set(VOCopts,cls + '_' + val_set)
+    if not descriptor_path is None:
+        for im in img_set:
+            if os.path.exists(descriptor_path%im.im_id):
+                # Make sure not to calculate descriptors again if they already exist
+                im.descriptor_file.append(descriptor_path%im.im_id)
+    log.info('==== GET %s VAL-DESCRIPTORS ====', cls)
+    descriptors = get_image_descriptors(img_set, descriptor_function, \
+        descriptor_path)
+
+    # Get descriptor's objects (bboxes):
+    log.info('==== GET %s VAL-OBJECTS ====', cls)
+    objects = get_objects_by_class(img_set, cls)
+    bg_descriptors = get_bbox_bg_descriptors(objects, descriptors)
+    fg_descriptors = get_bbox_descriptors(objects, descriptors)
+    
+    log.info('==== TRAIN BEHMO alphas and betas for %s', cls)
+    ground_truth =  [cls+'_fg' for i in xrange(len(fg_descriptors))] + \
+                    [cls+'_bg' for i in xrange(len(bg_descriptors))]
+    
+    estimator.train(fg_descriptors+bg_descriptors, ground_truth)
+    
 
 def make_voc_tests(descriptor_function, VOCopts, TESTopts):
     log.info('==== GENERATING TEST IMAGES =====')

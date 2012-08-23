@@ -37,7 +37,7 @@ if __name__ == '__main__':
         DETECTIONopts['no_hypotheses'] = 2000
     else:
         DETECTIONopts['no_hypotheses'] = int(DETECTIONopts['no_hypotheses'])
-    log.info('Using $d hypotheses, out of %d', DETECTIONopts['no_hypotheses'], hypotheses.shape[0])
+    log.info('Using %d hypotheses, out of %d', DETECTIONopts['no_hypotheses'], hypotheses.shape[0])
     hypotheses = hypotheses[hypotheses[:,0].argsort()[::-1][:DETECTIONopts['no_hypotheses']]]
     
     # get pairwise overlap (don't have to calculate each time)
