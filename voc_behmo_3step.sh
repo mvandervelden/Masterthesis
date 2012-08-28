@@ -4,9 +4,9 @@ echo "Running training"
 CFGFILE=$1
 TMPFOLDER=$2
 
-mkdir "$TMPFOLDER"
+#mkdir "$TMPFOLDER"
 
-python voc_det_ex_behmo_train.py $CFGFILE $TMPFOLDER
+#python voc_det_ex_behmo_train.py $CFGFILE $TMPFOLDER
 # python voc_det_exemplar_mktest.py $CFGFILE $TMPFOLDER
 NO_BATCHES=`cat $TMPFOLDER/testinfo.txt | sed -n '1p'`
 NO_CLASSES=`cat $TMPFOLDER/testinfo.txt | sed -n '2p'`
@@ -70,3 +70,4 @@ for B in `seq 1 $NO_BATCHES`; do
     done
 done
 echo "FINISHED ALL"
+
