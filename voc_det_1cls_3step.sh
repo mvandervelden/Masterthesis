@@ -27,4 +27,4 @@ for B in `seq 1 $NO_BATCHES`; do
         python voc_det_exemplar_detect.py $CFGFILE $TMPFOLDER $B $CLS $ID
     done
 done
-    
+echo "FINISHED ALL"

@@ -57,7 +57,7 @@ for B in `seq 1 $NO_BATCHES`; do
         echo "Running detection on class $CLS"
         START_IMID=0
         for SZ in $IT_SIZES; do
-            echo "Running batch $B on detection. $SZ images simultaneously"
+            echo "Running batch $B, class $CLS on detection. $SZ images simultaneously"
             STOP_IMID=$(($START_IMID+$SZ-1))
             for I in `seq $START_IMID $STOP_IMID`; do
                 IMID=${IMIDS[$I]}
@@ -69,4 +69,4 @@ for B in `seq 1 $NO_BATCHES`; do
         done
     done
 done
-    
+echo "FINISHED ALL"
