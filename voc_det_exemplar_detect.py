@@ -23,7 +23,7 @@ if __name__ == '__main__':
         mode = 'w'
     else:
         mode = 'a'
-    log = init_log(TESTopts['log_path'], im_id, mode)
+    log = init_log(TESTopts['log_path'], im_id+cls, mode)
 
     
     log.info("DETECTION cfg:%s, batch_no:%d, im_id:%s, cls:%s",configfile, batch_no, im_id, cls)
