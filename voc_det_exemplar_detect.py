@@ -1,4 +1,5 @@
 from utils import *
+from io import save_to_pickle
 from detection_utils import *
 from nbnn import *
 from nbnn.voc import *
@@ -45,6 +46,8 @@ if __name__ == '__main__':
     log.debug('Mean overlap:%.5f',overlap.mean())
     log.info('  == CLUSTERING HYPOTHESES OF %s==',im_id)
     detections = []
+    Qds = []
+    Qhs = []
     while not indexes == None:
         # Cluster hypotheses' overlap to get the biggest cluster (it's hypotheses' indexes)
         left = np.sum(~(hypotheses[:,0] == 0))
@@ -60,15 +63,17 @@ if __name__ == '__main__':
             
         # merge the biggest cluster of hypotheses into a detection, and append it
         log.debug(' Best cluster size: %d',best_cluster_idx.shape[0])
-        detection = merge_cluster(hypotheses[best_cluster_idx], im_id)
-        log.debug(' Detection found: %s',detection)
+        Qd, Qh, detection = merge_cluster(hypotheses[best_cluster_idx], im_id)
+        log.debug(' Detection found: %s, Qd: %d, Qh: %.2f',detection, Qd, Qh)
         detections.append(detection)
+        Qds.append(Qd)
+        Qhs.append(Qh)
         # Select hypotheses to remove based on the cluster and the removal threshold theta_p
-        hypotheses, overlap, indexes = remove_cluster(best_cluster_idx, detection[3:], hypotheses, overlap, indexes, DETECTIONopts['theta_p'])
+        hypotheses, overlap, indexes = remove_cluster(best_cluster_idx, detection, hypotheses, overlap, indexes, DETECTIONopts['theta_p'])
             
     log.debug(' Found %d Detections', len(detections))
     # Save detections of image to resultsfiles
     # Save detections only, do not rank yet, because of batches...
     log.info('==== SAVE CONFIDENCE VALUES ====')
-    save_to_pickle(TESTopts['result_path']%cls, detections)
+    save_to_pickle(TESTopts['result_path']%cls, [np.vstack(detections), np.hstack(Qds), np.hstack(Qhs), np.tile(im_id,len(detections))])
     

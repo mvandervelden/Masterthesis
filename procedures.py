@@ -1,15 +1,23 @@
 import cPickle
 import logging
+import os.path
+
 from utils import *
 from nbnn.voc import *
-import os.path
+from io import *
 
 log = logging.getLogger("__name__")
 
 def train_voc(descriptor_function, estimator, object_type, VOCopts,\
-        train_set='train', descriptor_path=None, exemplar_path=None):
-    for i,cls in enumerate(VOCopts.classes):
-        if not cls in estimator.classes:
+        train_set='train', descriptor_path=None, exemplar_path=None, cls=None):
+    if not cls is None:
+        classes = [cls]
+    else:
+        classes = VOCopts.classes
+    
+    for i,cls in enumerate(classes):
+        if (not object_type == 'fgbg' and not cls in estimator.classes) or \
+                (object_type == 'fgbg' and not cls+'_fg' in estimator.classes):
             log.info('==== GET CLASS %d: %s IMAGES ====', i, cls)
             img_set = read_image_set(VOCopts,cls+'_'+ train_set)
             if not descriptor_path is None:
@@ -40,16 +48,14 @@ def train_voc(descriptor_function, estimator, object_type, VOCopts,\
                     fg_descriptors, exemplars = get_bbox_descriptors(objects, descriptors, exemplars=True)
                     estimator.add_class(cls+'_fg', fg_descriptors)
                     log.info('==== SAVING EXEMPLARS to %s ====', exemplar_path)
-                    with open(exemplar_path%cls,'wb') as ef:
-                        np.save(ef, np.vstack(exemplars))
-                        # cPickle.dump(exemplars, ef)
+                    save_exemplars(exemplar_path%cls, exemplars)
                 else:
                     fg_descriptors = get_bbox_descriptors(objects, descriptors)
                     estimator.add_class(cls+'_fg', fg_descriptors)
 
 def load_behmo_estimator(descriptor_function, estimator, cls, VOCopts, \
         train_set='train', descriptor_path=None, exemplar_path=None):
-    if not cls in estimator.classes:
+    if not cls+'_fg' in estimator.classes:
         log.info('==== GET CLASS %s IMAGES ====', cls)
         img_set = read_image_set(VOCopts,cls+'_'+train_set)
         if not descriptor_path is None:
@@ -69,9 +75,7 @@ def load_behmo_estimator(descriptor_function, estimator, cls, VOCopts, \
             fg_descriptors, exemplars = get_bbox_descriptors(objects, descriptors, exemplars=True)
             estimator.add_class(cls+'_fg', fg_descriptors)
             log.info('==== SAVING EXEMPLARS to %s ====', exemplar_path)
-            with open(exemplar_path%cls,'wb') as ef:
-                np.save(ef, np.vstack(exemplars))
-                # cPickle.dump(exemplars, ef)
+            save_exemplars(exemplar_path%cls, exemplars)
         else:
             fg_descriptors = get_bbox_descriptors(objects, descriptors)
             estimator.add_class(cls+'_fg', fg_descriptors)
@@ -103,22 +107,18 @@ def train_behmo(descriptor_function, estimator, cls, VOCopts, val_set='val', \
     estimator.train(fg_descriptors+bg_descriptors, ground_truth)
     
 
-def make_voc_tests(descriptor_function, VOCopts, TESTopts):
+def make_voc_batches(descriptor_function, VOCopts, GLOBopts, TESTopts):
     log.info('==== GENERATING TEST IMAGES =====')
-    test_images = read_image_set(VOCopts,TESTopts['test_set'])
+    test_images = read_image_set(VOCopts, GLOBopts['test_set'])
     log.info('==== GENERATING AND SAVING TEST DESCRIPTORS =====')
     save_image_descriptors(test_images, descriptor_function, \
-        TESTopts['descriptor_path'])
+        GLOBopts['descriptor_path'])
     batches = get_image_batches(VOCopts, test_images, TESTopts['batch_size'])
     log.info('==== SAVING IMAGE OBJECTS PER BATCH =====')
-    for b,batch in enumerate(batches):
-        with open(TESTopts['img_pickle_path']%(b+1), 'wb') as pklfile:
-            cPickle.dump(batch, pklfile)
-        with open(TESTopts['img_pickle_path']%(b+1)+'.txt', 'w') as txtf:
-            for im in batch:
-                txtf.write(im.im_id+'\n')
+    for b, batch in enumerate(batches):
+        save_batch(TESTopts['img_pickle_path']%(b+1), batch)
     log.info('==== SAVING TESTINFORMATION =====')
-    save_testinfo(TESTopts['infofile'], batches, VOCopts.classes)
+    save_testinfo(GLOBopts['tmp_path']+'/testinfo.txt', batches, VOCopts.classes)
 
 def train_cal(train_images, descriptor_function, estimator, CALopts, TESTopts):
     for cls, images in train_images.items():

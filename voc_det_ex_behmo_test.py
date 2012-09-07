@@ -11,14 +11,19 @@ if __name__ == '__main__':
     if len(sys.argv) < 5:
         raise Exception("arguments expected: cfgfile batch_no class")
     configfile = sys.argv[1]
-    tmpdir = sys.argv[2]
-    batch_no = int(sys.argv[3])
-    cls = sys.argv[4]
+    batch_no = int(sys.argv[2])
+    cls = sys.argv[3]
     
     # Get options into dicts
     VOCopts = VOC.fromConfig(configfile)
-    DESCRopts, NBNNopts, TESTopts, DETECTIONopts, test_scalings = get_detection_opts(configfile, tmpdir)
+    GLOBopts, DESCRopts, NBNNopts, TESTopts, DETopts = getopts(configfile)
+
+    # Setup logger
+    log = init_log(GLOBopts['log_path'], 'training', 'w')
     
+    log.info('==== INIT DESCRIPTOR FUNCTION ====')
+    descriptor_function = init_descriptor(DESCRopts[0])
+
     # Setup logger
     if batch_no == 1:
         mode = 'w'
@@ -44,6 +49,8 @@ if __name__ == '__main__':
     log.info('==== LOAD IMAGE DESCRIPTORS ====')
     descriptors = get_image_descriptors(images, descriptor_function, \
         TESTopts['descriptor_path'])
+    
+    # Sort descriptors points, images such that they have the same order...
     image_list = [(im_id, p, d) for im_id, (p, d) in descriptors.items()]
     del descriptors
     num_descriptors = [d.shape[0] for i,p,d in image_list]
@@ -66,6 +73,7 @@ if __name__ == '__main__':
 
     log.info("Getting estimates for %s descriptors.", descriptors_array.shape[0])
 
+    # Get distances
     cls_dst = np.zeros((descriptors_array.shape[0], 2), np.double)
     cls_dst[:,0], nn_descr_idxs = estimator.get_class_estimates(cls+'_fg', descriptors_array, return_result=True)
     cls_dst[:,1] = estimator.get_class_estimates(cls+'_bg', descriptors_array)
@@ -77,6 +85,9 @@ if __name__ == '__main__':
     log.debug("--min estimate for each class: %s"%np.min(cls_dst,0))
     log.debug("--min/max descr_idx for fg class:%d/%d",nn_descr_idxs.min(),nn_descr_idxs.max())
     log.debug("--no of descr_indexes %s",nn_descr_idxs.shape)
+    
+    # Put distances into a list (per image)
+    # and put exemplar_indexes in a list too
     distances = []
     nearest_exemplar_indexes = []
     index = 0
@@ -86,28 +97,17 @@ if __name__ == '__main__':
         index += k
     del cls_dst
     del nn_descr_idxs
-    """ get exemplars and hypotheses per image, save these per image"""
     
-    with open('/'.join(DETECTIONopts['hypotheses_path'].split('/')[:-1])+'/distances_%s_batch%d.pkl'%(cls, batch_no), 'wb') as dfile:
-        cPickle.dump(distances, dfile)
-        cPickle.dump(points_list, dfile)
-        cPickle.dump(images, dfile)
-        cPickle.dump(nearest_exemplar_indexes, dfile)
+    fname = DETECTIONopts['distances_path']%(cls, batch_no)
+    save_distances(fname, distances, points_list, images, nearest_exemplar_indexes)
     
     log.info('==== GET EXEMPLARS ====')
     
-    
-    with open(DETECTIONopts['exemplar_path']%cls, 'rb') as exf:
-        # USing np save instead of cPickle
-        exemplars = np.load(exf)
-        # exemplars = np.vstack(cPickle.load(exf))
-        # exemplars is an np.array, nx4, where n=no of exemplars in a class
-        # the cols are [rel_bb_w, rel_bb_h, rel_x, rel_y]
+    exemplars = load_exemplars(DETECTIONopts['exemplar_path']%cls)
     
     # Each detection will be a tuple (Qd, Qh, im_id, xmin, ymin, xmax, ymax)
-        
     for i, dist_arr in enumerate(distances):
-        
+        get_hypothesis
         log.info("==== FINDING DETECTIONS FOR IMAGE %s ====", im_ids[i])
         # Select all descriptors where d+ < d- (i.e. second col > first col)
         positives = dist_arr.argmax(1)==1

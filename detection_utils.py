@@ -4,6 +4,58 @@ import logging
 
 log = logging.getLogger("__name__")
 
+
+def threshold_distances(exemplars, points, distances, threshold):
+    if thresholding == 'becker':
+        # Remove points/exemplars with fg > bg
+        mask = distances[:, 0] <= distances[:, 1]
+        exemplars = exemplars[mask, :]
+        points = points[mask, :]
+        log.debug("Removing %d points from %d total, because of Becker thresholding",\
+            points.shape[0], distances.shape[0])
+    return exemplars, points, distances
+
+def get_hypotheses(exemplars, points):
+    
+    hypotheses = np.zeros([exemplars.shape[0], 4])
+    # Make sure hypotheses lie within image bounds!!!
+    # (therefore the stacks and min/max)
+    # xmin = point_x - (rel_x * rel_bb_w * point_sigma)
+    # [which means: start the bbox at the x_location, subtracted by the
+    # converted with to the new scale (rel_bb_w * scale) times the relative
+    # x_pos of the exemplar to its bbox]
+    hypotheses[:,0] = np.maximum(points[:,0]-(exemplars[:,2] * exemplars[:,0] * points[:,2]), 0)
+    # ymin = point_y - (rel_y * rel_bb_h * point_sigma)
+    hypotheses[:,1] = np.maximum(points[:,1]-(exemplars[:,3] * exemplars[:,1] * points[:,2]), 0)
+    # xmax = point_x + (rel_x * rel_bb_w * point_sigma)
+    hypotheses[:,2] = np.minimum(points[:,0]+((1.0 - exemplars[:,2]) * exemplars[:,0] * points[:,2]), 0)
+    # ymax = point_y + (rel_y * rel_bb_h * point_sigma)
+    hypotheses[:,3] = np.minimum(points[:,1]+((1.0 - exemplars[:,3]) * exemplars[:,1] * points[:,2]), 0)
+    
+    return hypotheses
+
+def get_hypothesis_values(hypotheses, distances, points, metric):
+    vals = np.zeros(hypotheses.shape[0])
+    for h in xrange(hypotheses.shape[0]):
+        vals[h] = metric(hypotheses[h,:], h, distances, points)
+    return vals
+
+def get_detection_values(detections, reflist, distances, points, metric):
+    if not metric is det_becker:
+        vals = np.zeros(detections.shape[0])
+    else:
+        vals = np.zeros(detections.shape[0],2)
+    for h in xrange(detections.shape[0]):
+        vals[h] = metric(detections[h,:], reflist[h], distances, points)
+    return vals
+
+def sort_values(values):
+    if len(values.shape) == 1:
+        return values.argsort()
+    else:
+        return values.argsort(0)
+
+
 def get_pairwise_overlap(hyp):
     # Can do to with scipy.spatial.distance.pdist, but does not give index array back
     
@@ -28,7 +80,7 @@ def get_pairwise_overlap(hyp):
             # bottom-top
             indexes[o_idx,:] = [i,j]
             # N.B. 1-indexing, because hyp[x,0] = Qh
-            overlap[o_idx] = get_overlap(hyp[i,1:], hyp[j,1:])
+            overlap[o_idx] = get_overlap(hyp[i,:], hyp[j,:])
             o_idx += 1
     return overlap, indexes
 
@@ -181,37 +233,39 @@ Own implementation seems more useful"""
 #     
 #     return mask
     
-def merge_cluster(cluster_of_hyp, im_id):
-    """Make a detection, a tuple of (Qd, Qh, im_id, xmin,ymin,xmax,ymax)
+def merge_cluster(cluster_of_hyp):
+    """ Make a detection, a tuple of (Qd, Qh, [xmin, ymin, xmax, ymax])
+    
     """
 
-    Qd = cluster_of_hyp.shape[0]
-    rest = cluster_of_hyp.mean(0)
+    det = cluster_of_hyp.mean(0)
     log.debug(" --- Merged cluster of size: %s. Qd=%d",cluster_of_hyp.shape, Qd)
     log.debug(" ---  max values per row: %s", cluster_of_hyp.max(0))
     log.debug(" ---  min values per row: %s", cluster_of_hyp.min(0))
     log.debug(" ---  mean values per row: %s (= detection)", cluster_of_hyp.mean(0))
-    return (Qd,rest[0], im_id, rest[1], rest[2], rest[3], rest[4])
+    return det
     
-def remove_cluster(cluster, det_bbox, hypotheses, overlap, indexes, threshold=0.0):
+def remove_cluster(cluster, det_bbox, hypotheses, hvalues, overlap, indexes, threshold=0.0):
     """ overlap thereshold theta p, set by Becker to 0, which means everything 
     with just a little overlap is removed
+    
     """
+    
     n = hypotheses.shape[0]
-    hyp_left = np.sum(~(hypotheses[:,0]==0))
-    to_be_removed = np.zeros(n,dtype=bool)
+    hyp_left = np.sum(~(hvalues[:]==0))
+    to_be_removed = np.zeros(n, dtype=bool)
     for i in xrange(n):
         if i in cluster:
             # All hypotheses in the detection cluster have to be removed
             to_be_removed[i] = True
-        elif hypotheses[i,0] > 0 and get_overlap(hypotheses[i,1:], det_bbox) > threshold:
+        elif hvalues[i] > 0 and get_overlap(hypotheses[i,:], det_bbox) > threshold:
             # If overlap too big, remove too
             to_be_removed[i] = True
     log.debug(' ---  hypotheses to be removed: %d out of %d', to_be_removed.sum(), hyp_left)
     
-    hypotheses[to_be_removed,0] = 0
-    log.debug(' ---  New length: %d (hypotheses actually removed: %d)', np.sum(~(hypotheses[:,0]==0)), hyp_left-np.sum(~(hypotheses[:,0]==0)))
-    if np.sum(~(hypotheses[:,0]==0)) == 0:
+    hvalues[to_be_removed] = 0
+    log.debug(' ---  New length: %d (hypotheses actually removed: %d)', np.sum(~(hvalues[:]==0)), hyp_left-np.sum(~(hvalues[:]==0)))
+    if np.sum(~(hvalues[:]==0)) == 0:
         log.debug(" ---  all is clustered, returning None")
         # Nothing to do anymore: everything is clustered.
         return None, None, None
@@ -225,4 +279,4 @@ def remove_cluster(cluster, det_bbox, hypotheses, overlap, indexes, threshold=0.
         overlap =overlap[~overlap_to_be_removed]
         log.debug(' ---  New length: %d (overlaps actually removed: %d)', overlap.shape[0], indexes.shape[0]-overlap.shape[0])
         
-        return hypotheses, overlap, indexes[~overlap_to_be_removed]
+        return hvalues, overlap, indexes[~overlap_to_be_removed]

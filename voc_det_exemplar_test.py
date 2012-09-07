@@ -123,20 +123,21 @@ if __name__ == '__main__':
         log.debug(' --- No of positive exemplars in image %s: %s',im_ids[i],im_exemplars.shape)
         # Make hypotheses from the positive points and their exemplars
         # hypotheses = nx5 array, where n=no of positive descriptors, 
-        # the cols define a bbox and its quality Qh: [Qh, xmin, ymin, xmax, ymax]
+        # the cols define a bbox and its quality Qh: [Qh, xmin, ymin, xmax,ymax]
         hypotheses = np.zeros([positives.sum(),5], np.float32)
 
         # Qh
         hypotheses[:,0] = QH
-        # xmin = point_x - (rel_x * rel_bb_w * point_sigma)
-        # [which means: start the bbox at the x_location, subtracted by the
-        # converted with to the new scale (rel_bb_w * scale) times the relative
-        # x_pos of the exemplar to its bbox]
+
         log.debug(" --- Trying to fill %s hypotheses from %s fg_points and %s im_exemplars",hypotheses.shape, fg_points.shape, im_exemplars.shape)
         log.debug(" --- dtypes: hypotheses: %s, fg_points:%s, im_exemplars:%s",hypotheses.dtype, fg_points.dtype, im_exemplars.dtype)
         
         # Make sure hypotheses lie within image bounds!!!
         # (therefore the stacks and min/max)
+        # xmin = point_x - (rel_x * rel_bb_w * point_sigma)
+        # [which means: start the bbox at the x_location, subtracted by the
+        # converted with to the new scale (rel_bb_w * scale) times the relative
+        # x_pos of the exemplar to its bbox]
         hypotheses[:,1] = fg_points[:,0]-(im_exemplars[:,2] * im_exemplars[:,0] * fg_points[:,2])
         hypotheses[:,1] = np.vstack([hypotheses[:,1], np.zeros(hypotheses.shape[0])]).max(0)
         # ymin = point_y - (rel_y * rel_bb_h * point_sigma)
