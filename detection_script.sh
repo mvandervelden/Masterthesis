@@ -1,27 +1,32 @@
 #!/bin/bash
 
-echo "Running training"
+
 CFGFILE=$1
-TMPFOLDER=$2
+echo "Running training"
+python train_detection.py $CFGFILE
+echo "Making batches"
+python make_detection_batches.py $CFGFILE
 
-#mkdir "$TMPFOLDER"
-
-#python voc_det_ex_behmo_train.py $CFGFILE $TMPFOLDER
-python voc_det_exemplar_mktest.py $CFGFILE $TMPFOLDER
+NNTHREADS=`cat $CFGFILE | awk '$1 ~ /nn_threads/ {print $3}'`
+DETECTTHREADS=`cat $CFGFILE | awk '$1 /det_threads/ {print $3}'`
+TMPFOLDER=`cat $CFGFILE | awk '$1 /tmp_dir/ {print $3}'`
 NO_BATCHES=`cat $TMPFOLDER/testinfo.txt | sed -n '1p'`
 NO_CLASSES=`cat $TMPFOLDER/testinfo.txt | sed -n '2p'`
 CLASSES=(`cat $TMPFOLDER/testinfo.txt | tail -n 1`)
-TESTTHREADS=4
-DETECTTHREADS=8
+
+echo "TMPFOLDER: $TMPFOLDER"
+echo "No of NN-threads: $NNTHREADS"
+echo "No of NN-threads: $DETECTTHREADS"
 echo "No of batches: $NO_BATCHES"
 echo "No of classes: $NO_CLASSES"
 echo "Classes: ${CLASSES[@]}"
+echo ""
+echo "Running NN for all batches and classes"
 
-# all classes, and how many processes there should be in each iteration
-NO_FULL_ITS=`echo $(($NO_CLASSES/$TESTTHREADS))`
+NO_FULL_ITS=`echo $(($NO_CLASSES/$NNTHREADS))`
 if [ $NO_FULL_ITS -gt 0 ]; then
     FULL_ITS=`seq 1 $NO_FULL_ITS`
-    IT_SIZES=`for it in $FULL_ITS; do echo $TESTTHREADS; done; echo $(($NO_CLASSES%$TESTTHREADS))`
+    IT_SIZES=`for it in $FULL_ITS; do echo $NNTHREADS; done; echo $(($NO_CLASSES%$NNTHREADS))`
 else
     IT_SIZES=$NO_CLASSES
 fi
@@ -35,16 +40,17 @@ for B in `seq 1 $NO_BATCHES`; do
         for P in `seq $START_CLS $STOP_CLS`; do
             CLS=${CLASSES[$P]}
             echo "Running test on class no $P ($CLS)"
-            python voc_det_ex_behmo_test.py $CFGFILE $TMPFOLDER $B $CLS&
+            python get_detection_distances.py $CFGFILE $B $CLS&
         done
         wait
         START_CLS=$(($START_CLS+$SZ))
     done
 done
 
+echo "Running "
 # perform detection (clustering on all images) per image
 for B in `seq 1 $NO_BATCHES`; do
-    IMIDS=(`cat $TMPFOLDER/batch_$B.pkl.txt`)
+    IMIDS=(`cat $TMPFOLDER/batches/$B.pkl.txt`)
     NO_IMIDS=${#IMIDS[@]}
     NO_FULL_ITS=`echo $(($NO_IMIDS/$DETECTTHREADS))`
     if [ $NO_FULL_ITS -gt 0 ]; then
@@ -62,7 +68,7 @@ for B in `seq 1 $NO_BATCHES`; do
             for I in `seq $START_IMID $STOP_IMID`; do
                 IMID=${IMIDS[$I]}
                 echo "Running detection on image no $I ($IMID)"
-                python voc_det_exemplar_detect.py $CFGFILE $TMPFOLDER $B $CLS $IMID&
+                python detection.py $CFGFILE $B $CLS $IMID&
             done
             wait
             START_IMID=$(($START_IMID+$SZ))
