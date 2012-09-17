@@ -5,13 +5,15 @@ from pylab import *
 import sys
 from nbnn import vocimage
 from utils import *
-from distance_functions import *
+from metric_functions import *
 from file_io import *
 from detection_utils import *
+import logging
 
 
-def visualize_distances(vimage, cls, metric, src_path, res_path):
-    distances, points, image, nn_exemplar_indexes = load_distances(src_path%(vimage.im_id, cls))
+def visualize_distances(vimage, cls, metric, DETopts, res_path):
+    print "Performing visualize_distance with image: %s, class: %s, metric: %s, res_path: %s"%(vimage.im_id, cls, metric.__name__, res_path)
+    distances, points, image, nn_exemplar_indexes = load_distances(DETopts['distances_path']%(im_id,cls))
     
     imarr = load_imarray(vimage.path)
     
@@ -24,8 +26,9 @@ def visualize_distances(vimage, cls, metric, src_path, res_path):
     plt.savefig(res_path)
     plt.clf()
 
-def visualize_detections(vimage, cls, metric, det_n, detsrc_path, distsrc_path, res_path):
-    distances, points, image, nn_exemplar_indexes = load_distances(distsrc_path%(vimage.im_id, cls))
+def visualize_detections(vimage, cls, metric, det_n, detsrc_path, DETopts, res_path):
+    print "Performing visualize_detection with image: %s, class: %s, metric: %s, det_n: %d, res_path: %s"%(vimage.im_id, cls, metric.__name__, det_n, res_path)
+    distances, points, image, nn_exemplar_indexes = load_distances(DETopts['distances_path']%(im_id,cls))
     detections, reflist = load_detections(detsrc_path, cls, vimage.im_id)
     detection_vals = get_detection_values(detections, reflist, distances, points, metric)
     ranking = sort_values(detection_values)
@@ -56,10 +59,11 @@ def visualize_detections(vimage, cls, metric, det_n, detsrc_path, distsrc_path, 
     plt.clf()
     
     
-def visualize_hypotheses_heatmap(vimage, cls, metric, src_path, res_path):
-    distances, points, image, nn_exemplar_indexes = load_distances(src_path%(vimage.im_id, cls))
-    exemplars = load_exemplars(src_path, nn_exemplar_indexes)
-    hypotheses = get_hypotheses(exemplars, points)
+def visualize_hypotheses_heatmap(vimage, cls, metric, DETopts, res_path):
+    print "Performing visualize_hyp_heatmap with image: %s, class: %s, metric: %s, res_path: %s"%(vimage.im_id, cls, metric.__name__, res_path)
+    distances, points, image, nn_exemplar_indexes = load_distances(DETopts['distances_path']%(im_id,cls))
+    exemplars = load_exemplars(DETopts['exemplar_path']%(cls), nn_exemplar_indexes)
+    hypotheses = get_hypotheses(exemplars, points, vimage.width, vimage.height)
     hyp_values = get_hypothesis_values(hypotheses, distances, points, metric)
     ranking = sort_values(hyp_values)
     
@@ -82,10 +86,11 @@ def visualize_hypotheses_heatmap(vimage, cls, metric, src_path, res_path):
     cb.set_label(metric.__name__)
     plt.savefig(res_path)
     
-def visualize_hypotheses_top(vimage, cls, metric, hyp_n, src_path, res_path):
-    distances, points, image, nn_exemplar_indexes = load_distances(src_path%(vimage.im_id, cls))
-    exemplars = load_exemplars(src_path, nn_exemplar_indexes)
-    hypotheses = get_hypotheses(exemplars, points)
+def visualize_hypotheses_top(vimage, cls, metric, hyp_n, DETopts, res_path):
+    print "Performing visualize_hyp_top with image: %s, class: %s, metric: %s, hyp_n: %d res_path: %s"%(vimage.im_id, cls, metric.__name__, hyp_n, res_path)
+    distances, points, image, nn_exemplar_indexes = load_distances(DETopts['distances_path']%(im_id,cls))
+    exemplars = load_exemplars(DETopts['exemplar_path']%(cls), nn_exemplar_indexes)
+    hypotheses = get_hypotheses(exemplars, points, vimage.width, vimage.height)
     hyp_values = get_hypothesis_values(hypotheses, distances, points, metric)
     ranking = sort_values(hyp_values)
     
@@ -119,7 +124,7 @@ def visualize_hypotheses_top(vimage, cls, metric, hyp_n, src_path, res_path):
 
 
 if __name__ == '__main__':
-    """ Usage: python visualize method im_id cls dir [options]
+    usage = """ Usage: python visualize method im_id cls configfile [options]
         method = [distance | detections | hypotheses]
         options [ distance: [fg | bg | Qh] ;
                   detections: n(-1...x) [Becker | Qh | fg | Energy]
@@ -128,43 +133,57 @@ if __name__ == '__main__':
                               ]
                 ]
     """
-    method = sys.argv[1]
-    im_id = sys.argv[2]
-    cls = sys.argv[3]
-    src_path = sys.argv[4]
-    res_path = sys.argv[5]
-
-    im_path = 'VOCdevkit/VOC2012/JPEGImages/%s.jpg'%im_id
-    annotation_file = 'VOCdevkit/VOC2012/Annotations/%s.xml'%im_id
-    vimage = vocimage.VOCImage(im_path, im_id, annotation_file)
+    try:
+        method = sys.argv[1]
+        im_id = sys.argv[2]
+        cls = sys.argv[3]
+        cfgfile = sys.argv[4]
+    except IndexError:
+        print "Not enough command line arguments:"
+        print usage
+        exit(1)
     
-    if len(sys.argv) > 6:
-        options = sys.argv[6:]
+    logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+    log = logging.getLogger(__name__)
+    
+    VOCopts = VOC.fromConfig(cfgfile)
+    GLOBopts, DESCRopts, NBNNopts, TESTopts, DETopts = getopts(cfgfile)
+    
+    im_filename = VOCopts.image_path%im_id
+    annotation_file = VOCopts.annotation_path%im_id
+    vimage = vocimage.VOCImage(im_filename, im_id, annotation_file)
+    
+    if len(sys.argv) > 5:
+        options = sys.argv[5:]
     else:
         options = None
     if method == 'distance':
         if not options is None:
-            metric = eval(options[0] + '_dist')
+            metric = eval('dist_' + options[0])
         else:
-            metric = fg_dist
+            metric = dist_fg
         
+        res_dir = GLOBopts['res_dir'] + '/dist_images'
+        assert_dir(res_dir)
         visualize_distances(vimage, cls, metric, \
-            src_path + '/distances/%s_%s.pkl' % (im_id, cls), \
-            res_path + '/%s_%s_%s_distances.png' % (im_id, cls, metric))
+            DETopts[1], \
+            res_dir + '/%s_%s_%s.png' % (im_id, cls, metric.__name__))
     elif method == 'detections':
         if not options is None:
             det_n = int(options[0])
             if len(options) > 1:
-                metric = eval('detection_'+options[1])
+                metric = eval('det_'+options[1])
             else:
-                metric = detection_becker
+                metric = det_becker
         else:
             det_n = 10
-            metric = detection_becker
+            metric = det_becker
+        res_dir = GLOBopts['res_dir'] + '/top%d_det_images' % det_n
+        assert_dir(res_dir)
         visualize_detections(vimage, cls, metric, det_n,  \
-            src_path + '/detections/%s.pkl' % (cls), \
-            src_path + '/distances/%s_%s.pkl' % (im_id, cls), \
-            res_path + '/%s_%s_%s_top%ddetections.png' % (im_id, cls, metric, det_n))
+            GLOBopts['result_path'] % (im_id, cls), \
+            DETopts[1], \
+            res_dir + '/%s_%s_%s.png' % (im_id, cls, metric.__name__))
     elif method == 'hypotheses':
         if not options is None:
             h_vis = options[0]
@@ -173,9 +192,11 @@ if __name__ == '__main__':
                     metric = eval('bb_' + options[1])
                 else:
                     metric = bb_qh
+                res_dir = GLOBopts['res_dir'] + '/hyp_heatmaps'
+                assert_dir(res_dir)
                 visualize_hypotheses_heatmap(vimage, cls, metric, \
-                    src_path + '/distances/%s_%s.pkl'%(im_id, cls), \
-                    res_path + '/%s_%s_%s_hypothesesHM.png'%(im_id, cls, metric))
+                    DETopts[1], \
+                    res_dir + '/%s_%s_%s.png'%(im_id, cls, metric.__name__))
             elif h_vis == 'top':
                 if len(options) > 1:
                     hyp_n = int(options[1])
@@ -185,9 +206,11 @@ if __name__ == '__main__':
                     metric = eval('bb_' + options[2])
                 else:
                     metric = bb_qh
+                res_dir = GLOBopts['res_dir'] + '/top%d_hyp_images' % hyp_n
+                assert_dir(res_dir)
                 visualize_hypotheses_top(vimage, cls, metric, hyp_n,  \
-            src_path + '/distances/%s_%s.pkl' % (im_id, cls), \
-            res_path + '/%s_%s_%s_top%dhypotheses.png' % (im_id, cls, metric, hyp_n)))
+            DETopts[1], \
+            res_dir + '/%s_%s_%s.png' % (im_id, cls, metric.__name__))
             else:
                 raise Exception("Wrong Parameters")
         else:
