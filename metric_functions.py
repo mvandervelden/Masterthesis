@@ -1,5 +1,8 @@
 from utils import *
 from numpy import *
+import logging
+
+log = logging.getLogger(__name__)
 
 def dist_fg(dist_array):
     """ From a distance array, returns the distance to the fg class (=0th col)
@@ -69,7 +72,16 @@ def bb_qh(bb, i, pt_array, dist_array):
     pts_in_bb = points_in_bb(bb, pt_array)
     fg_d = dist_array[pts_in_bb,0]
     bg_d = dist_array[pts_in_bb,1]
-
+    # log.debug(' -- bb_qh: input : bb=%s (dtype:%s), pt_array=%s (dtype:%s), dist_array%s (dtype:%s)',bb,bb.dtype, pt_array.shape, pt_array.dtype, dist_array.shape, dist_array.dtype)
+    # log.debug(' -- bb_qh: pts_in_bb=%s, fg_d=%s, bg_d=%s',pts_in_bb.shape, fg_d.shape, bg_d.shape)
+    if np.sum(pts_in_bb) == 0:
+        log.warning(' -- bb_qh: no pts in bb found, so no qh can be determined')
+        
+    if np.sum(fg_d==0) > 0:
+        log.warning(' -- bb_qh: fg_dist = 0 encountered %d times, replacing with %f', np.sum(fg_d==0), fg_d[fg_d>0].min()/1.e99)
+        fg_d[fg_d==0] = fg_d[fg_d>0].min()/1.e99
+    log.debug(' -- bb_qh: out:%f',( (bg_d - fg_d)/fg_d ).mean())
+    
     return ( (bg_d - fg_d)/fg_d ).mean()
 
 def bb_descrqh(bb, i, pt_array, dist_array):

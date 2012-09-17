@@ -1,12 +1,16 @@
 import sys
 import numpy as np
+from logutils import *
 from nbnn import *
 from nbnn.voc import *
 from utils import *
+
 from detection_utils import *
-from io import *
+from file_io import *
 
 if __name__ == '__main__':
+    np.seterr(all='raise')
+    
     # Get config settings
     if len(sys.argv) < 4:
         raise Exception("arguments expected: cfgfile batch_no class")
@@ -37,7 +41,7 @@ if __name__ == '__main__':
         GLOBopts['descriptor_path'])
     
     # Sort descriptors points & images such that they have the same order...
-    descriptor_array, points_list, images, num_descriptors = sort_descriptors(descriptors, images)
+    descriptors_array, points_list, images, num_descriptors = sort_descriptors(descriptors, images)
 
     log.info('==== GET ESTIMATES ====')
     
@@ -70,6 +74,6 @@ if __name__ == '__main__':
     del nn_descr_idxs
     
     log.info('==== SAVE DISTANCES ====')
-    save_distances(DETopts['distances_path'], cls, distances, points_list, \
+    save_distances(DETopts[1]['distances_path'], cls, distances, points_list, \
         images, nearest_exemplar_indexes)
     log.info('==== NN FINISHED ====')

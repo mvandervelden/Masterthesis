@@ -1,8 +1,9 @@
 import sys
 from nbnn.voc import VOC
+from logutils import *
 from utils import *
 from procedures import *
-from io import *
+from file_io import *
 
 if __name__ == "__main__":
     
@@ -23,6 +24,6 @@ if __name__ == "__main__":
     
     log.info('==== INIT BATCHES ====')
     # Save descriptors of test set to disk
-    make_voc_batches(descriptor_function, VOCopts, TESTopts)
+    make_voc_batches(descriptor_function, VOCopts, GLOBopts, TESTopts)
     log.info('==== BATCHMAKING FINISHED ====')
     

@@ -2,51 +2,74 @@
 import numpy as np
 import logging
 
-log = logging.getLogger("__name__")
-
+np.seterr(all='raise')
+log = logging.getLogger(__name__)
 
 def threshold_distances(exemplars, points, distances, threshold):
-    if thresholding == 'becker':
+    log.debug(" -- Removing exemplars below threshold %s", threshold)
+    if threshold == 'becker':
+        old = distances.shape[0]
         # Remove points/exemplars with fg > bg
         mask = distances[:, 0] <= distances[:, 1]
         exemplars = exemplars[mask, :]
         points = points[mask, :]
-        log.debug("Removing %d points from %d total, because of Becker thresholding",\
-            points.shape[0], distances.shape[0])
+        distances = distances[mask, :]
+        log.debug("Removing points where fg_d > bg_d: %d (=%d? =%d?) points from %d total, because of Becker thresholding",\
+            points.shape[0], exemplars.shape[0], distances.shape[0], old)
     return exemplars, points, distances
 
-def get_hypotheses(exemplars, points):
+def get_hypotheses(exemplars, points, imwidth, imheight):
+    """
+    Make hypothesis from an exemplar-points pair
+    exemplar: [rel_w = obj_w/sigma, rel_h = obj_h/sigma, rel_x_pos = (x-xmin)/obj_w, rel_y_pos = (y-ymin)/obj_h]
+    point:    [x,y,sigma]
+    hypothesis: [xmin, ymin, xmax, ymax]
+    hyp_w = rel_w * sigma
+    hyp_h = rel_h * sigma
+    hyp_xmin = x-(rel_x_pos * obj_w) = x - (rel_x_pos * rel_w * sigma)
+    hyp_ymin = y - (rel_y_pos * rel_h * sigma)
+    hyp_xmax = hyp_xmin + hyp_w
     
+    
+    doctest:
+    >>> get_hypotheses(np.array([[1,1,0.5,0.5],[0.5,1,0.1,0.5]]), np.array([[0.,0., 2.0], [100,100, 1.0]]), 200, 200)
+    array([[   0.  ,    0.  ,    1.  ,    1.  ],
+           [  99.95,   99.5 ,  100.45,  100.5 ]])
+    """
+    
+    log.info('  -- Getting hypotheses from %s points and %s exemplars (img dimensions: [%d, %d])',\
+        points.shape, exemplars.shape, imwidth, imheight)
     hypotheses = np.zeros([exemplars.shape[0], 4])
-    # Make sure hypotheses lie within image bounds!!!
-    # (therefore the stacks and min/max)
-    # xmin = point_x - (rel_x * rel_bb_w * point_sigma)
-    # [which means: start the bbox at the x_location, subtracted by the
-    # converted with to the new scale (rel_bb_w * scale) times the relative
-    # x_pos of the exemplar to its bbox]
-    hypotheses[:,0] = np.maximum(points[:,0]-(exemplars[:,2] * exemplars[:,0] * points[:,2]), 0)
-    # ymin = point_y - (rel_y * rel_bb_h * point_sigma)
-    hypotheses[:,1] = np.maximum(points[:,1]-(exemplars[:,3] * exemplars[:,1] * points[:,2]), 0)
-    # xmax = point_x + (rel_x * rel_bb_w * point_sigma)
-    hypotheses[:,2] = np.minimum(points[:,0]+((1.0 - exemplars[:,2]) * exemplars[:,0] * points[:,2]), 0)
-    # ymax = point_y + (rel_y * rel_bb_h * point_sigma)
-    hypotheses[:,3] = np.minimum(points[:,1]+((1.0 - exemplars[:,3]) * exemplars[:,1] * points[:,2]), 0)
-    
+    # Make sure hypotheses lie within image bounds!!! (minimum and maximum within image bounds)
+
+    hypotheses[:,0] = np.maximum(points[:,0] - (exemplars[:,2] * exemplars[:,0] * points[:,2]), 0)
+    hypotheses[:,1] = np.maximum(points[:,1] - (exemplars[:,3] * exemplars[:,1] * points[:,2]), 0)
+    hypotheses[:,2] = np.minimum(hypotheses[:,0] + (exemplars[:,0] * points[:,2]), imwidth)
+    hypotheses[:,3] = np.minimum(hypotheses[:,1] + (exemplars[:,1] * points[:,2]), imheight)
+
+    log.info('  -- found %s hypotheses', hypotheses.shape)
+    log.info('  - hyp example: %s from point: %s and exemplar: %s', hypotheses[0,:], points[0,:], exemplars[0,:])
+    log.info('  - hyp example: %s from point: %s and exemplar: %s', hypotheses[-1,:], points[-1,:], exemplars[-1,:])
     return hypotheses
 
 def get_hypothesis_values(hypotheses, distances, points, metric):
+    log.info('  -- get hypothesis values for %s hypotheses (metric:%s, %s distances, %s points)', \
+        hypotheses.shape, metric.__name__, distances.shape, points.shape)
     vals = np.zeros(hypotheses.shape[0])
     for h in xrange(hypotheses.shape[0]):
-        vals[h] = metric(hypotheses[h,:], h, distances, points)
+        vals[h] = metric(hypotheses[h,:], h, points, distances)
     return vals
 
 def get_detection_values(detections, reflist, distances, points, metric):
+    log.info('  -- get detection values for %s detections (metric:%s, %s references, %s distances, %s points)', \
+        hypotheses.shape, metric.__name__, len(reflist),distances.shape, points.shape)
     if not metric is det_becker:
         vals = np.zeros(detections.shape[0])
     else:
         vals = np.zeros(detections.shape[0],2)
     for h in xrange(detections.shape[0]):
-        vals[h] = metric(detections[h,:], reflist[h], distances, points)
+        vals[h] = metric(detections[h,:], reflist[h], points, distances)
+    log.debug('  -- found %d values', len(vals))
     return vals
 
 def sort_values(values):
@@ -234,12 +257,12 @@ Own implementation seems more useful"""
 #     return mask
     
 def merge_cluster(cluster_of_hyp):
-    """ Make a detection, a tuple of (Qd, Qh, [xmin, ymin, xmax, ymax])
+    """ Make a detection [xmin, ymin, xmax, ymax]
     
     """
 
     det = cluster_of_hyp.mean(0)
-    log.debug(" --- Merged cluster of size: %s. Qd=%d",cluster_of_hyp.shape, Qd)
+    log.debug(" --- Merged cluster of size: %s.",cluster_of_hyp.shape)
     log.debug(" ---  max values per row: %s", cluster_of_hyp.max(0))
     log.debug(" ---  min values per row: %s", cluster_of_hyp.min(0))
     log.debug(" ---  mean values per row: %s (= detection)", cluster_of_hyp.mean(0))
@@ -280,3 +303,8 @@ def remove_cluster(cluster, det_bbox, hypotheses, hvalues, overlap, indexes, thr
         log.debug(' ---  New length: %d (overlaps actually removed: %d)', overlap.shape[0], indexes.shape[0]-overlap.shape[0])
         
         return hvalues, overlap, indexes[~overlap_to_be_removed]
+
+if __name__ == '__main__':
+    import doctest
+    import numpy as np
+    doctest.testmod()

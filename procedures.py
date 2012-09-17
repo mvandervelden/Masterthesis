@@ -1,12 +1,11 @@
 import cPickle
 import logging
 import os.path
-
 from utils import *
 from nbnn.voc import *
-from io import *
+from file_io import *
 
-log = logging.getLogger("__name__")
+log = logging.getLogger(__name__)
 
 def train_voc(descriptor_function, estimator, object_type, VOCopts,\
         train_set='train', descriptor_path=None, exemplar_path=None, cls=None):
@@ -118,7 +117,7 @@ def make_voc_batches(descriptor_function, VOCopts, GLOBopts, TESTopts):
     for b, batch in enumerate(batches):
         save_batch(TESTopts['img_pickle_path']%(b+1), batch)
     log.info('==== SAVING TESTINFORMATION =====')
-    save_testinfo(GLOBopts['tmp_path']+'/testinfo.txt', batches, VOCopts.classes)
+    save_testinfo(GLOBopts['tmp_dir']+'/testinfo.txt', batches, VOCopts.classes)
 
 def train_cal(train_images, descriptor_function, estimator, CALopts, TESTopts):
     for cls, images in train_images.items():

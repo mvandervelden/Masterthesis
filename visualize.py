@@ -6,9 +6,8 @@ import sys
 from nbnn import vocimage
 from utils import *
 from distance_functions import *
-from io import *
+from file_io import *
 from detection_utils import *
-
 
 
 def visualize_distances(vimage, cls, metric, src_path, res_path):

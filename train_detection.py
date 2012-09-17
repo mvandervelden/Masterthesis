@@ -1,9 +1,9 @@
-
 import sys
+from logutils import *
 from nbnn.voc import VOC
 from utils import *
 from procedures import *
-from io import *
+from file_io import *
 
 if __name__ == "__main__":
     
