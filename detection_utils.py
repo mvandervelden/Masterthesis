@@ -62,11 +62,11 @@ def get_hypothesis_values(hypotheses, distances, points, metric):
 
 def get_detection_values(detections, reflist, distances, points, metric):
     log.info('  -- get detection values for %s detections (metric:%s, %s references, %s distances, %s points)', \
-        hypotheses.shape, metric.__name__, len(reflist),distances.shape, points.shape)
-    if not metric is det_becker:
+        detections.shape, metric.__name__, len(reflist),distances.shape, points.shape)
+    if not metric.__name__ == 'det_becker':
         vals = np.zeros(detections.shape[0])
     else:
-        vals = np.zeros(detections.shape[0],2)
+        vals = np.zeros([detections.shape[0],2])
     for h in xrange(detections.shape[0]):
         vals[h] = metric(detections[h,:], reflist[h], points, distances)
     log.debug('  -- found %d values', len(vals))
@@ -74,9 +74,14 @@ def get_detection_values(detections, reflist, distances, points, metric):
 
 def sort_values(values):
     if len(values.shape) == 1:
-        return values.argsort()
+        s = values.argsort()
+        log.debug(' -- ranking dimensions: %s', s.shape)
+        return s
     else:
-        return values.argsort(0)
+        # Sort values in increasing order, by first col first, then by sec col
+        s = np.lexsort(np.fliplr(values).T)
+        log.debug(' -- ranking dimensions: %s', s.shape)
+        return s
 
 
 def get_pairwise_overlap(hyp):

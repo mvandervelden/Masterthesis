@@ -26,14 +26,16 @@ if __name__ == '__main__':
     
     log.info("DETECTION cfg:%s, batch_no:%d, im_id:%s, cls:%s",configfile, batch_no, im_id, cls)
     
-    log.info('==== LOADING DISTANCES ====')
     #TODO: solve this
 
     if DETopts[0] == 'single_link':
         DETopts = DETopts[1]
+        log.info('==== LOADING DISTANCES ====')
         distances, points, image, nearest_exemplar_indexes = \
             load_distances(DETopts['distances_path']%(im_id, cls))
-    
+        # Only take into account the fg exemplars, there exist no bg exemplars.
+        nearest_exemplar_indexes = nearest_exemplar_indexes[:,0]
+        
         log.info('==== LOADING NEAREST EXEMPLARS ====')
         exemplars = load_exemplars(DETopts['exemplar_path']%cls, nearest_exemplar_indexes)
     

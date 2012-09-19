@@ -49,9 +49,7 @@ if __name__ == '__main__':
     log.info("Getting estimates for %s descriptors.", descriptors_array.shape[0])
 
     # Get distances
-    cls_dst = np.zeros((descriptors_array.shape[0], 2), np.double)
-    cls_dst[:,0], nn_descr_idxs = estimator.get_class_estimates(cls+'_fg', descriptors_array, return_result=True)
-    cls_dst[:,1] = estimator.get_class_estimates(cls+'_bg', descriptors_array)
+    cls_dst, nn_descr_idxs = estimator.get_estimates([cls+'_fg',cls+'_bg'], descriptors_array, return_result=True)
     del descriptors_array
     
     log.debug("-- returning array of shape %s"%(cls_dst.shape,))
@@ -68,7 +66,7 @@ if __name__ == '__main__':
     index = 0
     for k in num_descriptors:
         distances.append(cls_dst[index:index+k,:])
-        nearest_exemplar_indexes.append(nn_descr_idxs[index:index+k])
+        nearest_exemplar_indexes.append(nn_descr_idxs[index:index+k,:])
         index += k
     del cls_dst
     del nn_descr_idxs
