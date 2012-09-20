@@ -89,7 +89,7 @@ for CLS in ${CLASSES[@]}; do
 done
 
 echo "Tarballing results and tmpfiles"
-tar -czvf ${CFGFILE}.tmp.tgz $TMPFOLDER
+tar -czvf ${CFGFILE}.tmp.tgz --exclude=*.dbin --exclude=*.dtxt $TMPFOLDER
 RESFOLDER=`cat $CFGFILE | awk '$1 ~ /res_dir/ { print $3 }'`
 tar -czvf ${CFGFILE}.tmp.tgz $RESFOLDER
 
