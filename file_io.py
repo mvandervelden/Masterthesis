@@ -130,6 +130,25 @@ def load_detections(filename, im_id):
         detections.shape, len(reflist))
     return detections, reflist
 
+def save_voc_results(filename, detections, values, im_ids):
+    """Assuming values is array with values higher=more confidence
+    
+    """
+    log.info('++SAVING voc_results file to %s: detections:%s',filename, detections.shape)
+    if len(values.shape)>1:
+        # If values consist of multiple columns, enumerate to get the confidence
+        l = values.shape
+        firstval = values[0,:]
+        lastval = values[-1,:]
+        values = np.arange(l[0])
+        log.info('made values of shape: %s into range [0,...,%d]',l, values.shape[0])
+        log.info('first entry was: %s, and becomes %d',firstval, values[0])
+        log.info('last entry was: %s, and becomes %d',lastval, values[-1])
+    with open(filename, 'w') as f:
+        for i in xrange(values.shape[0]):
+            f.write("%s %f %s\n"%(im_ids[i], values[i], "%f %f %f %f"%tuple(detections[i,:])))
+    
+
 def save_to_pickle(filename, datalist):
     log.warning("DEPRECATED function call save_to_pickle")
     

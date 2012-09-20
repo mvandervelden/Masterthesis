@@ -50,6 +50,23 @@ def bb_energy(bb, i, pt_array, dist_array):
     pts_in_bb = points_in_bb(bb, pt_array)
     return dist_array[pts_in_bb,0].sum() + dist_array[~pts_in_bb, 1].sum()
 
+def bb_wenergy(bb, i, pt_array, dist_array):
+    """ Calculate the weighted energy of a Bounding Box: E = sum of distances of
+    descriptors inside BB to the fg + sum of distances of descriptors outside BB
+    to the bg
+    
+    doctest:
+    >>> bb_energy([10,15,20,25],1,np.array([[0,0],[10,10],[15,15],[20,20],[25,25],[15,20]]), np.array([[10,10],[10,20],[30,10],[5,50],[50,5],[7,70]]))
+    
+    """
+    n=pt_array.shape[0]
+    pts_in_bb = points_in_bb(bb, pt_array)
+    m = pts_in_bb.shape[0]
+    print n, m
+    a=dist_array[pts_in_bb,0].sum()/m
+    b=dist_array[~pts_in_bb, 1].sum()/(n-m)
+    return  a+b
+
 def bb_fg(bb, i, pt_array, dist_array):
     """ Calculate the mean fg-distances of a Bounding Box: D = mean of fg-distances of
     descriptors inside BB

@@ -52,34 +52,47 @@ echo "Running NN for all batches and classes"
 
 echo "Running detection"
 # perform detection (clustering on all images) per image
-for B in `seq 1 $NO_BATCHES`; do
-    IMIDS=(`cat $TMPFOLDER/batches/$B.pkl.txt`)
-    NO_IMIDS=${#IMIDS[@]}
-    NO_FULL_ITS=`echo $(($NO_IMIDS/$DETECTTHREADS))`
-    if [ $NO_FULL_ITS -gt 0 ]; then
-        FULL_ITS=`seq 1 $NO_FULL_ITS`
-        IT_SIZES=`for it in $FULL_ITS; do echo $DETECTTHREADS; done; REM=$(($NO_IMIDS%$DETECTTHREADS)); if [ $REM != 0 ]; then echo $REM; fi`
-    else
-        IT_SIZES=$NO_IMIDS
-    fi
-    echo "  Iterations: $NO_FULL_ITS"
-    echo "  FULL_ITS: $FULL_ITS"
-    echo "   It_sizes: $IT_SIZES"
-    for CLS in ${CLASSES[@]}; do
-        echo "Running detection on class $CLS"
-        START_IMID=0
-        for SZ in $IT_SIZES; do
-            echo "Running batch $B, class $CLS on detection. $SZ images simultaneously"
-            STOP_IMID=$(($START_IMID+$SZ-1))
-            for I in `seq $START_IMID $STOP_IMID`; do
-                IMID=${IMIDS[$I]}
-                echo "Running detection on image no $I ($IMID)"
-                python detection.py $CFGFILE $B $CLS $IMID&
-            done
-            wait
-            START_IMID=$(($START_IMID+$SZ))
-        done
-    done
+# for B in `seq 1 $NO_BATCHES`; do
+#     IMIDS=(`cat $TMPFOLDER/batches/$B.pkl.txt`)
+#     NO_IMIDS=${#IMIDS[@]}
+#     NO_FULL_ITS=`echo $(($NO_IMIDS/$DETECTTHREADS))`
+#     if [ $NO_FULL_ITS -gt 0 ]; then
+#         FULL_ITS=`seq 1 $NO_FULL_ITS`
+#         IT_SIZES=`for it in $FULL_ITS; do echo $DETECTTHREADS; done; REM=$(($NO_IMIDS%$DETECTTHREADS)); if [ $REM != 0 ]; then echo $REM; fi`
+#     else
+#         IT_SIZES=$NO_IMIDS
+#     fi
+#     echo "  Iterations: $NO_FULL_ITS"
+#     echo "  FULL_ITS: $FULL_ITS"
+#     echo "   It_sizes: $IT_SIZES"
+#     for CLS in ${CLASSES[@]}; do
+#         echo "Running detection on class $CLS"
+#         START_IMID=0
+#         for SZ in $IT_SIZES; do
+#             echo "Running batch $B, class $CLS on detection. $SZ images simultaneously"
+#             STOP_IMID=$(($START_IMID+$SZ-1))
+#             for I in `seq $START_IMID $STOP_IMID`; do
+#                 IMID=${IMIDS[$I]}
+#                 echo "Running detection on image no $I ($IMID)"
+#                 python detection.py $CFGFILE $B $CLS $IMID&
+#             done
+#             wait
+#             START_IMID=$(($START_IMID+$SZ))
+#         done
+#     done
+# done
+
+echo "Running ranking function"
+for CLS in ${CLASSES[@]}; do
+    echo "Ranking class $CLS"
+    python rank_detections.py $CFGFILE $CLS
 done
+
+echo "Tarballing results and tmpfiles"
+tar -czvf ${CFGFILE}.tmp.tgz $TMPFOLDER
+RESFOLDER=`cat $CFGFILE | awk '$1 ~ /res_dir/ { print $3 }'`
+tar -czvf ${CFGFILE}.tmp.tgz $RESFOLDER
+
 echo "FINISHED ALL"
+
 
