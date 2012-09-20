@@ -83,6 +83,26 @@ def sort_values(values):
         log.debug(' -- ranking dimensions: %s', s.shape)
         return s
 
+def make_indexes(size):
+    indexes = np.zeros([size/2.0 * (size-1),2], np.uint32)
+    # print indexes.shape
+    o = 0
+    for i in xrange(size-1):
+        # The intersection box exists (>0) when the rightmost xmin is
+        # smaller than the leftmost xmax and the lowermost ymin is smaller
+        # than the uppermost ymax, in that case intersection = right-left *
+        # bottom-top
+
+        # print i
+        # print o
+        # print size-i+1
+        # print np.arange(i+1, size)
+        # print range(o, o+(size-(i+1)))
+        indexes[o:o+(size-(i+1)),0] = i
+        indexes[o:o+(size-(i+1)),1] = np.arange(i+1, size)
+        # print indexes
+        o += (size - (i+1))
+    return indexes
 
 def get_pairwise_overlap(hyp):
     # Can do to with scipy.spatial.distance.pdist, but does not give index array back
@@ -96,17 +116,12 @@ def get_pairwise_overlap(hyp):
     # excluding the diagonal (so for every row i, calculate overlap with every
     # col j>i)
     overlap = np.zeros(n/2.0 * (n-1))
-    indexes = np.zeros([n/2.0 * (n-1),2],np.uint32)
+    indexes = make_indexes(n)
     o_idx = 0
     for i in xrange(n-1):
         if i%100 == 0:
             log.debug('---row i= %d, total j=%d cols', i, n-(i+1))
         for j in xrange(i+1,n):
-            # The intersection box exists (>0) when the rightmost xmin is
-            # smaller than the leftmost xmax and the lowermost ymin is smaller
-            # than the uppermost ymax, in that case intersection = right-left *
-            # bottom-top
-            indexes[o_idx,:] = [i,j]
             # N.B. 1-indexing, because hyp[x,0] = Qh
             overlap[o_idx] = get_overlap(hyp[i,:], hyp[j,:])
             o_idx += 1

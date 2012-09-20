@@ -7,6 +7,7 @@ from file_io import *
 from detection_utils import *
 from metric_functions import *
 import numpy as np
+from scipy.spatial import distance as sc_dist
 
 if __name__ == '__main__':
     np.seterr(all='raise')
@@ -57,7 +58,13 @@ if __name__ == '__main__':
             hvalues[0], hypotheses[-1,:], hvalues[-1])
         if DETopts['method'] == 'single_link':
             # get pairwise overlap (don't have to calculate each time)
-            overlap, indexes = get_pairwise_overlap(hypotheses)
+            if DETopts['dist'] == 'overlap':
+                overlap, indexes = get_pairwise_overlap(hypotheses)
+            else:
+                dist = sc_dist.pdist(hypotheses, DETopts['dist'])
+                overlap = 1-(dist/dist.max())
+                indexes = make_indexes(hypotheses.shape[0])
+            
             log.debug('Mean overlap:%.5f',overlap.mean())
             log.info('  == CLUSTERING HYPOTHESES OF %s==',im_id)
             detections = []
