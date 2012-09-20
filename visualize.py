@@ -152,28 +152,7 @@ def visualize_hypotheses_top(vimage, cls, metric, hyp_n, DETopts, res_path):
     plt.savefig(res_path)
 
 
-
-
-if __name__ == '__main__':
-    usage = """ Usage: python visualize method im_id cls configfile [options]
-        method = [distance | detections | hypotheses]
-        options [ distance: [fg | bg | qh] ;
-                  detections: n(-1...x) [becker | qh | fg | bg | energy]
-                  hypotheses: [ heat: [uniform | qh | descrqh | fg | bg | energy]
-                                top: n(-1...x) [ qh | descrqh | fg | bg | energy]
-                              ]
-                ]
-    """
-    try:
-        method = sys.argv[1]
-        im_id = sys.argv[2]
-        cls = sys.argv[3]
-        cfgfile = sys.argv[4]
-    except IndexError:
-        print "Not enough command line arguments:"
-        print usage
-        exit(1)
-    
+def run_visualize(method, im_id, cls, cfgfile, options):
     logging.basicConfig(stream=sys.stdout, level=logging.INFO)
     log = logging.getLogger(__name__)
     
@@ -184,10 +163,7 @@ if __name__ == '__main__':
     annotation_file = VOCopts.annotation_path%im_id
     vimage = vocimage.VOCImage(im_filename, im_id, annotation_file)
     
-    if len(sys.argv) > 5:
-        options = sys.argv[5:]
-    else:
-        options = None
+    
     if method == 'distance':
         if not options is None:
             metric = eval('dist_' + options[0])
@@ -248,4 +224,32 @@ if __name__ == '__main__':
             raise Exception("Not enough parameters")
     else:
         raise Exception("Unknown mode")
+
+if __name__ == '__main__':
+    usage = """ Usage: python visualize method im_id cls configfile [options]
+        method = [distance | detections | hypotheses]
+        options [ distance: [fg | bg | qh] ;
+                  detections: n(-1...x) [becker | qh | fg | bg | energy]
+                  hypotheses: [ heat: [uniform | qh | descrqh | fg | bg | energy]
+                                top: n(-1...x) [ qh | descrqh | fg | bg | energy]
+                              ]
+                ]
+    """
+    try:
+        method = sys.argv[1]
+        im_id = sys.argv[2]
+        cls = sys.argv[3]
+        cfgfile = sys.argv[4]
+    except IndexError:
+        print "Not enough command line arguments:"
+        print usage
+        exit(1)
+    
+    if len(sys.argv) > 5:
+        options = sys.argv[5:]
+    else:
+        options = None
+    
+    run_visualize(method, im_id, cls, cfgfile, options)
+
         

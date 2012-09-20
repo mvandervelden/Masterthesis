@@ -50,61 +50,61 @@ def split_clsfile(infile, outfile1, ims1, outfile2=None, ims2 = None):
             for line in filestr2:
                 of2.write(line+'\n')
 
-if __name__ == '__main__':
-    im_set_cls = sys.argv[1]
-    im_set_src = sys.argv[2]
-    voc_cfg = sys.argv[3]
-    
-    VOCopts = voc.VOC.fromConfig(voc_cfg)
-    classes = [c for c in VOCopts.classes if not c == "background"]
-    ims = voc.read_image_set(VOCopts, im_set_src)
-    for cls in classes:
-        split_clsfile(VOCopts.imset_path%(cls+'_'+im_set_cls), \
-            VOCopts.imset_path%(cls+'_'+im_set_src), ims)
-# if __name__ == "__main__":
-# 
-#     im_set = sys.argv[1]
-#     voc_cfg = sys.argv[2]
-# 
-#     outset1 = sys.argv[3]
-#     outset2 = sys.argv[4]
-# 
-#     ratio = 0.5
-#     if len(sys.argv) > 5:
-#         ratio = float(sys.argv[5])
-# 
+# if __name__ == '__main__':
+#     im_set_cls = sys.argv[1]
+#     im_set_src = sys.argv[2]
+#     voc_cfg = sys.argv[3]
+#     
 #     VOCopts = voc.VOC.fromConfig(voc_cfg)
 #     classes = [c for c in VOCopts.classes if not c == "background"]
-#     ims = voc.read_image_set(VOCopts, im_set)
-# 
-#     im_set1 = set()
-#     im_set2 = set()
-#     for class_name in classes:
-#         class_ims = [im for im in ims if class_name in im.classes]
-#         random.shuffle(class_ims)
-#         idx = int(round(len(class_ims)*ratio))
-#         im_set1.update(set(class_ims[:idx]).difference(im_set2))
-#         im_set2.update(set(class_ims[idx:]).difference(im_set1))
-# 
-#     with open(VOCopts.imset_path%outset1, 'w') as f:
-#         for im in im_set1:
-#             f.write(im.im_id + "\n")
-# 
-#     with open(VOCopts.imset_path%outset2, 'w') as f:
-#         for im in im_set2:
-#             f.write(im.im_id + "\n")
-# 
-#     print outset1, "length:", len(im_set1)
-#     print outset2, "length:", len(im_set2)
-#     for class_name in classes:
-#         s1 = len([im for im in im_set1 if class_name in im.classes])
-#         s2 = len([im for im in im_set2 if class_name in im.classes])
-#         print
-#         print class_name
-#         print outset1+":", s1
-#         print outset2+":", s2
-#         
-#         split_clsfile(VOCopts.imset_path%(class_name + '_' + im_set), \
-#             VOCopts.imset_path%(class_name + '_' + outset1), im_set1, \
-#             VOCopts.imset_path%(class_name + '_' + outset2), im_set2)
+#     ims = voc.read_image_set(VOCopts, im_set_src)
+#     for cls in classes:
+#         split_clsfile(VOCopts.imset_path%(cls+'_'+im_set_cls), \
+#             VOCopts.imset_path%(cls+'_'+im_set_src), ims)
+if __name__ == "__main__":
+
+    im_set = sys.argv[1]
+    voc_cfg = sys.argv[2]
+
+    outset1 = sys.argv[3]
+    outset2 = sys.argv[4]
+
+    ratio = 0.5
+    if len(sys.argv) > 5:
+        ratio = float(sys.argv[5])
+
+    VOCopts = voc.VOC.fromConfig(voc_cfg)
+    classes = [c for c in VOCopts.classes if not c == "background"]
+    ims = voc.read_image_set(VOCopts, im_set)
+
+    im_set1 = set()
+    im_set2 = set()
+    for class_name in classes:
+        class_ims = [im for im in ims if class_name in im.classes]
+        random.shuffle(class_ims)
+        idx = int(round(len(class_ims)*ratio))
+        im_set1.update(set(class_ims[:idx]).difference(im_set2))
+        im_set2.update(set(class_ims[idx:]).difference(im_set1))
+
+    with open(VOCopts.imset_path%outset1, 'w') as f:
+        for im in im_set1:
+            f.write(im.im_id + "\n")
+
+    with open(VOCopts.imset_path%outset2, 'w') as f:
+        for im in im_set2:
+            f.write(im.im_id + "\n")
+
+    print outset1, "length:", len(im_set1)
+    print outset2, "length:", len(im_set2)
+    for class_name in classes:
+        s1 = len([im for im in im_set1 if class_name in im.classes])
+        s2 = len([im for im in im_set2 if class_name in im.classes])
+        print
+        print class_name
+        print outset1+":", s1
+        print outset2+":", s2
+        
+        split_clsfile(VOCopts.imset_path%(class_name + '_' + im_set), \
+            VOCopts.imset_path%(class_name + '_' + outset1), im_set1, \
+            VOCopts.imset_path%(class_name + '_' + outset2), im_set2)
 
