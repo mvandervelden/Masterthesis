@@ -49,7 +49,10 @@ if __name__ == '__main__':
     log.info("Getting estimates for %s descriptors.", descriptors_array.shape[0])
 
     # Get distances
-    cls_dst, nn_descr_idxs = estimator.get_estimates([cls+'_fg',cls+'_bg'], descriptors_array, return_result=True)
+    if 'setmode' in GLOBopts and GLOBopts['setmode'] == 'becker':
+        cls_dst, nn_descr_idxs = estimator.get_estimates([cls,'background'], descriptors_array, return_result=True)
+    else:
+        cls_dst, nn_descr_idxs = estimator.get_estimates([cls+'_fg',cls+'_bg'], descriptors_array, return_result=True)
     del descriptors_array
     
     log.debug("-- returning array of shape %s"%(cls_dst.shape,))

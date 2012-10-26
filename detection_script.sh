@@ -8,6 +8,7 @@ TMPFOLDER=`cat $CFGFILE | awk '$1 ~ /tmp_dir/ { print $3 }'`
 python train_detection.py $CFGFILE
 echo "Making batches"
 python make_detection_batches.py $CFGFILE
+
 echo "Reading cfg $CFGFILE"
 NNTHREADS=`cat $CFGFILE | awk '$1 ~ /nn_threads/ { print $3 }'`
 DETECTTHREADS=`cat $CFGFILE | awk '$1 ~ /det_threads/ { print $3 }'`
