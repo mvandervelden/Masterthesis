@@ -1,6 +1,7 @@
 import cPickle
 import logging
 import os.path
+import numpy as np
 from utils import *
 from nbnn.voc import *
 from file_io import *
@@ -51,6 +52,75 @@ def train_voc(descriptor_function, estimator, object_type, VOCopts,\
                 else:
                     fg_descriptors = get_bbox_descriptors(objects, descriptors)
                     estimator.add_class(cls+'_fg', fg_descriptors)
+
+def load_becker_estimator(descriptor_function, estimator, VOCopts, \
+        train_set='train', descriptor_path=None, exemplar_path=None):
+    cls = 'motorbike'
+    # FG images are png: change image path:
+    origpath = VOCopts.image_path
+    VOCopts.image_path = VOCopts.image_path[:-4]+'.png'
+    if not cls in estimator.classes:
+        log.info('==== GET CLASS %s IMAGES ====', cls)
+        img_set = read_image_set(VOCopts, cls+'_'+train_set)
+        log.info('==== LOADING CLASS SEGMENTTION MASKS ====')
+        load_object_segmentations(VOCopts.class_mask_path, img_set)
+        if not descriptor_path is None:
+            for im in img_set:
+                if os.path.exists(descriptor_path%im.im_id):
+                    # Make sure not to calculate descriptors again if they already exist
+                    im.descriptor_file.append(descriptor_path%im.im_id)
+        log.info('==== GET %s DESCRIPTORS ====', cls)
+        descriptors = get_image_descriptors(img_set, descriptor_function, \
+            descriptor_path)
+        fg_descr = []
+        exemplars = []
+        for im in img_set:
+            object_idxs = list(np.unique(im.object_segmentation))
+            log.info('=== im %s, bb [%d,%d,%d,%d] partitioning ===', im.im_id, \
+                im.objects[0].xmin, im.objects[0].ymin, \
+                im.objects[0].xmax, im.objects[0].ymax)
+            log.info('   - object idxs: %s', object_idxs)
+            log.info('   - pts: %s, descr: %s', descriptors[im.im_id][0].shape, descriptors[im.im_id][1].shape)
+            if not exemplar_path is None:
+                imdescr, impts = partition_descriptors(np.matrix(descriptors[im.im_id][0]), \
+                    descriptors[im.im_id][1], im.object_segmentation, exemplars=True)
+                exmps = get_exemplars(im.objects[0], np.array(impts[1]))
+                log.info('   - adding %s exemplars, %s descr', len(exmps), len(imdescr[1]))
+                exemplars.append(exmps)
+            else:
+                imdescr, impts = partition_descriptors(descriptors[im.im_id][0], \
+                    descriptors[im.im_id][1], im.object_segmentation, exemplars=False)
+                log.info('   - adding %s descr', len(imdescr))
+            fg_descr.append(imdescr[1])
+
+        log.info('--- Adding %s descriptor arrays to class %s', len(fg_descr), cls)
+        estimator.add_class(cls, fg_descr) #TODO SHOULD WORK....
+        if not exemplar_path is None:
+            log.info('==== SAVING EXEMPLARS to %s ====', exemplar_path)
+            save_exemplars(exemplar_path%cls, exemplars)
+    
+    cls = 'background'
+    # BG consists of .jpg images, change VOCopts again...
+    VOCopts.image_path = origpath
+    if not cls in estimator.classes:
+        log.info('==== GET CLASS %s IMAGES ====', cls)
+        img_set = read_image_set(VOCopts, cls+'_'+train_set)
+        log.info('==== LOADING CLASS SEGMENTTION MASKS ====')
+        load_object_segmentations(VOCopts.class_mask_path, img_set)
+        if not descriptor_path is None:
+            for im in img_set:
+                if os.path.exists(descriptor_path%im.im_id):
+                    # Make sure not to calculate descriptors again if they already exist
+                    im.descriptor_file.append(descriptor_path%im.im_id)
+        log.info('==== GET %s DESCRIPTORS ====', cls)
+        descriptors = get_image_descriptors(img_set, descriptor_function, \
+            descriptor_path)
+        for im, (p, d) in descriptors.items():
+            descriptors[im] = (np.matrix(p), d)
+        log.info('==== Select which DESCRIPTORS are %s ====', cls)
+        bg_descriptors = get_background_descriptors(img_set, descriptors)
+        log.info('--- Adding %s descriptor arrays to class %s', len(bg_descriptors), cls)
+        estimator.add_class(cls, bg_descriptors) #TODO SHOULD WORK...
 
 def load_behmo_estimator(descriptor_function, estimator, cls, VOCopts, \
         train_set='train', descriptor_path=None, exemplar_path=None):

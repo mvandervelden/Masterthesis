@@ -38,7 +38,7 @@ def sort_descriptors(descriptors, images):
     for it1, ref_id in enumerate(im_ids):
         for it2, im in enumerate(images):
             if im.im_id == ref_id:
-                log.debug('  -- descr no %d (id:%s) == list no %d (id:%s)',it1,ref_id,it2,im.im_id)
+                # log.debug('  -- descr no %d (id:%s) == list no %d (id:%s)',it1,ref_id,it2,im.im_id)
                 imgs.append(im)
                 break
     images = imgs

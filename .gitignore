@@ -16,6 +16,7 @@ bgraz*
 VOCdevkit
 VOCresults
 Caltech
+TUDmotorbikes
 *.aux
 *.bbl
 *.blg
@@ -24,3 +25,7 @@ Caltech
 *.pdf
 *.ps
 *.synctex.gz
+comp*
+*.tgz
+*_tmp*/
+*_res*/

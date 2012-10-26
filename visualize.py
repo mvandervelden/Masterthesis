@@ -158,6 +158,8 @@ def run_visualize(method, im_id, cls, cfgfile, options):
     
     VOCopts = VOC.fromConfig(cfgfile)
     GLOBopts, DESCRopts, NBNNopts, TESTopts, DETopts = getopts(cfgfile)
+    if 'setmode' in GLOBopts and GLOBopts['setmode'] == 'becker':
+        VOCopts.image_path = VOCopts.image_path[:-4]+'.png'
     
     im_filename = VOCopts.image_path%im_id
     annotation_file = VOCopts.annotation_path%im_id

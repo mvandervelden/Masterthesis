@@ -72,20 +72,41 @@ if __name__ == "__main__":
     ratio = 0.5
     if len(sys.argv) > 5:
         ratio = float(sys.argv[5])
-
+    dset = 'voc'
+    if len(sys.argv) > 6:
+        dset = sys.argv[6]
+    
     VOCopts = voc.VOC.fromConfig(voc_cfg)
-    classes = [c for c in VOCopts.classes if not c == "background"]
+    if dset == 'tud':
+        classes = [c for c in VOCopts.classes]
+    else:
+        classes = [c for c in VOCopts.classes if not c == "background"]
     ims = voc.read_image_set(VOCopts, im_set)
 
     im_set1 = set()
     im_set2 = set()
-    for class_name in classes:
-        class_ims = [im for im in ims if class_name in im.classes]
+    if dset == 'voc':
+        for class_name in classes:
+            class_ims = [im for im in ims if class_name in im.classes]
+            random.shuffle(class_ims)
+            idx = int(round(len(class_ims)*ratio))
+            im_set1.update(set(class_ims[:idx]).difference(im_set2))
+            im_set2.update(set(class_ims[idx:]).difference(im_set1))
+    elif dset == 'tud':
+        class_name = 'motorbike'
+        class_ims = [im for im in ims if len(im.im_id) == 4]
         random.shuffle(class_ims)
         idx = int(round(len(class_ims)*ratio))
         im_set1.update(set(class_ims[:idx]).difference(im_set2))
         im_set2.update(set(class_ims[idx:]).difference(im_set1))
-
+        
+        class_name = 'background'
+        class_ims = [im for im in ims if len(im.im_id) == 6]
+        random.shuffle(class_ims)
+        idx = int(round(len(class_ims)*ratio))
+        im_set1.update(set(class_ims[:idx]).difference(im_set2))
+        im_set2.update(set(class_ims[idx:]).difference(im_set1))
+        
     with open(VOCopts.imset_path%outset1, 'w') as f:
         for im in im_set1:
             f.write(im.im_id + "\n")

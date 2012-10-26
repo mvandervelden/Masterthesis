@@ -14,7 +14,8 @@ if __name__ == "__main__":
     
     VOCopts = VOC.fromConfig(configfile)
     GLOBopts, DESCRopts, NBNNopts, TESTopts, DETopts = getopts(configfile)
-
+    if 'setmode' in GLOBopts and GLOBopts['setmode'] == 'becker':
+        VOCopts.image_path = VOCopts.image_path[:-4]+'.png'
     # Setup logger
     log = init_log(GLOBopts['log_path'], 'mkbatches', 'w')
     
