@@ -1,6 +1,6 @@
 import cPickle, sys
 import numpy as np
-import logging
+from logutils import *
 from utils import *
 from file_io import *
 from detection_utils import *
@@ -17,8 +17,10 @@ if __name__ == "__main__":
     GLOBopts, DESCRopts, NBNNopts, TESTopts, DETopts = getopts(configfile)
     DETopts = DETopts[1]
     # Setup logger
-    logging.basicConfig(stream=sys.stdout, level=logging.INFO)
-    log = logging.getLogger(__name__)
+    log = init_log(GLOBopts['log_path'], 'ranking_%s'%cls, 'w')
+    
+    # logging.basicConfig(stream=sys.stdout, level=logging.INFO)
+    # log = logging.getLogger(__name__)
 
     
     log.info("Making VOC results files cfg:%s, cls:%s",configfile, cls)
