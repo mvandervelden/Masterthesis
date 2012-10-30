@@ -143,6 +143,8 @@ def init_descriptor(DESCRopts):
     log.info(' ++ Initializing descriptor class %s with options: %s', DESCRopts[0], DESCRopts[1].items())
     if DESCRopts[0] == 'DescriptorUint8':
         return descriptor.DescriptorUint8(**DESCRopts[1])
+    elif DESCRopts[0] == 'VL_DSift':
+        return descriptor.VL_DSift(**DESCRopts[1])
     else:
         raise Exception("Descriptor type '%s' unknown, check your cfg file"%DESCRopts[0])
 
