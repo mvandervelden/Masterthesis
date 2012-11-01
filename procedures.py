@@ -76,22 +76,23 @@ def load_becker_estimator(descriptor_function, estimator, VOCopts, \
         exemplars = []
         for im in img_set:
             object_idxs = list(np.unique(im.object_segmentation))
-            log.info('=== im %s, bb [%d,%d,%d,%d] partitioning ===', im.im_id, \
+            log.info('=== Image %s, bb [%d,%d,%d,%d] partitioning ===', im.im_id, \
                 im.objects[0].xmin, im.objects[0].ymin, \
                 im.objects[0].xmax, im.objects[0].ymax)
-            log.info('   - object idxs: %s', object_idxs)
-            log.info('   - pts: %s, descr: %s', descriptors[im.im_id][0].shape, descriptors[im.im_id][1].shape)
+            log.info(' --- object idxs: %s', object_idxs)
+            log.info(' --- pts: %s, descr: %s', descriptors[im.im_id][0].shape, descriptors[im.im_id][1].shape)
             if not exemplar_path is None:
                 imdescr, impts = partition_descriptors(np.matrix(descriptors[im.im_id][0]), \
                     descriptors[im.im_id][1], im.object_segmentation, exemplars=True)
                 exmps = get_exemplars(im.objects[0], np.array(impts[1]))
-                log.info('   - adding %s exemplars, %s descr', len(exmps), len(imdescr[1]))
+                log.info(' --- adding %s exemplars, %s descr', len(exmps), len(imdescr[1]))
                 exemplars.append(exmps)
             else:
                 imdescr, impts = partition_descriptors(descriptors[im.im_id][0], \
                     descriptors[im.im_id][1], im.object_segmentation, exemplars=False)
-                log.info('   - adding %s descr', len(imdescr))
+                log.info(' --- adding %s descr', len(imdescr))
             fg_descr.append(imdescr[1])
+
 
         log.info('--- Adding %s descriptor arrays to class %s', len(fg_descr), cls)
         estimator.add_class(cls, fg_descr) #TODO SHOULD WORK....

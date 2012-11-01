@@ -37,6 +37,7 @@ if __name__ == '__main__':
     estimator = init_estimator(GLOBopts['nbnn_path']%cls, NBNNopts)
     
     log.info('==== LOAD IMAGE DESCRIPTORS ====')
+    # log.debug('  -- NO images: %d, descr_path: %s', len(images), GLOBopts['descriptor_path'])
     descriptors = get_image_descriptors(images, descriptor_function, \
         GLOBopts['descriptor_path'])
     

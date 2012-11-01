@@ -13,9 +13,9 @@ OLDCFG=$CFGFILE
 CFGFILE=`echo "${RESFOLDER}/${CFGFILE}"`
 echo "CFGFILE COPIED TO: $CFGFILE"
 
-python train_detection.py $CFGFILE
-echo "Making batches"
-python make_detection_batches.py $CFGFILE
+# python train_detection.py $CFGFILE
+# echo "Making batches"
+# python make_detection_batches.py $CFGFILE
 
 echo "Reading cfg $CFGFILE"
 NNTHREADS=`cat $CFGFILE | awk '$1 ~ /nn_threads/ { print $3 }'`
@@ -98,7 +98,7 @@ for CLS in ${CLASSES[@]}; do
 done
 
 echo "Tarballing results and tmpfiles"
-tar -czvf ${OLDCFG}.tmp.tgz --exclude=*.dbin --exclude=*.dtxt --exclude=*.data --exclude=*.index $TMPFOLDER
+tar -czvf ${OLDCFG}.tmp.tgz --exclude=*.dbin* --exclude=*.dtxt --exclude=*.data --exclude=*.index $TMPFOLDER
 tar -czvf ${OLDCFG}.res.tgz $RESFOLDER
 
 echo "FINISHED ALL"
