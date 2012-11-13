@@ -1,18 +1,27 @@
 #!/bin/bash
+#$ -l h_rt=72:00:00
+#$ -cwd
 
+source ~/.bash_profile
+
+rm -rf /local/vdvelden
 mkdir /local/vdvelden
 
-CFGFILE=$1
+CFGFILE=sldet1beckerTUD_sift_das.cfg
 echo "Running training"
 TMPFOLDER=`cat $CFGFILE | awk '$1 ~ /tmp_dir/ { print $3 }'`
 RESFOLDER=`cat $CFGFILE | awk '$1 ~ /res_dir/ { print $3 }'`
 TGZFILE=`echo $RESFOLDER | awk '{split($0, a, "/")} END{ print a[length(a)]}'`
 
+echo "TMPFOLDER: $TMPFOLDER"
+echo "RESFOLDER: $RESFOLDER"
+echo "TGZFILE: $TGZFILE"
+
 mkdir $RESFOLDER
 cp $CFGFILE $RESFOLDER
-OLDCFG=$CFGFILE
 CFGFILE=`echo "${RESFOLDER}/${CFGFILE}"`
 echo "CFGFILE COPIED TO: $CFGFILE"
+
 
 python train_detection.py $CFGFILE
 echo "Making batches"
@@ -25,7 +34,6 @@ NO_BATCHES=`cat $TMPFOLDER/testinfo.txt | sed -n '1p'`
 NO_CLASSES=`cat $TMPFOLDER/testinfo.txt | sed -n '2p'`
 CLASSES=(`cat $TMPFOLDER/testinfo.txt | tail -n 1`)
 
-echo "TMPFOLDER: $TMPFOLDER"
 echo "No of NN-threads: $NNTHREADS"
 echo "No of DET-threads: $DETECTTHREADS"
 echo "No of batches: $NO_BATCHES"
@@ -101,6 +109,9 @@ done
 echo "Tarballing results and tmpfiles"
 tar -czvf ${TGZFILE}.tmp.tgz --exclude=*.dbin* --exclude=*.dtxt --exclude=*.data --exclude=*.index $TMPFOLDER
 tar -czvf ${TGZFILE}.res.tgz $RESFOLDER
+
+echo "Cleaning up tmp-dir"
+rm -rf /local/vdvelden
 
 echo "FINISHED ALL"
 
