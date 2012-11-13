@@ -4,6 +4,7 @@
 
 source ~/.bash_profile
 
+START=$(date +%s)
 rm -rf /local/vdvelden
 mkdir /local/vdvelden
 
@@ -113,6 +114,8 @@ tar -czvf ${TGZFILE}.res.tgz $RESFOLDER
 echo "Cleaning up tmp-dir"
 rm -rf /local/vdvelden
 
-echo "FINISHED ALL"
-
-
+DURATION=$(echo "$(date +%s) - $START" | bc)
+DUR_H=$(echo "$DURATION/3600" | bc)
+DUR_M=$(echo "($DURATION-$DUR_H*3600)/60" | bc)
+DUR_S=$(echo "($DURATION - $DUR_H*3600 - $DUR_M*60)" | bc)
+echo "FINISHED ALL IN $DUR_H:$DUR_M:$DUR_S"
