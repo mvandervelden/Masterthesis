@@ -88,7 +88,7 @@ def load_becker_estimator(descriptor_function, estimator, VOCopts, \
                 log.info(' --- adding %s exemplars, %s descr', len(exmps), len(imdescr[1]))
                 exemplars.append(exmps)
             else:
-                imdescr, impts = partition_descriptors(descriptors[im.im_id][0], \
+                imdescr, impts = partition_descriptors(np.matrix(descriptors[im.im_id][0]), \
                     descriptors[im.im_id][1], im.object_segmentation, exemplars=False)
                 log.info(' --- adding %s descr', len(imdescr))
             fg_descr.append(imdescr[1])
@@ -178,7 +178,7 @@ def train_behmo_becker(descriptor_function, estimator, VOCopts, val_set, \
             im.objects[0].xmax, im.objects[0].ymax)
         log.info(' --- object idxs: %s', object_idxs)
         log.info(' --- pts: %s, descr: %s', descriptors[im.im_id][0].shape, descriptors[im.im_id][1].shape)
-        imdescr, impts = partition_descriptors(descriptors[im.im_id][0], \
+        imdescr, impts = partition_descriptors(np.matrix(descriptors[im.im_id][0]), \
             descriptors[im.im_id][1], im.object_segmentation, exemplars=False)
         log.info(' --- adding %s descr', len(imdescr))
         fg_descr.append(imdescr[1])
