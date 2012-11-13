@@ -149,6 +149,66 @@ def load_behmo_estimator(descriptor_function, estimator, cls, VOCopts, \
         else:
             fg_descriptors = get_bbox_descriptors(objects, descriptors)
             estimator.add_class(cls+'_fg', fg_descriptors)
+
+def train_behmo_becker(descriptor_function, estimator, VOCopts, val_set, \
+        descriptor_path=None):
+    cls = 'motorbike'
+    log.info('==== BECKER VALIDATE CLASS %s ====', cls)
+    # FG images are png: change image path:
+    origpath = VOCopts.image_path
+    VOCopts.image_path = VOCopts.image_path[:-4]+'.png'
+    
+    log.info('==== GET CLASS %s IMAGES ====', cls)
+    img_set = read_image_set(VOCopts, cls+'_'+val_set)
+    log.info('==== LOADING CLASS SEGMENTTION MASKS ====')
+    load_object_segmentations(VOCopts.class_mask_path, img_set)
+    if not descriptor_path is None:
+        for im in img_set:
+            if os.path.exists(descriptor_path%im.im_id):
+                # Make sure not to calculate descriptors again if they already exist
+                im.descriptor_file.append(descriptor_path%im.im_id)
+    log.info('==== GET %s DESCRIPTORS ====', cls)
+    descriptors = get_image_descriptors(img_set, descriptor_function, \
+        descriptor_path)
+    fg_descr = []
+    for im in img_set:
+        object_idxs = list(np.unique(im.object_segmentation))
+        log.info('=== Image %s, bb [%d,%d,%d,%d] partitioning ===', im.im_id, \
+            im.objects[0].xmin, im.objects[0].ymin, \
+            im.objects[0].xmax, im.objects[0].ymax)
+        log.info(' --- object idxs: %s', object_idxs)
+        log.info(' --- pts: %s, descr: %s', descriptors[im.im_id][0].shape, descriptors[im.im_id][1].shape)
+        imdescr, impts = partition_descriptors(descriptors[im.im_id][0], \
+            descriptors[im.im_id][1], im.object_segmentation, exemplars=False)
+        log.info(' --- adding %s descr', len(imdescr))
+        fg_descr.append(imdescr[1])
+    
+    cls = 'background'
+    # BG consists of .jpg images, change VOCopts again...
+    VOCopts.image_path = origpath
+    
+    log.info('==== GET CLASS %s IMAGES ====', cls)
+    img_set = read_image_set(VOCopts, cls+'_'+train_set)
+    log.info('==== LOADING CLASS SEGMENTTION MASKS ====')
+    load_object_segmentations(VOCopts.class_mask_path, img_set)
+    if not descriptor_path is None:
+        for im in img_set:
+            if os.path.exists(descriptor_path%im.im_id):
+                # Make sure not to calculate descriptors again if they already exist
+                im.descriptor_file.append(descriptor_path%im.im_id)
+    log.info('==== GET %s DESCRIPTORS ====', cls)
+    descriptors = get_image_descriptors(img_set, descriptor_function, \
+        descriptor_path)
+    for im, (p, d) in descriptors.items():
+        descriptors[im] = (np.matrix(p), d)
+    log.info('==== Select which DESCRIPTORS are %s ====', cls)
+    bg_descriptors = get_background_descriptors(img_set, descriptors)
+    
+    log.info('==== TRAIN BEHMO alphas and betas for %s', cls)
+    ground_truth =  ['motorbike' for i in xrange(len(fg_descriptors))] + \
+                    ['background' for i in xrange(len(bg_descriptors))]
+    
+    estimator.train(fg_descr+bg_descriptors, ground_truth)
     
 def train_behmo(descriptor_function, estimator, cls, VOCopts, val_set='val', \
         descriptor_path=None):

@@ -50,7 +50,7 @@ if __name__ == "__main__":
                 train_set = GLOBopts['train_set'],\
                 descriptor_path = GLOBopts['descriptor_path'],\
                 exemplar_path = DETopts[1]['exemplar_path'])
-            train_behmo(descriptor_function, estimator, cls, VOCopts, \
+            train_behmo_becker(descriptor_function, estimator, VOCopts, \
                 val_set = GLOBopts['val_set'], \
                 descriptor_path = GLOBopts['descriptor_path'])
         elif NBNNopts[0] == 'boiman':
