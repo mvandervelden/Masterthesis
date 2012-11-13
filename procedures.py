@@ -188,7 +188,7 @@ def train_behmo_becker(descriptor_function, estimator, VOCopts, val_set, \
     VOCopts.image_path = origpath
     
     log.info('==== GET CLASS %s IMAGES ====', cls)
-    img_set = read_image_set(VOCopts, cls+'_'+train_set)
+    img_set = read_image_set(VOCopts, cls+'_'+val_set)
     log.info('==== LOADING CLASS SEGMENTTION MASKS ====')
     load_object_segmentations(VOCopts.class_mask_path, img_set)
     if not descriptor_path is None:
@@ -205,7 +205,7 @@ def train_behmo_becker(descriptor_function, estimator, VOCopts, val_set, \
     bg_descriptors = get_background_descriptors(img_set, descriptors)
     
     log.info('==== TRAIN BEHMO alphas and betas for %s', cls)
-    ground_truth =  ['motorbike' for i in xrange(len(fg_descriptors))] + \
+    ground_truth =  ['motorbike' for i in xrange(len(fg_descr))] + \
                     ['background' for i in xrange(len(bg_descriptors))]
     
     estimator.train(fg_descr+bg_descriptors, ground_truth)
