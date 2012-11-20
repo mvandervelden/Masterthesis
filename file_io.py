@@ -55,6 +55,10 @@ def load_distances(filename):
     """ Load distances, points and indexes of the point's nearest exemplar
         indexes of a certain image (im_id), or the full file content (im_id=None)
     
+        distances and points can be either 2D or 3D (when k>1):
+        dimensions: distances[no_descriptors, no_classes, k]
+                    nearest_exemplar_indexes[no_descriptors, no_classes, k]
+        
     """
 
     with open(filename, 'rb') as f:

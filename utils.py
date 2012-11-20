@@ -105,6 +105,8 @@ def getopts(configfile):
         TESTopts['train_size'] = int(TESTopts['train_size'])
     if 'test_size' in TESTopts:
         TESTopts['test_size'] = int(TESTopts['test_size'])
+    if 'k' in TESTopts:
+        TESTopts['k'] = int(TESTopts['k'])
     if 'keep_descriptors' in TESTopts:
         TESTopts['keep_descriptors'] = TESTopts['keep_descriptors'] == 'True'
     #  Set Paths

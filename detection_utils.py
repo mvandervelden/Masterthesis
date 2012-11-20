@@ -7,13 +7,26 @@ log = logging.getLogger(__name__)
 
 def threshold_distances(exemplars, points, distances, threshold):
     log.debug(" -- Removing exemplars below threshold %s", threshold)
+    
     if threshold == 'becker':
         old = distances.shape[0]
         # Remove points/exemplars with fg > bg
         mask = distances[:, 0] <= distances[:, 1]
-        exemplars = exemplars[mask, :]
-        points = points[mask, :]
-        distances = distances[mask, :]
+        if len(mask.shape) > 1:
+            # Means 2D mask, means k>1, so for each point, there are k exemplars and k distances
+            k = mask.shape[1]
+            exemplars = exemplars[mask]
+            
+            # make sure indexing in 3D is correct for all variables...
+            mask = mask[:,np.newaxis,:]
+            points = np.tile(points[:,:,np.newaxis],[1,1,k])
+            points = np.reshape(points[np.tile(mask, (1,2,1))], (2,-1)).T
+            
+            distances = np.reshape(distances[np.tile(mask, (1,2,1)], (2,-1)).T
+        else:
+            exemplars = exemplars[mask, :]
+            points = points[mask, :]
+            distances = distances[mask, :]
         log.debug("Removing points where fg_d > bg_d: %d (=%d? =%d?) points from %d total, because of Becker thresholding",\
             points.shape[0], exemplars.shape[0], distances.shape[0], old)
     return exemplars, points, distances
