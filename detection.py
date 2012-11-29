@@ -41,9 +41,21 @@ if __name__ == '__main__':
         exemplars = load_exemplars(DETopts['exemplar_path']%cls, nearest_exemplar_indexes)
     
         log.info('==== GET HYPOTHESES ====')
-        exemplars, points, distances = threshold_distances(exemplars, points, distances, DETopts['hyp_threshold'])
+        exemplars_th, points_th, distances_th = threshold_distances(exemplars, points, distances, DETopts['hyp_threshold'])
+        if DETopts['ignore_threshold'] == 'True' and exemplars_th.shape[0] == 0:
+            log.debug("== FOUND NO POINTS WITH fg_d < bg_d!!! CONTINUE WITHOUT THRESHOLDED DISTANCES...")
+        elif exemplars_th.shape[0] == 0:
+            log.debug("== FOUND NO POINTS WITH fg_d < bg_d!!! NO DETECTIONS FOR THIS CLASS-IMAGE PAIR")
+            exit()
+        else:
+            # Use thresholded distances
+            exemplars = exemplars_th
+            points = points_th
+            distances = distances_th
+            
         hypotheses = get_hypotheses(exemplars, points, image.width, image.height)
-    
+        if hypotheses.shape[0] == 0:
+            log.debug("== FOUND NO HYPOTHESES WITH fg_d < bg_d. No clustering possible!")
         hvalues = get_hypothesis_values(hypotheses, distances, points, eval(DETopts['hypothesis_metric']))
         ranking = sort_values(hvalues)
     
@@ -79,7 +91,7 @@ if __name__ == '__main__':
                     log.debug('  --  Clustering again')
                     best_cluster_idx = cluster_hypotheses(overlap, indexes, DETopts['theta_m'])
                 elif left == 1:
-                    log.debug('  --  No need for clustering, only 1 hypothesis left:')
+                    log.debug('  --  No need for clustering, only 1 hypothesis left, val: %f', hvalues.sum())
                     best_cluster_idx = np.where(hvalues > 0)[0]
                     log.debug('   - ID: %s',best_cluster_idx)
             

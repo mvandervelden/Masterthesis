@@ -2,13 +2,29 @@
 #$ -l h_rt=72:00:00
 #$ -cwd
 
+
 source ~/.bash_profile
 
 START=$(date +%s)
-rm -rf /local/vdvelden
+# rm -rf /local/vdvelden
 mkdir /local/vdvelden
 
-CFGFILE=sldet1beckerTUD_sift_das.cfg
+# Default config file.
+# To give a non-default file in qsub, use "qsub -v CFGFILE=foo.cfg detection_script.sh"
+# To give a non-default file running the vanilla script, use  "./detection_script.sh foo.cfg"
+DEFCFGFILE=sldet1beckerTUD_sift_das.cfg
+
+if [[ $CFGFILE && ${CFGFILE-x} ]]; then
+    echo "CFGFILE defined: ${CFGFILE}"
+elif [[ $1 && ${1-x} ]]; then
+    echo "config file given in command line: $1"
+    CFGFILE=$1
+else
+    echo "No CFGFILE defined, take: ${DEFCFGFILE}"
+    CFGFILE=$DEFCFGFILE
+fi
+
+
 echo "Running training"
 TMPFOLDER=`cat $CFGFILE | awk '$1 ~ /tmp_dir/ { print $3 }'`
 RESFOLDER=`cat $CFGFILE | awk '$1 ~ /res_dir/ { print $3 }'`
@@ -111,8 +127,8 @@ echo "Tarballing results and tmpfiles"
 tar -czvf ${TGZFILE}.tmp.tgz --exclude=*.dbin* --exclude=*.dtxt --exclude=*.data --exclude=*.index $TMPFOLDER
 tar -czvf ${TGZFILE}.res.tgz $RESFOLDER
 
-echo "Cleaning up tmp-dir"
-rm -rf /local/vdvelden
+#echo "Cleaning up tmp-dir"
+#rm -rf /local/vdvelden
 
 DURATION=$(echo "$(date +%s) - $START" | bc)
 DUR_H=$(echo "$DURATION/3600" | bc)

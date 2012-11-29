@@ -6,27 +6,34 @@ np.seterr(all='raise')
 log = logging.getLogger(__name__)
 
 def threshold_distances(exemplars, points, distances, threshold):
-    log.debug(" -- Removing exemplars below threshold %s", threshold)
+    """ threshold distances
     
+    doctest:
+    >>> threshold_distances(exemplars, points, distances, t)
+    
+    
+    """
+    log.debug(" -- Removing exemplars below threshold %s", threshold)
+    log.debug(" -- Shapes BEFORE: exemplars: %s, points: %s, dist: %s", exemplars.shape, points.shape, distances.shape)
+    log.debug(" -- Distance properties: means: %s, max: %s, min: %s", distances.mean(0), distances.max(0), distances.min(0))
     if threshold == 'becker':
         old = distances.shape[0]
         # Remove points/exemplars with fg > bg
         mask = distances[:, 0] <= distances[:, 1]
+        log.debug(" -- Mask: shape: %s, sum: %d", mask.shape, mask.sum())
         if len(mask.shape) > 1:
             # Means 2D mask, means k>1, so for each point, there are k exemplars and k distances
             k = mask.shape[1]
             exemplars = exemplars[mask]
-            
-            # make sure indexing in 3D is correct for all variables...
-            mask = mask[:,np.newaxis,:]
-            points = np.tile(points[:,:,np.newaxis],[1,1,k])
-            points = np.reshape(points[np.tile(mask, (1,2,1))], (2,-1)).T
-            
-            distances = np.reshape(distances[np.tile(mask, (1,2,1)], (2,-1)).T
+            # For distances, concatenate the masked fg and bg dists
+            distances = np.vstack([distances[:,0][mask], distances[:,1][mask]]).T
+            # 'repmat' the points array for each 'k' NN, and take the mask of this
+            points = np.tile(points[:,np.newaxis,:],(1,k,1))[mask]
         else:
             exemplars = exemplars[mask, :]
             points = points[mask, :]
             distances = distances[mask, :]
+        log.debug(" -- Shapes  AFTER: exemplars: %s, points: %s, dist: %s", exemplars.shape, points.shape, distances.shape)
         log.debug("Removing points where fg_d > bg_d: %d (=%d? =%d?) points from %d total, because of Becker thresholding",\
             points.shape[0], exemplars.shape[0], distances.shape[0], old)
     return exemplars, points, distances
@@ -43,6 +50,7 @@ def get_hypotheses(exemplars, points, imwidth, imheight):
     hyp_ymin = y - (rel_y_pos * rel_h * sigma)
     hyp_xmax = hyp_xmin + hyp_w
     
+    NB: doctest not up to date...
     
     doctest:
     >>> get_hypotheses(np.array([[1,1,0.5,0.5],[0.5,1,0.1,0.5]]), np.array([[0.,0., 2.0], [100,100, 1.0]]), 200, 200)
@@ -54,15 +62,16 @@ def get_hypotheses(exemplars, points, imwidth, imheight):
         points.shape, exemplars.shape, imwidth, imheight)
     hypotheses = np.zeros([exemplars.shape[0], 4])
     # Make sure hypotheses lie within image bounds!!! (minimum and maximum within image bounds)
-
+    
     hypotheses[:,0] = np.maximum(points[:,0] - (exemplars[:,2] * exemplars[:,0] * points[:,2]), 0)
     hypotheses[:,1] = np.maximum(points[:,1] - (exemplars[:,3] * exemplars[:,1] * points[:,2]), 0)
     hypotheses[:,2] = np.minimum(hypotheses[:,0] + (exemplars[:,0] * points[:,2]), imwidth)
     hypotheses[:,3] = np.minimum(hypotheses[:,1] + (exemplars[:,1] * points[:,2]), imheight)
 
     log.info('  -- found %s hypotheses', hypotheses.shape)
-    log.info('  - hyp example: %s from point: %s and exemplar: %s', hypotheses[0,:], points[0,:], exemplars[0,:])
-    log.info('  - hyp example: %s from point: %s and exemplar: %s', hypotheses[-1,:], points[-1,:], exemplars[-1,:])
+    if hypotheses.shape[0] > 0:
+        log.info('  - hyp example: %s from point: %s and exemplar: %s', hypotheses[0,:], points[0,:], exemplars[0,:])
+        log.info('  - hyp example: %s from point: %s and exemplar: %s', hypotheses[-1,:], points[-1,:], exemplars[-1,:])
     return hypotheses
 
 def get_hypothesis_values(hypotheses, distances, points, metric):
@@ -293,11 +302,11 @@ def merge_cluster(cluster_of_hyp):
     """ Make a detection [xmin, ymin, xmax, ymax]
     
     """
-
-    det = cluster_of_hyp.mean(0)
     log.debug(" --- Merged cluster of size: %s.",cluster_of_hyp.shape)
     log.debug(" ---  max values per row: %s", cluster_of_hyp.max(0))
     log.debug(" ---  min values per row: %s", cluster_of_hyp.min(0))
+    
+    det = cluster_of_hyp.mean(0)
     log.debug(" ---  mean values per row: %s (= detection)", cluster_of_hyp.mean(0))
     return det
     
@@ -340,4 +349,18 @@ def remove_cluster(cluster, det_bbox, hypotheses, hvalues, overlap, indexes, thr
 if __name__ == '__main__':
     import doctest
     import numpy as np
+    N = 3
+    k = 4
+    exemplars = np.zeros([N, k, 4])
+    points    = np.zeros([N, 5])
+    distances = np.zeros([N, 2, k])
+    for n in range(N):
+        m=n+1
+        points[n] = [m*11,m*111,m*1111,0,0]
+        for kk in range(k):
+            ll=kk+1
+            e_val = m+(ll*.10)
+            exemplars[n,kk] = e_val
+            distances[n,:,kk] = [ll,ll*(-1)**ll]
+    t = 'becker'
     doctest.testmod()
