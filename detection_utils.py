@@ -4,7 +4,7 @@ import logging
 
 np.seterr(all='raise')
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+
 def threshold_distances(exemplars, points, distances, threshold):
     """ threshold distances
     
@@ -13,6 +13,7 @@ def threshold_distances(exemplars, points, distances, threshold):
     
     
     """
+    print log.level, log.name
     log.debug(" -- Removing exemplars below threshold %s", threshold)
     log.debug(" -- Shapes BEFORE: exemplars: %s, points: %s, dist: %s", exemplars.shape, points.shape, distances.shape)
     log.debug(" -- Distance properties: means: %s, max: %s, min: %s", distances.mean(0), distances.max(0), distances.min(0))
@@ -30,20 +31,34 @@ def threshold_distances(exemplars, points, distances, threshold):
             k = distances.shape[2]
         
         for i in xrange(N):
-            # get all distances smaller than the average
-            dmask = distances[i]<=distances[i].mean()
-            # dists to be added: all fg_d within k (so True in dmask[0])
-            # amount of exemplars to be added
-            amount = dmask[0].sum()
-            dists = np.zeros((amount,2))
-            dists[:,0] = distances[i][dmask[0]]
-            dists[:,1] = distances[i][dmask[1]].min()
-            # Add dists to the results
-            distances_th.append(dists)
-            # Add the exemplars accordingly
-            exemplars_th.append(exemplars[i][dmask[0]])
-            # Add the point 'amount' times
-            points_th.append(np.tile(points[i],(amount,1)))
+            if len(distances.shape) == 3:
+                # get all distances smaller than the median (median of even amount of values: mean of the middle two)
+                dmask = distances[i]<np.median(distances[i])
+                # dists to be added: all fg_d within k (so True in dmask[0])
+                # amount of exemplars to be added
+                amount = dmask[0].sum()
+                print 'amount', amount
+                print 'tot_am', dmask.sum()
+                print 'd', distances[i], 'med', np.median(distances[i])
+                print dmask, dmask.shape
+                if amount == 0:
+                    continue
+                dists = np.zeros((amount,2))
+                dists[:,0] = distances[i,0][dmask[0]]
+                dists[:,1] = distances[i,1][dmask[1]].min()
+                # Add dists to the results
+                distances_th.append(dists)
+                # Add the exemplars accordingly
+                exemplars_th.append(exemplars[i][dmask[0]])
+                # Add the point 'amount' times
+                points_th.append(np.tile(points[i],(amount,1)))
+            else:
+                # 1NN case
+                if distances[i][0] < distances[i][1]:
+                    # fg < bg, so add!
+                    distances_th.append(distances[i])
+                    points_th.append(points[i])
+                    exemplars_th.append(exemplars[i])
             
     exemplars = np.vstack(exemplars_th)
     points = np.vstack(points_th)
