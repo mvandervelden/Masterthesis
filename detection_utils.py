@@ -4,7 +4,7 @@ import logging
 
 np.seterr(all='raise')
 log = logging.getLogger(__name__)
-
+log.setLevel(logging.DEBUG)
 def threshold_distances(exemplars, points, distances, threshold):
     """ threshold distances
     
@@ -16,26 +16,41 @@ def threshold_distances(exemplars, points, distances, threshold):
     log.debug(" -- Removing exemplars below threshold %s", threshold)
     log.debug(" -- Shapes BEFORE: exemplars: %s, points: %s, dist: %s", exemplars.shape, points.shape, distances.shape)
     log.debug(" -- Distance properties: means: %s, max: %s, min: %s", distances.mean(0), distances.max(0), distances.min(0))
+    
+    exemplars_th = []
+    points_th = []
+    distances_th = []
+    
     if threshold == 'becker':
         old = distances.shape[0]
-        # Remove points/exemplars with fg > bg
-        mask = distances[:, 0] <= distances[:, 1]
-        log.debug(" -- Mask: shape: %s, sum: %d", mask.shape, mask.sum())
-        if len(mask.shape) > 1:
-            # Means 2D mask, means k>1, so for each point, there are k exemplars and k distances
-            k = mask.shape[1]
-            exemplars = exemplars[mask]
-            # For distances, concatenate the masked fg and bg dists
-            distances = np.vstack([distances[:,0][mask], distances[:,1][mask]]).T
-            # 'repmat' the points array for each 'k' NN, and take the mask of this
-            points = np.tile(points[:,np.newaxis,:],(1,k,1))[mask]
+        N = distances.shape[0]
+        if len(distances.shape) == 2:
+            k = 1
         else:
-            exemplars = exemplars[mask, :]
-            points = points[mask, :]
-            distances = distances[mask, :]
-        log.debug(" -- Shapes  AFTER: exemplars: %s, points: %s, dist: %s", exemplars.shape, points.shape, distances.shape)
-        log.debug("Removing points where fg_d > bg_d: %d (=%d? =%d?) points from %d total, because of Becker thresholding",\
-            points.shape[0], exemplars.shape[0], distances.shape[0], old)
+            k = distances.shape[2]
+        
+        for i in xrange(N):
+            # get all distances smaller than the average
+            dmask = distances[i]<=distances[i].mean()
+            # dists to be added: all fg_d within k (so True in dmask[0])
+            # amount of exemplars to be added
+            amount = dmask[0].sum()
+            dists = np.zeros((amount,2))
+            dists[:,0] = distances[i][dmask[0]]
+            dists[:,1] = distances[i][dmask[1]].min()
+            # Add dists to the results
+            distances_th.append(dists)
+            # Add the exemplars accordingly
+            exemplars_th.append(exemplars[i][dmask[0]])
+            # Add the point 'amount' times
+            points_th.append(np.tile(points[i],(amount,1)))
+            
+    exemplars = np.vstack(exemplars_th)
+    points = np.vstack(points_th)
+    distances = np.vstack(distances_th)
+    log.debug(" -- Shapes  AFTER: exemplars: %s, points: %s, dist: %s", exemplars.shape, points.shape, distances.shape)
+    log.debug("Removing points where fg_d > bg_d: Keeping %d (=%d? =%d?) points from %d total, because of Becker thresholding",\
+        points.shape[0], exemplars.shape[0], distances.shape[0], old)
     return exemplars, points, distances
 
 def get_hypotheses(exemplars, points, imwidth, imheight):
