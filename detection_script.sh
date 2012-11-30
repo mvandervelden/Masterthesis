@@ -6,7 +6,7 @@
 source ~/.bash_profile
 
 START=$(date +%s)
-# rm -rf /local/vdvelden
+rm -rf /local/vdvelden
 mkdir /local/vdvelden
 
 # Default config file.
@@ -124,8 +124,8 @@ for CLS in ${CLASSES[@]}; do
 done
 
 echo "Tarballing results and tmpfiles"
-tar -czvf ${TGZFILE}.tmp.tgz --exclude=*.dbin* --exclude=*.dtxt --exclude=*.data --exclude=*.index $TMPFOLDER
-tar -czvf ${TGZFILE}.res.tgz $RESFOLDER
+tar -czf ${TGZFILE}.tmp.tgz --exclude=*.dbin* --exclude=*.dtxt --exclude=*.data --exclude=*.index $TMPFOLDER
+tar -czf ${TGZFILE}.res.tgz $RESFOLDER
 
 #echo "Cleaning up tmp-dir"
 #rm -rf /local/vdvelden

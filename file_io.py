@@ -89,7 +89,7 @@ def load_exemplars(filename, exemplar_indexes = None):
     
     with open(filename, 'rb') as exemplar_f:
         exemplars = np.load(exemplar_f)
-    # exemplars is an np.array, nx4, where n=no of exemplars in a class
+    # exemplars is an np.array, nx4(xk), where n=no of exemplars in a class, and k is the amount of NN taken (if >1)
     # the cols are [rel_bb_w, rel_bb_h, rel_x, rel_y]
     if not exemplar_indexes is None:
         log.info('++ LOADING exemplars from %s: total:%s, selecting: %s indexes', \
@@ -119,20 +119,30 @@ def load_hypotheses(filename):
         im_exemplars = cPickle.load(f)
     return (hypotheses, points, im_exemplars)
 
-def save_detections(filename, detections, reflist):
-    log.info('++ SAVING detections to %s: detections:%s, reflist:%s', filename, \
-        detections.shape, len(reflist))
+def save_detections(filename, detections, reflist, descr_distances=None, descr_points=None):
+    if descr_distances is None:
+        descr_distances = np.array([])
+    if descr_points is None:
+        descr_points = np.array([])
+    log.info('++ SAVING detections to %s: detections:%s, reflist:%s, descr_dist:%s, descr_points:%s', \
+        filename, detections.shape, len(reflist), descr_distances.shape, \
+        descr_points.shape)
     with open(filename,'wb') as pklfile:
             cPickle.dump(detections, pklfile)
             cPickle.dump(reflist, pklfile)
+            cPickle.dump(descr_distances, pklfile)
+            cPickle.dump(descr_points, pklfile)
 
 def load_detections(filename, im_id):
     with open(filename, 'rb') as f:
         detections = cPickle.load(f)
         reflist = cPickle.load(f)
-    log.info('++ LOADING detections from %s: detections:%s, reflist:%s', filename, \
-        detections.shape, len(reflist))
-    return detections, reflist
+        descr_distances = cPickle.load(f)
+        descr_points = cPickle.load(f)
+    log.info('++ LOADING detections from %s: detections:%s, reflist:%s descr_dist:%s, descr_points:%s', \
+        filename, detections.shape, len(reflist), descr_distances.shape, \
+        descr_points.shape)
+    return detections, reflist, descr_distances, descr_points
 
 def save_voc_results(filename, detections, values, im_ids):
     """Assuming values is array with values higher=more confidence

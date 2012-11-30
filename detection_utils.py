@@ -13,7 +13,6 @@ def threshold_distances(exemplars, points, distances, threshold):
     
     
     """
-    print log.level, log.name
     log.debug(" -- Removing exemplars below threshold %s", threshold)
     log.debug(" -- Shapes BEFORE: exemplars: %s, points: %s, dist: %s", exemplars.shape, points.shape, distances.shape)
     log.debug(" -- Distance properties: means: %s, max: %s, min: %s", distances.mean(0), distances.max(0), distances.min(0))
@@ -37,15 +36,19 @@ def threshold_distances(exemplars, points, distances, threshold):
                 # dists to be added: all fg_d within k (so True in dmask[0])
                 # amount of exemplars to be added
                 amount = dmask[0].sum()
-                print 'amount', amount
-                print 'tot_am', dmask.sum()
-                print 'd', distances[i], 'med', np.median(distances[i])
-                print dmask, dmask.shape
+                # print 'amount', amount
+                # print 'tot_am', dmask.sum()
+                # print 'd', distances[i], 'med', np.median(distances[i])
+                # print dmask, dmask.shape
                 if amount == 0:
                     continue
                 dists = np.zeros((amount,2))
                 dists[:,0] = distances[i,0][dmask[0]]
-                dists[:,1] = distances[i,1][dmask[1]].min()
+                if amount < k:
+                    dists[:,1] = distances[i,1][dmask[1]].min()
+                else:
+                    # All chosen distances are fg_d, so no bg_d is True, chose the closest bg_d instead:
+                    dists[:,1] = distances[i,1].min()
                 # Add dists to the results
                 distances_th.append(dists)
                 # Add the exemplars accordingly
@@ -353,7 +356,7 @@ def remove_cluster(cluster, det_bbox, hypotheses, hvalues, overlap, indexes, thr
         if i in cluster:
             # All hypotheses in the detection cluster have to be removed
             to_be_removed[i] = True
-        elif hvalues[i] > 0 and get_overlap(hypotheses[i,:], det_bbox) > threshold:
+        elif not hvalues[i] == 0 and get_overlap(hypotheses[i,:], det_bbox) > threshold:
             # If overlap too big, remove too
             to_be_removed[i] = True
     log.debug(' ---  hypotheses to be removed: %d out of %d', to_be_removed.sum(), hyp_left)

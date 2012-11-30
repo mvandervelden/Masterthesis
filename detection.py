@@ -66,6 +66,9 @@ if __name__ == '__main__':
             ranking = ranking[:int(DETopts['hyp_cutoff'])]
         hvalues = hvalues[ranking]
         hypotheses = hypotheses[ranking]
+        # Make sure points and distances are selected and sorted in the same way, and saved with the detections
+        points = points[ranking]
+        distances = distances[ranking]
         log.debug(" -- first hyp: (%s, %.2f, last: hyp: (%s, %.2f)", hypotheses[0,:], \
             hvalues[0], hypotheses[-1,:], hvalues[-1])
         if DETopts['method'] == 'single_link':
@@ -92,7 +95,7 @@ if __name__ == '__main__':
                     best_cluster_idx = cluster_hypotheses(overlap, indexes, DETopts['theta_m'])
                 elif left == 1:
                     log.debug('  --  No need for clustering, only 1 hypothesis left, val: %f', hvalues.sum())
-                    best_cluster_idx = np.where(hvalues > 0)[0]
+                    best_cluster_idx = np.where(~(hvalues == 0))[0]
                     log.debug('   - ID: %s',best_cluster_idx)
             
                 # merge the biggest cluster of hypotheses into a detection, and append it
@@ -109,5 +112,5 @@ if __name__ == '__main__':
     # Save detections of image to resultsfiles
     # Save detections only, do not rank yet, because of batches...
     log.info('==== SAVE CONFIDENCE VALUES ====')
-    save_detections(GLOBopts['result_path']%(im_id, cls), np.vstack(detections), dist_references)
+    save_detections(GLOBopts['result_path']%(im_id, cls), np.vstack(detections), dist_references, descr_distances=distances, descr_points=points)
     log.info('==== FINISHED DETECTION ====')

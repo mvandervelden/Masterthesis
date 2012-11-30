@@ -155,6 +155,7 @@ def det_qh(det, i, pt_array, dist_array):
     """
     return dist_qh(dist_array[i,:]).mean()
 
+    
 def det_qd(det, i, pt_array, dist_array):
     """ Idea: never supply qh/qd, but give (as i) a list of indexes that
     make up the detection: qh can be computed from that (dist_qh for the sublist)
