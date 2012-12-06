@@ -21,54 +21,53 @@ def threshold_distances(exemplars, points, distances, threshold):
     points_th = []
     distances_th = []
     
-    if threshold == 'becker':
-        old = distances.shape[0]
-        N = distances.shape[0]
-        if len(distances.shape) == 2:
-            k = 1
-        else:
-            k = distances.shape[2]
+    old_dist_size = distances.shape[0]
+    N = distances.shape[0]
+    if len(distances.shape) == 2:
+        k = 1
+    else:
+        k = distances.shape[2]
         
-        for i in xrange(N):
-            if len(distances.shape) == 3:
+    for i in xrange(N):
+        if len(distances.shape) == 3:
+
+            if threshold == 'ranked':
                 # get all distances smaller than the median (median of even amount of values: mean of the middle two)
-                dmask = distances[i]<np.median(distances[i])
-                # dists to be added: all fg_d within k (so True in dmask[0])
-                # amount of exemplars to be added
-                amount = dmask[0].sum()
-                # print 'amount', amount
-                # print 'tot_am', dmask.sum()
-                # print 'd', distances[i], 'med', np.median(distances[i])
-                # print dmask, dmask.shape
-                if amount == 0:
-                    continue
-                dists = np.zeros((amount,2))
-                dists[:,0] = distances[i,0][dmask[0]]
-                if amount < k:
-                    dists[:,1] = distances[i,1][dmask[1]].min()
-                else:
-                    # All chosen distances are fg_d, so no bg_d is True, chose the closest bg_d instead:
-                    dists[:,1] = distances[i,1].min()
-                # Add dists to the results
-                distances_th.append(dists)
-                # Add the exemplars accordingly
-                exemplars_th.append(exemplars[i][dmask[0]])
-                # Add the point 'amount' times
-                points_th.append(np.tile(points[i],(amount,1)))
-            else:
-                # 1NN case
-                if distances[i][0] < distances[i][1]:
-                    # fg < bg, so add!
-                    distances_th.append(distances[i])
-                    points_th.append(points[i])
-                    exemplars_th.append(exemplars[i])
+                dmask = distances[i,0] < np.median(distances[i])
+            elif threshold == 'nearest':
+                # Get all fg_d < the nearest bg_d
+                dmask = distances[i,0] < distances[i,1].min()
+
+            # amount of exemplars to be added
+            amount = dmask.sum()
+            log.debug('Amount of exemplars elected: %d', amount)
+            if amount == 0:
+                log.debug('Nothing to add')
+                continue
+            dists = np.zeros((amount,2))
+            dists[:,0] = distances[i,0][dmask]
+            # For bg_d, choose the closest bg_d:
+            dists[:,1] = distances[i,1].min()
+            # Add dists to the results
+            distances_th.append(dists)
+            # Add the exemplars accordingly
+            exemplars_th.append(exemplars[i][dmask])
+            # Add the point 'amount' times
+            points_th.append(np.tile(points[i],(amount,1)))
+        else:
+            # 1NN case
+            if distances[i,0] < distances[i,1]:
+                # fg < bg, so add!
+                distances_th.append(distances[i])
+                points_th.append(points[i])
+                exemplars_th.append(exemplars[i])
             
     exemplars = np.vstack(exemplars_th)
     points = np.vstack(points_th)
     distances = np.vstack(distances_th)
     log.debug(" -- Shapes  AFTER: exemplars: %s, points: %s, dist: %s", exemplars.shape, points.shape, distances.shape)
     log.debug("Removing points where fg_d > bg_d: Keeping %d (=%d? =%d?) points from %d total, because of Becker thresholding",\
-        points.shape[0], exemplars.shape[0], distances.shape[0], old)
+        points.shape[0], exemplars.shape[0], distances.shape[0], old_dist_size)
     return exemplars, points, distances
 
 def get_hypotheses(exemplars, points, imwidth, imheight):

@@ -127,8 +127,8 @@ echo "Tarballing results and tmpfiles"
 tar -czf ${TGZFILE}.tmp.tgz --exclude=*.dbin* --exclude=*.dtxt --exclude=*.data --exclude=*.index $TMPFOLDER
 tar -czf ${TGZFILE}.res.tgz $RESFOLDER
 
-#echo "Cleaning up tmp-dir"
-#rm -rf /local/vdvelden
+echo "Cleaning up tmp-dir"
+rm -rf /local/vdvelden
 
 DURATION=$(echo "$(date +%s) - $START" | bc)
 DUR_H=$(echo "$DURATION/3600" | bc)
