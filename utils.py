@@ -147,6 +147,8 @@ def init_descriptor(DESCRopts):
         return descriptor.DescriptorUint8(**DESCRopts[1])
     elif DESCRopts[0] == 'VL_DSift':
         return descriptor.VL_DSift(**DESCRopts[1])
+    elif DESCRopts[0] == 'RootSIFT':
+        return descriptor.RootSIFT(**DESCRopts[1])
     else:
         raise Exception("Descriptor type '%s' unknown, check your cfg file"%DESCRopts[0])
 
