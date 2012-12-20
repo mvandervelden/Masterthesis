@@ -144,6 +144,21 @@ def load_detections(filename, im_id):
         descr_points.shape)
     return detections, reflist, descr_distances, descr_points
 
+def save_quickshift_tree(filename, parents, distances):
+    log.info('++ SAVING quickshift tree to %s: parents: %s, distances:%s', \
+        filename, parents.shape, distances.shape)
+    with open(filename, 'wb') as pklfile:
+        cPickle.dump(parents, pklfile)
+        cPickle.dump(distances, pklfile)
+
+def load_quickshift_tree(filename):
+    with open(filename, 'rb') as f:
+        parents = cPickle.load(f)
+        distances = cPickle.load(f)
+    log.info('++ LOADING quickshift tree from %s: parents: %s, distances: %s',\
+        filename, parents.shape, distances.shape)
+    return parents, distances
+
 def save_voc_results(filename, detections, values, im_ids):
     """Assuming values is array with values higher=more confidence
     
@@ -185,7 +200,7 @@ def save_to_pickle(filename, datalist):
                 cPickle.dump(data_old, pklfile)
 
 def save_results_to_file(file, objects, confidence_values):
-    log = logging.getLogger("__name__")
+    log = logging.getLogger(__name__)
     if isinstance(objects[0], VOCImage) or isinstance(objects[0], CalImage):
         log.info('++ SAVING image classification')
         with open(file, 'a') as f:

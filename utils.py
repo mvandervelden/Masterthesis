@@ -125,6 +125,10 @@ def getopts(configfile):
             DETopts[1]['theta_m'] = float(DETopts[1]['theta_m'])
         if 'theta_p' in DETopts[1]:
             DETopts[1]['theta_p'] = float(DETopts[1]['theta_p'])
+        if 'tau' in DETopts[1]:
+            DETopts[1]['tau'] = float(DETopts[1]['tau'])
+        else:
+            DETopts[1]['tau'] = np.inf
         
         # Set paths
         DETopts[1]['exemplar_path'] = '/'.join([tmpdir, DETopts[1]['exemplar_path']])
@@ -136,7 +140,10 @@ def getopts(configfile):
         assert_dir(exemplar_dir)
         assert_dir(distances_dir)
         assert_dir(hypotheses_dir)
-        
+        if 'quickshift_tree_path' in DETopts[1]:
+            DETopts[1]['quickshift_tree_path'] = '/'.join([tmpdir, DETopts[1]['quickshift_tree_path']])
+            quickshift_tree_dir = '/'.join(DETopts[1]['quickshift_tree_path'].split('/')[:-1])
+            assert_dir(quickshift_tree_dir)
         return GLOBopts, DESCRopts, NBNNopts, TESTopts, DETopts
     else:
         return GLOBopts, DESCRopts, NBNNopts, TESTopts, None

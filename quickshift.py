@@ -1,77 +1,99 @@
 import numpy as np
+import logging
 from detection_utils import *
+from file_io import *
+
 # Python adaptation of Vedaldi & Fulkersons implementation of Quickshift in C, included in VLFEAT.
 # Changed so it can cluster generically, instead of pixel values and coordinates only
+log = logging.getLogger(__name__)
 
-def overlap_to_E(overlap, indexes):
-    N = indexes.max()
-    E = np.zeros(N+1)
-    for i in xrange(N+1):
-        mask = np.any(indexes==i,1)
-        Eij = overlap[mask]
-        print Eij
-        E[i] = np.sum(Eij)
-        print E[i]
+def overlap_to_E(indexes):
+    
+    E = [sum(i.values()) for i in indexes]
     return E
 
-def quickshift(data, tau):
+def quickshift(data, tau=np.inf):
     N = data.shape[0]
     dim = data.shape[1]
-    # TODO tau [max(height, width)/2 in vlfeat where height & width is of image] & sigma [max(2, tau/3) in vlfeat], what is it here???
     tau2 = tau*tau
-    sigma = max(2,tau/3)
     
     # For now, I take no window, and use pairwise overlap for all
-    # E = np.zeros(N)
-    overlap,indexes = get_pairwise_overlap(data)
-    print data
-    print overlap
-    print indexes
-    E = overlap_to_E(overlap, indexes)
+    indexes = [dict() for i in xrange(N)]
+    
+    for i in xrange(N):
+        for j in xrange(N):
+            di = data[i]
+            dj = data[j]
+            overlap = get_overlap(di, dj)
+            if overlap > 0:
+                indexes[i][j] = overlap
+    log.debug('data: %s',data)
+    log.debug('indexes: %s',indexes)
+    E = overlap_to_E(indexes)
+    log.debug('E: %s', E)
     parents = np.arange(N)
     dists = np.empty(N)
     dists.fill(np.inf)
     
-    # TODO Make some kind of window (based on tau and sigma), iterate over each data point, and within the window around that point iterate over the neighbors
-    # for i in xrange(N):
-    #     for j in xrange(N):
-    #         # VLFEAT: D_ij = d(x_i,x_j)
-    #         # VLFEAT: E_ij = exp(- .5 * D_ij / sigma^2) ;
-    #         # Overlap is a kind of similarity measure, so we take overlap=E
-    #         # 0 = no overlap
-    #         # 1 = identical...
-    #         Eij = get_overlap(data[i,:], data[j,:])
-    #         E[i] += Eij
-    
     # Quickshift assigns each i to the closest j which has an increase in the
     # density (E). If there is no j s.t. Ej > Ei, then dists_i == inf (a root
     # node in one of the trees of merges).
-    print E
-    
-    for n in xrange(indexes.shape[0]):
-        i = indexes[n,0]
-        j = indexes[n,1]
-        
-        if E[j] > E[i]:
-            Eij = overlap[n]
-            Dij = 1./Eij if not Eij == 0.0 else np.inf
-            if Dij <= tau2 and Dij < dists[i]:
-                dists[i] = Dij
-                parents[i] = j
-        
+    for i in xrange(N):
+        overlap_i = indexes[i]
+        for j, overlap in overlap_i.items():
+            log.debug('j: %d, overlap: %.3f Ei: %.3f Ej: %.3f', j,overlap, E[i], E[j])
+            # Possible: hypo[i] == hypo[j], so E[i] == E[j], make sure they are clustered, but not assigned to eachother
+            if E[j] > E[i] or (E[i] == E[j] and i<j):
+                Eij = overlap
+                Dij = 1./Eij if not Eij == 0.0 else np.inf
+                log.debug('Eij: %.3f Dij: %.3f',Eij,Dij)
+                if Dij <= tau2 and Dij < dists[i]:
+                    dists[i] = Dij
+                    parents[i] = j
         # parents is the index of the best pair
         # dists_i is the minimal distance, inf implies no Ej > Ei within
         # distance tau from the point
         
     return parents, dists
 
-def cluster_quickshift(hypotheses, tau):
+def cluster_quickshift(hypotheses, tau, save_tree_path=None):
+    N = hypotheses.shape[0]
     parents, dists = quickshift(hypotheses, tau)
-    return parents, dists
+    if not save_tree_path is None:
+        save_quickshift_tree(save_tree_path, parents, dists)
+    # parents = array of length N (no of hypotheses) where the values represent the parent hypothesis of the i'th hypothesis
+    # dists = array of length N where the valeus represent the distance to the parent node
+    # if parents[i] = i, this is a root node --> a detection
+    log.debug('parents: %s, dtype: %s', parents, parents.dtype)
+    log.debug('dists: %s', dists)
+    boolroots = np.array([i==p for i,p in enumerate(parents)])
+    log.debug('boolroots: %s', boolroots)
+    roots = parents[boolroots]
+    log.debug('roots: %s', roots)
+    root_node_indexes = np.unique(roots)
+    D = root_node_indexes.shape[0]
+    detections = hypotheses[root_node_indexes]
+    log.debug('No of detections found: %s', detections.shape)
+    log.debug('Root node indexes: %s', root_node_indexes)
+    # make dist_reference lists:
+    while len(np.unique(parents)) > D:
+        for i, p in enumerate(parents):
+            if not i == p:
+                parents[i] = parents[p]
+    
+    dist_references = [[] for i in range(D)]
+    for p_i, p in enumerate(parents):
+        for r_i,r in enumerate(root_node_indexes):
+            if p == r:
+                dist_references[r_i].append(p_i)
+    
+    return detections, dist_references
     # Generate clusters
 
 if __name__ == "__main__":
-    A = np.array([[1,1,10,10],[10,10,12,12],[1,1,5,5],[8,8,12,12]])
-    tau = 1
+    logging.basicConfig(level=logging.DEBUG)
+    log = logging.getLogger('')
+    A = np.array([[1,1,10,10],[10,10,12,12],[1,1,5,5],[8,8,12,12],[1,1,10,10],[1,1,10,10]])
+    tau = np.inf
     
-    print cluster_quickshift(A,tau)
+    print cluster_quickshift(A,tau, 'tmptree')
