@@ -25,7 +25,6 @@ else
 fi
 
 
-echo "Running training"
 TMPFOLDER=`cat $CFGFILE | awk '$1 ~ /tmp_dir/ { print $3 }'`
 RESFOLDER=`cat $CFGFILE | awk '$1 ~ /res_dir/ { print $3 }'`
 TGZFILE=`echo $RESFOLDER | awk '{split($0, a, "/")} END{ print a[length(a)]}'`
@@ -39,7 +38,7 @@ cp $CFGFILE $RESFOLDER
 CFGFILE=`echo "${RESFOLDER}/${CFGFILE}"`
 echo "CFGFILE COPIED TO: $CFGFILE"
 
-
+echo "Running training"
 python train_detection.py $CFGFILE
 echo "Making batches"
 python make_detection_batches.py $CFGFILE
