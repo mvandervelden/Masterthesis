@@ -13,10 +13,11 @@ def overlap_to_E(indexes):
     return E
 
 def quickshift(data, tau=np.inf):
+    log.debug('-- Running Quickshift algorithm with tau=: %f',tau)
     N = data.shape[0]
     dim = data.shape[1]
     tau2 = tau*tau
-    
+    log.debug('data: shape %s, first: %s, last: %s',data.shape, data[0], data[-1])    
     # For now, I take no window, and use pairwise overlap for all
     indexes = [dict() for i in xrange(N)]
     
@@ -27,10 +28,10 @@ def quickshift(data, tau=np.inf):
             overlap = get_overlap(di, dj)
             if overlap > 0:
                 indexes[i][j] = overlap
-    log.debug('data: %s',data)
-    log.debug('indexes: %s',indexes)
+
+    log.debug('indexes: shape %s, first: %s, last: %s',len(indexes), indexes[0].items()[0], indexes[-1].items()[-1])
     E = overlap_to_E(indexes)
-    log.debug('E: %s', E)
+    log.debug('E: shape %s, first: %s, last: %s', E.shape, E[0], E[-1])
     parents = np.arange(N)
     dists = np.empty(N)
     dists.fill(np.inf)
