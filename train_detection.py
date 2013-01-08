@@ -21,13 +21,14 @@ if __name__ == "__main__":
     log.info('==== INIT DESCRIPTOR FUNCTION ====')
     descriptor_function = init_descriptor(DESCRopts[0])
     
-    if ('setmode' in GLOBopts and not GLOBopts['setmode'] == 'becker') or \
-            not 'setmode' in GLOBopts:
+    if 'voc' in GLOBopts['setmode']:
+        # VOC07 detection
         for cls in VOCopts.classes:
             log.info('==== INIT ESTIMATOR FOR CLASS %s ====', cls)
             estimator = init_estimator(GLOBopts['nbnn_path']%cls, NBNNopts)
         
             # Train
+            
             if NBNNopts[0] == 'behmo':
                 load_behmo_estimator(descriptor_function, estimator, cls, VOCopts, \
                     train_set = GLOBopts['train_set'],\
@@ -43,6 +44,7 @@ if __name__ == "__main__":
                     descriptor_path = GLOBopts['descriptor_path'], \
                     cls = cls)
     elif GLOBopts['setmode'] == 'becker':
+        # 'Becker' detection set (TUDmotorbikes with VOC07 for bg training)
         log.info('==== INIT ESTIMATOR FOR BECKER TRAINING ====', )
         estimator = init_estimator(GLOBopts['nbnn_path']%'motorbike', NBNNopts)
         if NBNNopts[0] == 'behmo':
