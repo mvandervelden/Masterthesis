@@ -6,7 +6,7 @@
 source ~/.bash_profile
 
 START=$(date +%s)
-# rm -rf /local/vdvelden
+rm -rf /local/vdvelden
 mkdir /local/vdvelden
 
 # Default config file.
@@ -38,10 +38,10 @@ cp $CFGFILE $RESFOLDER
 CFGFILE=`echo "${RESFOLDER}/${CFGFILE}"`
 echo "CFGFILE COPIED TO: $CFGFILE"
 
-# echo "Running training"
-# python train_detection.py $CFGFILE
-# echo "Making batches"
-# python make_detection_batches.py $CFGFILE
+echo "Running training"
+python train_detection.py $CFGFILE
+echo "Making batches"
+python make_detection_batches.py $CFGFILE
 
 echo "Reading cfg $CFGFILE"
 NNTHREADS=`cat $CFGFILE | awk '$1 ~ /nn_threads/ { print $3 }'`
@@ -68,21 +68,21 @@ fi
 echo "Iterations: $NO_FULL_ITS"
 echo "FULL_ITS: $FULL_ITS"
 echo "It_sizes: $IT_SIZES"
-# for B in `seq 1 $NO_BATCHES`; do
-#     echo "Running batch $B"
-#     START_CLS=0
-#     for SZ in $IT_SIZES; do
-#         echo "Running iteration of $SZ processes"
-#         STOP_CLS=$(($START_CLS+$SZ-1))
-#         for P in `seq $START_CLS $STOP_CLS`; do
-#             CLS=${CLASSES[$P]}
-#             echo "Running NN on class no $P ($CLS)"
-#             python get_detection_distances.py $CFGFILE $B $CLS&
-#         done
-#         wait
-#         START_CLS=$(($START_CLS+$SZ))
-#     done
-# done
+for B in `seq 1 $NO_BATCHES`; do
+    echo " Running batch $B"
+    START_CLS=0
+    for SZ in $IT_SIZES; do
+        echo "  Running iteration of $SZ processes"
+        STOP_CLS=$(($START_CLS+$SZ-1))
+        for P in `seq $START_CLS $STOP_CLS`; do
+            CLS=${CLASSES[$P]}
+            echo "   Running NN on class no $P ($CLS)"
+            python get_detection_distances.py $CFGFILE $B $CLS&
+        done
+        wait
+        START_CLS=$(($START_CLS+$SZ))
+    done
+done
 
 echo "Running detection"
 # perform detection (clustering on all images) per image
@@ -96,18 +96,18 @@ for B in `seq 1 $NO_BATCHES`; do
     else
         IT_SIZES=$NO_IMIDS
     fi
-    echo "  Iterations: $NO_FULL_ITS"
-    echo "  FULL_ITS: $FULL_ITS"
-    echo "   It_sizes: $IT_SIZES"
+    echo " Iterations: $NO_FULL_ITS"
+    echo " FULL_ITS: $FULL_ITS"
+    echo " It_sizes: $IT_SIZES"
     for CLS in ${CLASSES[@]}; do
-        echo "Running detection on class $CLS"
+        echo "  Running detection on class $CLS"
         START_IMID=0
         for SZ in $IT_SIZES; do
-            echo "Running batch $B, class $CLS on detection. $SZ images simultaneously"
+            echo "   Running batch $B, class $CLS on detection. $SZ images simultaneously"
             STOP_IMID=$(($START_IMID+$SZ-1))
             for I in `seq $START_IMID $STOP_IMID`; do
                 IMID=${IMIDS[$I]}
-                echo "Running detection on image no $I ($IMID)"
+                echo "    Running detection on image no $I ($IMID)"
                 python detection.py $CFGFILE $B $CLS $IMID&
             done
             wait
@@ -118,7 +118,7 @@ done
 
 echo "Running ranking function"
 for CLS in ${CLASSES[@]}; do
-    echo "Ranking class $CLS"
+    echo " Ranking class $CLS"
     python rank_detections.py $CFGFILE $CLS
 done
 
@@ -127,7 +127,7 @@ tar -czf ${TGZFILE}.tmp.tgz --exclude=*.dbin* --exclude=*.dtxt --exclude=*.data 
 tar -czf ${TGZFILE}.res.tgz $RESFOLDER
 
 echo "Cleaning up tmp-dir"
-# rm -rf /local/vdvelden
+rm -rf /local/vdvelden
 
 DURATION=$(echo "$(date +%s) - $START" | bc)
 DUR_H=$(echo "$DURATION/3600" | bc)

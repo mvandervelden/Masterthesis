@@ -114,7 +114,10 @@ if __name__ == '__main__':
         
         detections, dist_references = single_link_clustering(hypotheses, hvalues, overlap, indexes, DETopts)
     elif DETopts['method'] == 'quickshift':
-        detections, dist_references = cluster_quickshift(hypotheses, DETopts['tau'], save_tree_path=DETopts['quickshift_tree_path'])
+        log.debug('qs_tree_path: %s', DETopts['quickshift_tree_path'])
+        qs_path = DETopts['quickshift_tree_path']%(cls, im_id)
+        log.debug('qs_tree_path: %s', qs_path)
+        detections, dist_references = cluster_quickshift(hypotheses, DETopts['tau'], save_tree_path=qs_path)
     log.debug(' Found %d Detections', len(detections))
     # Save detections of image to resultsfiles
     # Save detections only, do not rank yet, because of batches...

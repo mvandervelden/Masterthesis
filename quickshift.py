@@ -13,7 +13,7 @@ def overlap_to_E(indexes):
     return E
 
 def quickshift(data, tau=np.inf):
-    log.debug('-- Running Quickshift algorithm with tau=: %f',tau)
+    log.debug('-- Running Quickshift algorithm with tau = %f',tau)
     N = data.shape[0]
     dim = data.shape[1]
     tau2 = tau*tau
@@ -31,7 +31,7 @@ def quickshift(data, tau=np.inf):
 
     log.debug('indexes: shape %s, first: %s, last: %s',len(indexes), indexes[0].items()[0], indexes[-1].items()[-1])
     E = overlap_to_E(indexes)
-    log.debug('E: shape %s, first: %s, last: %s', E.shape, E[0], E[-1])
+    log.debug('E: shape %s, first: %s, last: %s', len(E), E[0], E[-1])
     parents = np.arange(N)
     dists = np.empty(N)
     dists.fill(np.inf)
@@ -59,16 +59,21 @@ def quickshift(data, tau=np.inf):
 
 def cluster_quickshift(hypotheses, tau, save_tree_path=None):
     N = hypotheses.shape[0]
-    parents, dists = quickshift(hypotheses, tau)
+    try:
+        parents, dists = quickshift(hypotheses, tau)
+    except FloatingPointError as e:
+        print "Floating Point error encountered in quickshift: %s"%e
+        log.error("Floating Point error encountered in quickshift: %s", e)
+        
     if not save_tree_path is None:
         save_quickshift_tree(save_tree_path, parents, dists)
     # parents = array of length N (no of hypotheses) where the values represent the parent hypothesis of the i'th hypothesis
     # dists = array of length N where the valeus represent the distance to the parent node
     # if parents[i] = i, this is a root node --> a detection
-    log.debug('parents: %s, dtype: %s', parents, parents.dtype)
-    log.debug('dists: %s', dists)
+    log.debug('parents: dtype: %s', parents.dtype)
+    log.debug('dists, min, max, mean, size: %s, %s, %s, %s', dists.min(), dists.max(), dists.mean(), dists.shape)
     boolroots = np.array([i==p for i,p in enumerate(parents)])
-    log.debug('boolroots: %s', boolroots)
+    log.debug('boolroots sum, size: %s, %s', boolroots.sum(), boolroots.shape)
     roots = parents[boolroots]
     log.debug('roots: %s', roots)
     root_node_indexes = np.unique(roots)
