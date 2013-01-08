@@ -38,6 +38,9 @@ if __name__ == "__main__":
         detfile = GLOBopts['result_path']%(im_id, cls)
     
         detections, reflist, distances, points = load_detections(detfile,im_id)
+        if not isinstance(reflist[0], np.ndarray):
+            # If reflist is a lst of lists instead of a list of ndarrays, convert
+            reflist = [np.array(l) for l in reflist]
         log.info(" Detections: %s, Reflist: %s (max: %d), distances: %s, points: %s", detections.shape, len(reflist), max([l.max() for l in reflist]), distances.shape, points.shape)
         detection_vals = get_detection_values(detections, reflist, distances, points, eval(DETopts['detection_metric']))
         log.info("im %s: det shape=%s, det_vals shape=%s"%(im_id, detections.shape, detection_vals.shape))

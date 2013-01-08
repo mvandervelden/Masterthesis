@@ -87,9 +87,9 @@ def cluster_quickshift(hypotheses, tau, save_tree_path=None):
         for r_i,r in enumerate(root_node_indexes):
             if p == r:
                 dist_references[r_i].append(p_i)
-    
+    # Convert list of lists to list of arrays
+    dist_references = [np.asarray(l) for l in dist_references]
     return detections, dist_references
-    # Generate clusters
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)

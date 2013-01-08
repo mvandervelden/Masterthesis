@@ -11,7 +11,7 @@ from detection_utils import *
 from metric_functions import *
 from quickshift import *
 
-def single_link_clustering(hypotheses, hvalues, overlap, indexes, DETopts):
+def single_link_clustering(hypotheses, hvalues, overlap, indexes, ranking, DETopts):
     detections = []
     dist_references = []
     while not indexes is None:
@@ -112,7 +112,7 @@ if __name__ == '__main__':
         log.debug('Mean overlap:%.5f',overlap.mean())
         log.info('  == CLUSTERING HYPOTHESES OF %s==',im_id)
         
-        detections, dist_references = single_link_clustering(hypotheses, hvalues, overlap, indexes, DETopts)
+        detections, dist_references = single_link_clustering(hypotheses, hvalues, overlap, indexes, ranking, DETopts)
     elif DETopts['method'] == 'quickshift':
         detections, dist_references = cluster_quickshift(hypotheses, DETopts['tau'], save_tree_path=DETopts['quickshift_tree_path'])
     log.debug(' Found %d Detections', len(detections))
