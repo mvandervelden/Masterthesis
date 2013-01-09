@@ -42,12 +42,13 @@ def quickshift(data, tau=np.inf):
     for i in xrange(N):
         overlap_i = indexes[i]
         for j, overlap in overlap_i.items():
-            log.debug('j: %d, overlap: %.3f Ei: %.3f Ej: %.3f', j,overlap, E[i], E[j])
+            if j%100 == 0:
+                log.debug('j: %d, overlap: %.3f Ei: %.3f Ej: %.3f', j,overlap, E[i], E[j])
             # Possible: hypo[i] == hypo[j], so E[i] == E[j], make sure they are clustered, but not assigned to eachother
             if E[j] > E[i] or (E[i] == E[j] and i<j):
                 Eij = overlap
                 Dij = 1./Eij if not Eij == 0.0 else np.inf
-                log.debug('Eij: %.3f Dij: %.3f',Eij,Dij)
+                # log.debug('Eij: %.3f Dij: %.3f',Eij,Dij)
                 if Dij <= tau2 and Dij < dists[i]:
                     dists[i] = Dij
                     parents[i] = j
