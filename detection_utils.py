@@ -40,9 +40,9 @@ def threshold_distances(exemplars, points, distances, threshold):
 
             # amount of exemplars to be added
             amount = dmask.sum()
-            log.debug('Amount of exemplars elected: %d', amount)
+            # log.debug('Amount of exemplars elected: %d', amount)
             if amount == 0:
-                log.debug('Nothing to add')
+                # log.debug('Nothing to add')
                 continue
             dists = np.zeros((amount,2))
             dists[:,0] = distances[i,0][dmask]
