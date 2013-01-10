@@ -54,6 +54,9 @@ def getopts(configfile):
         GLOBopts['nn_threads'] = int(GLOBopts['nn_threads'])
     if 'det_threads' in GLOBopts:
         GLOBopts['det_threads'] = int(GLOBopts['det_threads'])
+    if 'randbg' in GLOBopts:
+        GLOBopts['randbg'] = int(GLOBopts['randbg'])
+    
     # Make sure folders exist:
     assert_dir(GLOBopts['tmp_dir'])
     assert_dir(GLOBopts['res_dir'])

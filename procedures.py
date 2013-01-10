@@ -9,7 +9,8 @@ from file_io import *
 log = logging.getLogger(__name__)
 
 def train_voc(descriptor_function, estimator, object_type, VOCopts,\
-        train_set='train', descriptor_path=None, exemplar_path=None, cls=None):
+        train_set='train', descriptor_path=None, exemplar_path=None, \
+        fg_selection='bbox', random_bg_images=0, cls=None):
     if not cls is None:
         classes = [cls]
     else:
@@ -18,8 +19,12 @@ def train_voc(descriptor_function, estimator, object_type, VOCopts,\
     for i,cls in enumerate(classes):
         if (not object_type == 'fgbg' and not cls in estimator.classes) or \
                 (object_type == 'fgbg' and not cls+'_fg' in estimator.classes):
+            # If the class is not yet in the estimator classes (cls_fg for fgbg detection): Get its images, descriptors, and add it to the estimator
             log.info('==== GET CLASS %d: %s IMAGES ====', i, cls)
-            img_set = read_image_set(VOCopts,cls+'_'+ train_set)
+            img_set = read_image_set(VOCopts,cls+'_'+train_set)
+            if fg_selection == 'segment':
+                log.info('==== LOADING OBJECT SEGMENTATION MASKS ====')
+                load_object_segmentations(VOCopts.object_mask_path, img_set)
             if not descriptor_path is None:
                 for im in img_set:
                     if os.path.exists(descriptor_path%im.im_id):
@@ -39,19 +44,73 @@ def train_voc(descriptor_function, estimator, object_type, VOCopts,\
                 log.info('==== ADD %s DESCRIPTORS TO ESTIMATOR', cls)
                 estimator.add_class(cls, descriptors)
             else:
-                # Get descriptor's objects (bboxes):
-                log.info('==== GET %s OBJECTS ====', cls)
-                objects = get_objects_by_class(img_set, cls)
-                bg_descriptors = get_bbox_bg_descriptors(objects, descriptors)
-                estimator.add_class(cls+'_bg', bg_descriptors)
-                if not exemplar_path is None:
-                    fg_descriptors, exemplars = get_bbox_descriptors(objects, descriptors, exemplars=True)
-                    estimator.add_class(cls+'_fg', fg_descriptors)
-                    log.info('==== SAVING EXEMPLARS to %s ====', exemplar_path)
-                    save_exemplars(exemplar_path%cls, exemplars)
-                else:
-                    fg_descriptors = get_bbox_descriptors(objects, descriptors)
-                    estimator.add_class(cls+'_fg', fg_descriptors)
+                if fg_selection == 'bbox':
+                    # Get descriptor's objects (bboxes):
+                    log.info('==== GET %s OBJECTS ====', cls)
+                    objects = get_objects_by_class(img_set, cls)
+                    if not exemplar_path is None:
+                        fg_descriptors, exemplars = get_bbox_descriptors(objects, descriptors, exemplars=True)
+                        estimator.add_class(cls+'_fg', fg_descriptors)
+                        log.info('==== SAVING EXEMPLARS to %s ====', exemplar_path)
+                        save_exemplars(exemplar_path%cls, exemplars)
+                    else:
+                        fg_descriptors = get_bbox_descriptors(objects, descriptors)
+                        estimator.add_class(cls+'_fg', fg_descriptors)
+                    # Get bg descriptors of the images with fg objects
+                    bg_descriptors = get_bbox_bg_descriptors(objects, descriptors)
+                
+                elif fg_selection == 'segment':
+                    fg_descr = []
+                    bg_descr = []
+                    exemplars = []
+                    for im in img_set:
+                        object_idxs = list(np.unique(im.object_segmentation))
+                        log.info('=== Image %s, bb [%d,%d,%d,%d] partitioning ===', im.im_id, \
+                            im.objects[0].xmin, im.objects[0].ymin, \
+                            im.objects[0].xmax, im.objects[0].ymax)
+                        log.info(' --- object idxs in image: %s', object_idxs)
+                        log.info(' --- pts: %s, descr: %s', descriptors[im.im_id][0].shape, descriptors[im.im_id][1].shape)
+                        # Find which objects are fg
+                        object_ids = [o.object_id for o in im.objects]
+                        fg_obj_ids = [o.object_id for o in im.objects if o.class_name == cls]
+                        log.info(' --- objects in image: %s, fg ids: %s', [(o.object_id, o.class_name) for o in im.objects], fg_obj_ids)
+                        if not exemplar_path is None:
+                            # Get object_segmentation
+                            imdescr, impts = partition_descriptors(np.matrix(descriptors[im.im_id][0]), \
+                                    descriptors[im.im_id][1], im.object_segmentation, exemplars=True)
+                            log.info(' --- No of seg_objects found: %d (=%d)', len(imdescr), len(impts))
+                            # Index to the right objects
+                            for object_id in fg_obj_ids:
+                                fg_object = im.objects[object_id - 1]
+                                log.info(' --- get exemplars for object_id: %s, obj: %s',object_id, (fg_object.object_id, fg_object.cls))
+                                exmps = get_exemplars(fg_object, np.array(impts[object_id]))
+                            log.info(' --- adding %s exemplars, %s descr', len(exmps), len(imdescr[object_id]))
+                            exemplars.append(exmps)
+                        else:
+                            # Get object_segmentation
+                            imdescr, impts = partition_descriptors(np.matrix(descriptors[im.im_id][0]), \
+                                    descriptors[im.im_id][1], im.object_segmentation, exemplars=True)
+                            log.info(' --- No of seg_objects found: %d (=%d)', len(imdescr), len(impts))
+                        for object_id in fg_obj_ids:
+                            log.info(' --- adding %s descr for object %s', len(imdescr), object_id)
+                            fg_descr.append(imdescr[object_id])
+                        # Image background as index 0
+                        bg_descr.append(imdescr[0])
+                        
+                    log.info('--- Adding %s descriptor arrays to class %s', len(fg_descr), cls)
+                    estimator.add_class(cls+'_fg', fg_descr)
+                    if not exemplar_path is None:
+                        log.info('==== SAVING EXEMPLARS to %s ====', exemplar_path)
+                        save_exemplars(exemplar_path%cls, exemplars)
+                if random_bg_images > 0:
+                    # Add random background descriptors
+                    rand_bg = get_random_bg_descriptors(random_bg_images, cls, descriptor_function, VOCopts)
+                    log.info(' --- Adding %d descriptors to the background of class %s', len(rand_bg), cls)
+                    bg_descr.append(rand_bg)
+                estimator.add_class(cls+'_bg', bg_descr)
+                
+def get_random_bg_descriptors(no_images, cls, descr_function, VOCopts):
+    return None
 
 def load_becker_estimator(descriptor_function, estimator, VOCopts, \
         train_set='train', descriptor_path=None, exemplar_path=None):
@@ -62,7 +121,7 @@ def load_becker_estimator(descriptor_function, estimator, VOCopts, \
     if not cls in estimator.classes:
         log.info('==== GET CLASS %s IMAGES ====', cls)
         img_set = read_image_set(VOCopts, cls+'_'+train_set)
-        log.info('==== LOADING CLASS SEGMENTTION MASKS ====')
+        log.info('==== LOADING CLASS SEGMENTATION MASKS ====')
         load_object_segmentations(VOCopts.class_mask_path, img_set)
         if not descriptor_path is None:
             for im in img_set:
@@ -92,7 +151,6 @@ def load_becker_estimator(descriptor_function, estimator, VOCopts, \
                     descriptors[im.im_id][1], im.object_segmentation, exemplars=False)
                 log.info(' --- adding %s descr', len(imdescr))
             fg_descr.append(imdescr[1])
-
 
         log.info('--- Adding %s descriptor arrays to class %s', len(fg_descr), cls)
         estimator.add_class(cls, fg_descr) #TODO SHOULD WORK....
