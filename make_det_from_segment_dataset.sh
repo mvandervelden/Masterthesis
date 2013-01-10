@@ -17,7 +17,7 @@ for cls in $CLASSES; do
     done
     
     filename_tv="VOCdevkit/VOC2007/ImageSets/Main/${cls}_segtrainval.txt"
-    echo filename_tv
-    rm filename_tv
+    echo $filename_tv
+    rm $filename_tv
     cat ${filename_t} ${filename_v} > $filename_tv
 done
