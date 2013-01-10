@@ -21,7 +21,7 @@ if __name__ == "__main__":
     log.info('==== INIT DESCRIPTOR FUNCTION ====')
     descriptor_function = init_descriptor(DESCRopts[0])
     
-    if 'voc' in GLOBopts['setmode']:
+    if GLOBopts['setmode'] == 'voc':
         # VOC07 detection
         for cls in VOCopts.classes:
             log.info('==== INIT ESTIMATOR FOR CLASS %s ====', cls)
@@ -42,6 +42,8 @@ if __name__ == "__main__":
                     train_set = GLOBopts['train_set'], \
                     exemplar_path = DETopts[1]['exemplar_path'], \
                     descriptor_path = GLOBopts['descriptor_path'], \
+                    fg_selection = GLOBopts['train_sel'], \
+                    random_bg_images = GLOBopts['randbg'], \
                     cls = cls)
     elif GLOBopts['setmode'] == 'becker':
         # 'Becker' detection set (TUDmotorbikes with VOC07 for bg training)
