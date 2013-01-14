@@ -44,6 +44,7 @@ if __name__ == "__main__":
                     descriptor_path = GLOBopts['descriptor_path'], \
                     fg_selection = GLOBopts['train_sel'], \
                     random_bg_images = GLOBopts['randbg'], \
+                    random_bg_set = GLOBopts['bg_train_set'], \
                     cls = cls)
     elif GLOBopts['setmode'] == 'becker':
         # 'Becker' detection set (TUDmotorbikes with VOC07 for bg training)

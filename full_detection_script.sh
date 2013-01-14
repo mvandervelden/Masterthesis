@@ -97,17 +97,17 @@ for B in `seq 1 $NO_BATCHES`; do
         IT_SIZES=$NO_IMIDS
     fi
     echo " Iterations: $NO_FULL_ITS"
-    echo " FULL_ITS: $FULL_ITS"
-    echo " It_sizes: $IT_SIZES"
+    # echo " FULL_ITS: $FULL_ITS"
+    # echo " It_sizes: $IT_SIZES"
     for CLS in ${CLASSES[@]}; do
         echo "  Running detection on class $CLS"
         START_IMID=0
         for SZ in $IT_SIZES; do
-            echo "   Running batch $B, class $CLS on detection. $SZ images simultaneously"
             STOP_IMID=$(($START_IMID+$SZ-1))
+            echo "   Running batch $B, class $CLS on detection. $SZ images simultaneously: ${IMIDS[$START_IMID]} to ${IMIDS[$STOP_IMID]}"
             for I in `seq $START_IMID $STOP_IMID`; do
                 IMID=${IMIDS[$I]}
-                echo "    Running detection on image no $I ($IMID)"
+                # echo "    Running detection on image no $I ($IMID)"
                 python detection.py $CFGFILE $B $CLS $IMID&
             done
             wait

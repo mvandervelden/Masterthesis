@@ -150,7 +150,7 @@ def get_random_bg_descriptors(no_images, image_set, cls, descr_function, descr_p
     d_size = 0
     with open(image_set_file,'r') as f:
         for line in [l for l in f if not l.isspace()]:
-            dsize += 1
+            d_size += 1
             # Read the im_id and the label
             data = line.strip().split()
             im_id = data[0]
@@ -171,7 +171,7 @@ def get_random_bg_descriptors(no_images, image_set, cls, descr_function, descr_p
     bg_len = len(bg_images)
     if no_images == -1:
         # Add proportional bg_images 1:1
-        fg_len = dsize - bg_len
+        fg_len = d_size - bg_len
         no_images = fg_len
     elif no_images == -1:
         # Add all bg_images
@@ -182,13 +182,15 @@ def get_random_bg_descriptors(no_images, image_set, cls, descr_function, descr_p
             no_images = bg_len
 
     bg_images = bg_images[:no_images]
-    log.debug(' --- Found %d images in data set', dsize)
+    log.debug(' --- Found %d images in data set', d_size)
     log.debug(' --- Got %d potential images', bg_len)
     log.debug(' --- Selected %d background images', len(bg_images))
     # get descriptors
     descriptors = get_image_descriptors(bg_images, descr_function, descr_path)
-    log.debug(' --- Transferred to %s descriptor arrays', len(descriptors))
-    return descriptors
+    log.debug(' --- Transferred to %s descriptor dicts: type: %s', len(descriptors), descriptors.__class__)
+    descr_arr = np.vstack([d for d in descriptors.values()])
+    log.debug(' --- Transferred to array: %s type: %s', descr_arr.shape, descr_arr.__class__)
+    return descr_arr
 
 
 def load_becker_estimator(descriptor_function, estimator, VOCopts, \
