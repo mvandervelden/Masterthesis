@@ -82,7 +82,7 @@ def train_voc(descriptor_function, estimator, object_type, VOCopts,\
                             # Index to the right objects
                             for object_id in fg_obj_ids:
                                 fg_object = im.objects[object_id - 1]
-                                log.info(' --- get exemplars for object_id: %s, obj: %s',object_id, (fg_object.object_id, fg_object.cls))
+                                log.info(' --- get exemplars for object_id: %s, obj: %s',object_id, (fg_object.object_id, fg_object.class_name))
                                 exmps = get_exemplars(fg_object, np.array(impts[object_id]))
                             log.info(' --- adding %s exemplars, %s descr', len(exmps), len(imdescr[object_id]))
                             exemplars.append(exmps)
