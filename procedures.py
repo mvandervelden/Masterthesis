@@ -10,7 +10,7 @@ log = logging.getLogger(__name__)
 
 def train_voc(descriptor_function, estimator, object_type, VOCopts,\
         train_set='train', descriptor_path=None, exemplar_path=None, \
-        fg_selection='bbox', random_bg_images=0, cls=None):
+        fg_selection='bbox', random_bg_images=0, random_bg_set=None, cls=None):
     if not cls is None:
         classes = [cls]
     else:
@@ -57,7 +57,7 @@ def train_voc(descriptor_function, estimator, object_type, VOCopts,\
                         fg_descriptors = get_bbox_descriptors(objects, descriptors)
                         estimator.add_class(cls+'_fg', fg_descriptors)
                     # Get bg descriptors of the images with fg objects
-                    bg_descriptors = get_bbox_bg_descriptors(objects, descriptors)
+                    bg_descr = get_bbox_bg_descriptors(objects, descriptors)
                 
                 elif fg_selection == 'segment':
                     fg_descr = []
@@ -80,22 +80,29 @@ def train_voc(descriptor_function, estimator, object_type, VOCopts,\
                                     descriptors[im.im_id][1], im.object_segmentation, exemplars=True)
                             log.info(' --- No of seg_objects found: %d (=%d)', len(imdescr), len(impts))
                             # Index to the right objects
+                            im_exemplars = []
                             for object_id in fg_obj_ids:
                                 fg_object = im.objects[object_id - 1]
-                                log.info(' --- get exemplars for object_id: %s, obj: %s',object_id, (fg_object.object_id, fg_object.cls))
+                                no_descr_in_obj = imdescr[object_id].shape[0]
+                                log.info(' --- get exemplars for object_id: %s, obj: %s, no_descr: %d',object_id, (fg_object.object_id, fg_object.class_name), no_descr_in_obj)
                                 exmps = get_exemplars(fg_object, np.array(impts[object_id]))
-                            log.info(' --- adding %s exemplars, %s descr', len(exmps), len(imdescr[object_id]))
-                            exemplars.append(exmps)
+                                log.info(' --- adding %s exemplars, %s descr, %s points', exmps.shape, no_descr_in_obj, impts[object_id].shape)
+                                im_exemplars.append(exmps)
+                            exemplars.append(np.vstack(im_exemplars))
                         else:
                             # Get object_segmentation
                             imdescr, impts = partition_descriptors(np.matrix(descriptors[im.im_id][0]), \
                                     descriptors[im.im_id][1], im.object_segmentation, exemplars=True)
                             log.info(' --- No of seg_objects found: %d (=%d)', len(imdescr), len(impts))
                         for object_id in fg_obj_ids:
-                            log.info(' --- adding %s descr for object %s', len(imdescr), object_id)
+                            log.info(' --- adding descr for object %s', object_id)
                             fg_descr.append(imdescr[object_id])
-                        # Image background as index 0
-                        bg_descr.append(imdescr[0])
+                        # Image background as index 0, but also add other objects that are not of the class:
+                        for object_no in range(len(imdescr)):
+                            log.info(' --- Scanning for non_fg_objects: obj %s, idxs:%s?', object_no, object_idxs[object_no])
+                            if not object_no in fg_obj_ids and not object_idxs[object_no] == 255:
+                                log.info(' --- adding bg_descr for object %s: idxs %s', object_no, object_idxs[object_no])
+                                bg_descr.append(imdescr[object_no])
                         
                     log.info('--- Adding %s descriptor arrays to class %s', len(fg_descr), cls)
                     estimator.add_class(cls+'_fg', fg_descr)
@@ -104,13 +111,19 @@ def train_voc(descriptor_function, estimator, object_type, VOCopts,\
                         save_exemplars(exemplar_path%cls, exemplars)
                 if random_bg_images > 0:
                     # Add random background descriptors
-                    rand_bg = get_random_bg_descriptors(random_bg_images, cls, descriptor_function, VOCopts)
+                    rand_bg = get_random_bg_descriptors(random_bg_images, random_bg_set, cls, descriptor_function, VOCopts)
                     log.info(' --- Adding %d descriptors to the background of class %s', len(rand_bg), cls)
                     bg_descr.append(rand_bg)
                 estimator.add_class(cls+'_bg', bg_descr)
                 
-def get_random_bg_descriptors(no_images, cls, descr_function, VOCopts):
+def get_random_bg_descriptors(no_images, image_set, cls, descr_function, VOCopts):
+    log.info('==== GET %d RANDOM BG_DESCRIPTORS FOR CLASS %s, FROM SET %s', no_images, cls, image_set)
+    img_set = read_image_set(VOCopts,cls+'_'+image_set, min_label=-1)
+    # TODO select negative images
+    # TODO select first n no_images
+    # TODO get descriptors
     return None
+
 
 def load_becker_estimator(descriptor_function, estimator, VOCopts, \
         train_set='train', descriptor_path=None, exemplar_path=None):

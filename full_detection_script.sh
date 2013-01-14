@@ -1,5 +1,5 @@
 #!/bin/bash
-#$ -l h_rt=72:00:00
+#$ -l h_rt=500:00:00
 #$ -cwd
 
 
@@ -123,7 +123,7 @@ for CLS in ${CLASSES[@]}; do
 done
 
 echo "Tarballing results and tmpfiles"
-tar -czf ${TGZFILE}.tmp.tgz --exclude=*.dbin* --exclude=*.dtxt --exclude=*.data --exclude=*.index $TMPFOLDER
+# tar -czf ${TGZFILE}.tmp.tgz --exclude=*.dbin* --exclude=*.dtxt --exclude=*.data --exclude=*.index $TMPFOLDER
 tar -czf ${TGZFILE}.res.tgz $RESFOLDER
 
 echo "Cleaning up tmp-dir"
