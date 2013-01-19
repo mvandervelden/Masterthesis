@@ -1,5 +1,5 @@
 import random
-import sys
+import sys, os
 
 """
 take VOC2007's trainval.txt from the segmentation set, select 300 images, and put 
@@ -76,6 +76,66 @@ def randomize_trainsets(appendix):
         otrf.write('\n'.join(data))
         otrf.close()
 
+def randomize_graz01_sets(appendix):
+    bike_folder = 'Graz01/bikes'
+    person_folder = 'Graz01/persons'
+    bg_folder = 'Graz01/no_bike_no_person'
+    image_set_folder = 'Graz01/ImageSets/%s_%s%s.txt'
+    # We make: person_persontrain##.txt, bg_persontrain##.txt, person_persontest##.txt, bg_persontest##.txt, bike_biketrain##.txt, bg_biketrain##.txt, bike_biketest##.txt, bg_biketest##.txt
+    
+    all_bikes = os.listdir(bike_folder)
+    all_persons = os.listdir(person_folder)
+    all_bg = os.listdir(bg_folder)
+    
+    # shuffle
+    random.shuffle(all_bikes)
+    random.shuffle(all_persons)
+    random.shuffle(all_bg)
+    
+    # select:
+    p_persontrain = all_persons[:100]
+    p_persontest = all_persons[100:200]
+    bg_persontrain = all_bikes[:50] + all_bg[:50]
+    bg_persontest = all_bikes[50:100] + all_bg[50:100]
+    b_biketrain = all_bikes[:100]
+    b_biketest = all_bikes[100:200]
+    bg_biketrain = all_persons[:50] + all_bg[:50]
+    bg_biketest = all_persons[50:100] + all_bg[50:100]
+    with open(image_set_folder%('person', 'persontrain',appendix), 'w') as ptf:
+        with open(image_set_folder%('bg', 'persontrain',appendix), 'w') as btf:
+            for p in range(100):
+                ptf.write('%s  1\n'%p_persontrain[p][:-4])
+                btf.write('%s -1\n'%p_persontrain[p][:-4])
+            for p in range(100):
+                ptf.write('%s -1\n'%bg_persontrain[p][:-4])
+                btf.write('%s  1\n'%bg_persontrain[p][:-4])
+    with open(image_set_folder%('person', 'persontest',appendix), 'w') as ptf:
+        with open(image_set_folder%('bg', 'persontest',appendix), 'w') as btf:
+            for p in range(100):
+                ptf.write('%s  1\n'%p_persontest[p][:-4])
+                btf.write('%s -1\n'%p_persontest[p][:-4])
+            for p in range(100):
+                ptf.write('%s -1\n'%bg_persontest[p][:-4])
+                btf.write('%s  1\n'%bg_persontest[p][:-4])
+    with open(image_set_folder%('bike', 'biketrain',appendix), 'w') as ptf:
+        with open(image_set_folder%('bg', 'biketrain',appendix), 'w') as btf:
+            for p in range(100):
+                ptf.write('%s  1\n'%b_biketrain[p][:-4])
+                btf.write('%s -1\n'%b_biketrain[p][:-4])
+            for p in range(100):
+                ptf.write('%s -1\n'%bg_biketrain[p][:-4])
+                btf.write('%s  1\n'%bg_biketrain[p][:-4])
+    with open(image_set_folder%('bike', 'biketest',appendix), 'w') as ptf:
+        with open(image_set_folder%('bg', 'biketest',appendix), 'w') as btf:
+            for p in range(100):
+                ptf.write('%s  1\n'%b_biketest[p][:-4])
+                btf.write('%s -1\n'%b_biketest[p][:-4])
+            for p in range(100):
+                ptf.write('%s -1\n'%bg_biketest[p][:-4])
+                btf.write('%s  1\n'%bg_biketest[p][:-4])
+    
+
 if __name__ == "__main__":
-    randomize_trainsets(sys.argv[1])
+    randomize_graz01_sets(sys.argv[1])
+    # randomize_trainsets(sys.argv[1])
     # randomize_tud_bg(sys.argv[1])

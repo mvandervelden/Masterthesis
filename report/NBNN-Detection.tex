@@ -1,0 +1,36 @@
+
+\chapter{NBNN in an Exemplar-based Detection Model} % (fold)
+\label{sec:linking}
+\todo[inline]{In the end, explain that Becker's approahc is similar, but emphasize the difference here, by using  Behmo's normalization, but also taking im2class distances into account, which Becker does not really do.}
+
+NBNN classification and Chum's exemplar model detection can be combined into a new detection method, because the exemplar model has more in common with the NBNN approach than most other detection methods. The reason is that the exemplar model is based on image-to-class distance, like NBNN. This provides a natural way of linking both methods.
+
+Chum \emph{et al.}\cite{chum2007exemplar} uses interest point detectors and a codebook approach for their exemplars. The descriptor space is quantized like regular codebook classification methods do, even though they take the location of the object relative to the descriptor as basis for clustering the visual words, and not the descriptors themselves.
+
+In contrast to classification methods however, the exemplar models use image-to-class distance when testing. While most codebook methods \todo{cite} compare images to each other, see Section \ref{sub:boiman_s_nbnn}, in exemplar model detection the individual features are compared to the quantized exemplars. Because these exemplars have a designated class, not the distance between images forms the basis for classification, but the distance of a query image to each class.
+
+This shows a way to use the NBNN representation within the exemplar model. The un-quantized descriptors of NBNN are used as exemplars, and each descriptor in the query image votes for the hypothesis calculated from its nearest exemplar in each class. 
+
+
+\todo[color=green,inline]{Finish this, it needs a lot back reference to earlier parts, so I'm finishing that first}
+
+this meets the requirements set in Section \ref{sec:naive_bayes_nearest_neighbor} rather well. The weight of each hypothesis defined by Chum can quite easily be exchanged for a weight based on the distance of the underlying descriptor to its nearest exemplar. The only difference is that, where classification is based on the full image, detection only has support from a subset of the image. This means NN detection may not be expected to come as near to the Bayes optimal classifier as classification does.
+
+
+The main difference between the methods would be that our new method would generate a great many more hypotheses, resulting from the dense sampling compared to interest point sampling. This hurts efficiency of the method, but it is not an option to drop the dense sampling, because NBNN relies on the large amount of descriptors. This also means that the separate descriptors of NBNN give less support to a hypothesis, on average, than interest point exemplars give. That is the reason why summing NN distances over a whole image works that well for classification, as seen in Equation \eqref{eq:nbnnclass}. From this equation, and from the observation that the more specific descriptors for a certain class generate the highest difference in distance, 
+
+
+\todo[inline]{weighted difference ( $\frac{d^- - d^+}{d^+}$ ) in distance is a bit difficult to justify, because the decision boundary is shifted, but it is compliant with boiman's statement that the biggest differences matter most}
+
+
+\section{Foreground-Background classification} % (fold)
+\label{sec:foreground_background_classification}
+\todo[inline]{PERHAPS MORE RELEVANT IN SETUP SECTION??? Write something about fg/bg classification (is that the right term?). Show some images illustrating the idea}
+% subsection foreground_background_classification (end)
+
+\section{Descriptor Aliasing} % (fold)
+\label{sub:descriptor_aliasing}
+\todo[inline]{Explain this effect, illustrate it, and tell why k>1 avoids this, and why Local NBNN (McCann) is a good approach for it}
+% subsection descriptor_aliasing (end)
+
+% section linking (end)
