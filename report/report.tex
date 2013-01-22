@@ -197,7 +197,7 @@ Now, classification comes down to calculating descriptors for all images in each
 
 Even though the algorithm of \cite{boiman2008defense} is very simple and requires no training phase, it does have its scalability issues because of its high memory use. Because all densely computed descriptors for each image in the training set have to be stored, and the nearest neighbor for each descriptor of each query image on each class has to be found, the memory usage is much higher than for example BoF methods, which use a more compact representation of images. Calculating NN can be sped up by using sophisticated Approximations of the Nearest Neighbor algorithm, such as \todo[fancyline]{cite FLANN, ANN}. The memory issue remains however.
 
-Other limitations have been shown by various authors.\cite{behmo2010towards, wang2011improved,mccann2011local,tuytelaars2011nbnn,timofte2012iterative}
+Other limitations have been shown by various authors.\cite{behmo2010towards, wang2011improved,mccann2012local,tuytelaars2011nbnn,timofte2012iterative}
 
 Some authors \cite{behmo2010towards,wang2011improved} stress that NBNN is highly sensitive to differences in descriptor density over classes. Behmo \emph{et al.} for example state that this is caused by dropping the factor $\frac{1}{Z}$ from the classification rule, which normalizes for the descriptor density in the train set for a given class; compare Equations \eqref{eq:parzen} and \eqref{eq:nbnnloglikelihood}. This term is dropped because an equal kernel estimation is assumed, which does not hold for large differences in descriptor density over classes.\cite{behmo2010towards} Therefore, they propose to learn the density estimation parameters per class, variance $\sigma_c$ and normalization factor $Z_c$, as a linear problem. Rephrasing the general Parzen-based likelihood \eqref{eq:parzen} gives
 \begin{align}
@@ -311,7 +311,7 @@ The main difference between the methods would be that our new method would gener
 \label{sub:detection}
 NBNN-based-detection is tested on the VOC2012 \todo{and VOC2007? misschien goed voor vergelijkingen, if there's time...} data set. The performance of detection is measured both with and without optimization of the class-\-specific pa\-ra\-me\-ters defined by \cite{behmo2010towards}. A part of the training set was set apart as a optimization set, the rest was used as labeled examples. The full validation set was used for measuring performance.
 
-SIFT descriptors were densely sampled with a spacing of 6\todo{3 would be ideal, try if that might work)} pixels and on 4 scales (1.33, 2.0, 3.0 and 4.5 \todo{what? sigma, lookup}) from all example images, just like \cite{mccann2011local} proposes in their setup. 
+SIFT descriptors were densely sampled with a spacing of 6\todo{3 would be ideal, try if that might work)} pixels and on 4 scales (1.33, 2.0, 3.0 and 4.5 \todo{what? sigma, lookup}) from all example images, just like \cite{mccann2012local} proposes in their setup. 
 
 
 Detection of each object class is modeled as a separate 2-class foreground-background detection problem. All images containing one or more objects of an object class are selected, and for each image, the descriptors inside the class's bounding boxes are added to the foreground-class, while the descriptors outside these boxes are added to the background-class.

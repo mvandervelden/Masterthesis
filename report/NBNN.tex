@@ -1,9 +1,9 @@
-\chapter{Naive Bayes Nearest Neighbor} % (fold)
-\label{sec:naive_bayes_nearest_neighbor}
+\section{Naive Bayes Nearest Neighbor} % (fold)
+\label{cha:naive_bayes_nearest_neighbor}
 
 \todo[inline]{short introduction of a paragraph or so? SEEMS TO BE OK, PERHAPS CUT SOME OF THE WORK ON BEHMO A LITTLE, MAKE A SUBSEC ON ..?(forgot what)}
 
-\section{$k$-Nearest Neighbor classification} % (fold)
+\subsection{$k$-Nearest Neighbor Classification} % (fold)
 \label{sub:_k_nearest_neighbor}
 
 The $k$-Nearest-Neighbor algorithm is one of the earliest approaches for classification in machine learning. Given a set of items $n \in \mathcal{N}$, labeled with a designated number of classes $c_n \in \mathcal{C}$, an unlabeled query item $q$ and a distance measure to calculate pairwise differences between items $d(x_1\|x_2)$, the nearest neighbors of $q$ are the $k$ items in $\mathcal{N}$ for which $d(q\|n)$ is lowest. In turn, sets $\text{NN}_c(q)$ contain those nearest neighbors of $q$ that belong to class $c$. This way, $k$NN classification comes down to
@@ -14,7 +14,7 @@ being the class of which the most items are within the $k$ nearest neighbors of 
 
 In contrast to other classification algorithms, $k$NN is relatively simple. It does not require any for of training to make a model from the labeled images. The algorithm only estimates the probability density of the classes locally, within $k$, which means it does not assume a global probability density distribution underneath the data, which makes it non-parametric, and a cheap way of making a non-linear classifier.
 
-\section{Naive Bayes classification} % (fold)
+\subsection{Naive Bayes Classification} % (fold)
 \label{sub:NB}
 
 Naive Bayes is another rather simple classification algorithm, which is based on the idea that a simplification of Bayes' Theorem can be made using the assumption that all features of an item $d_{n,i} \in \mathcal{D}_n$ appear conditionally independent of each other. This means that $p(d_{n,i} | c_n, d_{n,j}) = p(d_{n,i}|c_n)$ is assumed for all $n,c,i,j$. 
@@ -45,21 +45,31 @@ With this equation, a decision rule can be made as follows
 \end{equation}
 which is called a maximum a-posteriori (MAP) classifier. In this formulation of a classification problem, a probability density estimation is needed to model all features. All kinds of distributions can be used for this.
 
-\section{Boiman's NBNN} % (fold)
+\subsection{Boiman's NBNN} % (fold)
 \label{sub:boiman_s_nbnn}
 Boiman \emph{et al.} \cite{boiman2008defense} coined the term Naive Bayes Nearest Neighbor (NBNN) for their image classification algorithm, that used a combination of Nearest-Neighbor (NN) comparison and Naive Bayes classification to classify images in a multi-class setting. The approach works well because of the non-parametric character of the approach, which means no learning of parameters is required. This makes it easy to use the method on a problem with a large number of classes (parametric methods typically model multi-class problems as multiple 2-class problems), and that the risk of overfitting is small because there are no parameters to be overfit. The authors achieved results competitive to the state of the art Bag of Features (BoF) methods because of two requirements their method meets: (\emph{i}) Avoiding feature quantization and (\emph{ii}) the use of image-to-class distance instead of image-to-image distances. They theorize that earlier attempts to use NN \todo[fancyline]{references} for image classification failed because these do not meet both requirements.
 
-Feature quantization is a means of creating compact image descriptions, such as the ones used in the BoF methods. In BoF, all descriptors of an image are clustered into visual words, and histograms are constructed counting the occurrence of each word in an image. Image matching is based on comparing these histograms. This being useful in learning-based methods, quantization is harmful for a nearest neighbor approach because the most informative descriptors get the highest quantization error while being necessary for finding nearest neighbors. This becomes clear when the observation is made that for a descriptor to be more informative, it should appear only at certain circumstances, ideally only in images of one class. They should be fairly well recognizable among other descriptors, and therefore they tend to be outliers in descriptor space. When quantizing, these descriptors will mostly be incorporated into visual words that are rather unlike these descriptors, resulting in a large quantization error.
+\begin{figure}[hbt]
+    \centering
+    \includegraphics[width=0.8\textwidth]{QuantizationError}
+    \caption{Quantization Error.}
+    \label{fig:quantization_error}
+\end{figure}
+
+Feature quantization is a means of creating compact image descriptions, such as the ones used in the BoF methods. In BoF, all descriptors of an image are clustered into visual words, and histograms are constructed counting the occurrence of each word in an image. Image matching is based on comparing these histograms. This being useful in learning-based methods, quantization is harmful for a nearest neighbor approach because the most informative descriptors get the highest quantization error while being necessary for finding nearest neighbors. This becomes clear when the observation is made that for a descriptor to be more informative, it should appear only at certain circumstances, ideally only in images of one class. They should be fairly well recognizable among other descriptors, and therefore they tend to be outliers in descriptor space. When quantizing, these descriptors will mostly be incorporated into visual words that are rather unlike these descriptors, resulting in a large quantization error. In Figure \ref{fig:quantization_error}, the effects of this are illustrated. \todo{explain image, perhaps change image to own.}
 
 In learning-based methods, like SVM, this disadvantage is outweighed by the benefit of dimensionality reduction which allows training on a large data set. Furthermore, when learning a BoF model, the problem itself is mitigated too. Therefore, NBNN uses every single descriptor of each image to perform NN on.
 
 Kernel methods such as SVM are based on image-to-image distances to create decision boundaries. For each image in the training set, a histogram of visual words is built, based on the features that appear in the image, and are matched with the visual words that resulted from quantizing all training features. 
-In a nearest neighbor approach, image-to-image distances do not enable much generalization, as no inference is done from the training images and their features. This would mean only test images close to known images will be classified correctly. Therefore, image-to-class distances should be used. While an image might be far removed from all others of a certain class, the individual features might all be close to features of different images of this class, making the image-to-image distances to a class large, but the image-to-class distance short. \cite{wang2009learning} 
+In a nearest neighbor approach, image-to-image distances do not enable much generalization, as no inference is done from the training images and their features. This would mean only test images close to known images will be classified correctly. Therefore, image-to-class distances should be used. While an image might be far removed from all others of a certain class, the individual features might all be close to features of different images of this class, making the image-to-image distances to a class large, but the image-to-class distance short. \cite{wang2009learning} Figure \ref{fig:im2im_vs_im2cl} shows the difference between image-to-image distance and image-to-class distance.\todo{Make a better embedding of the image in the text.}
 
 \begin{figure}[hbt]
     \centering
-    \missingfigure[figwidth=0.8\textwidth]{image like in Boiman or Wang2009 representing image-to-class distance (an perhaps one with quantization explained)}
+    \includegraphics[width=0.8\textwidth]{Im2imVsIm2cl}
+    \caption{Image to class distance vs image to image}
+    \label{fig:im2im_vs_im2cl}
 \end{figure}
+
 
 Using the main points of no quantization an image-to-class distances, $k$-nearest neighbor can be performed for individual features, per class. Note that in this way, it is impossible to use $k$NN as a classifier, because no discrimination can be made between the classes. It is however useful to be able to compare the distances of a feature to the nearest neighbors in each class. this is used as the input of a Naive Bayes classifier.
 
@@ -90,17 +100,17 @@ Now, classification comes down to calculating descriptors for all images in each
 % subsection boiman_s_nbnn (end)
 
 
-\section{Limitations and extensions} % (fold)
+\subsection{Limitations and Extensions} % (fold)
 \label{sub:limitations_and_extensions}
 
-Even though the algorithm of \cite{boiman2008defense} is very simple and requires no training phase, it does have scalability issues because of its dependence of as many individual descriptors as possible. Because all densely computed descriptors for each image in the training set have to be stored, and the nearest neighbor for each descriptor of each query image on each class has to be found, the memory usage is much higher than for example BoF methods, which use a more compact representation of images. Calculating NN can be sped up by using sophisticated Approximations of the Nearest Neighbor algorithm, such as \todo[fancyline]{cite FLANN, ANN}. The memory issue remains however.
+Even though the algorithm of \cite{boiman2008defense} is very simple and requires no training phase, it does have scalability issues because of its dependence of as many individual descriptors as possible. Because all densely computed descriptors for each image in the training set have to be stored, and the nearest neighbor for each descriptor of each query image on each class has to be found, the memory usage is much higher than for example BoF methods, which use a more compact representation of images. Calculating NN can be sped up by using sophisticated Approximations of the Nearest Neighbor algorithm, such as \todo[fancyline]{cite FLANN, ANN, some detail about FLANN???}. The memory issue remains however.
 
-Other limitations have been shown by various authors.\cite{behmo2010towards, wang2011improved,mccann2011local,tuytelaars2011nbnn,timofte2012iterative} Some authors \cite{behmo2010towards,wang2011improved} stress that NBNN is highly sensitive to differences in descriptor density over classes. Behmo \emph{et al.} for example state that this is caused by dropping the factor $\frac{1}{Z}$ from the classification rule, which normalizes for the descriptor density in the train set for a given class; compare Equations \eqref{eq:parzen} and \eqref{eq:nbnnloglikelihood}. This term is dropped because an equal kernel estimation is assumed, which does not hold for large differences in descriptor density over classes.\cite{behmo2010towards} Therefore, they propose to learn the density estimation parameters per class, variance $\sigma_c$ and normalization factor $Z_c$, as a linear problem. Rephrasing the general Parzen-based likelihood \eqref{eq:parzen} gives
+Other limitations have been shown by various authors.\cite{behmo2010towards, wang2011improved,mccann2012local,tuytelaars2011nbnn,timofte2012iterative} Some authors \cite{behmo2010towards,wang2011improved} stress that NBNN is highly sensitive to differences in descriptor density over classes. Behmo \emph{et al.} for example state that this is caused by dropping the factor $\frac{1}{Z}$ from the classification rule, which normalizes for the descriptor density in the train set for a given class; compare Equations \eqref{eq:parzen} and \eqref{eq:nbnnloglikelihood}. This term is dropped because an equal kernel estimation is assumed, which does not hold for large differences in descriptor density over classes.\cite{behmo2010towards} Therefore, they propose to learn the density estimation parameters per class, variance $\sigma_c$ and normalization factor $Z_c$, as a linear problem. Rephrasing the general Parzen-based likelihood \eqref{eq:parzen} gives
 \begin{align}
     - \log\big(p(d_q|c)\big) &= -\log\Bigg(\frac{1}{ Z_c}\exp\left( -\frac{ \|d_q - \text{NN}_c(d_q)\|^2}{2(\sigma_c)^2}\right)\!\Bigg) \\
     &= \frac{ \|d_q - \text{NN}_c(d_q)\|^2}{2(\sigma_c)^2} + \log(Z_c),
 \end{align}
-and subsequently rephrasing and reparametrizing the Naive Bayes rule \eqref{eq:nbnnclass} gives
+and subsequently rephrasing and re-parametrizing the Naive Bayes rule \eqref{eq:nbnnclass} gives
 \begin{align}
     \hat c_q &= \argmin_c \sum_{i=1}^{m_q} \left(\frac{ \|d_q - \text{NN}_c(d_q)\|^2}{2(\sigma_c)^2} + \log(Z_c)\right)\\
     &= \argmin_c \alpha_c \sum_{i=1}^{m_q} \|d_q - \text{NN}_c(d_q)\|^2 + m_q\beta_c,
@@ -128,26 +138,34 @@ Equation \eqref{eq:energy} can be minimized when viewed as a linear program, equ
 \end{align}
 A basic NBNN classifier is built with a labeled image set, on which a separate training set is used with the linear program, to learn the $\alpha_c$ and $\beta_c$ parameters for each class. For the test set, all resulting distances of the NBNN classifier are transformed using the trained parameters, and classified using these weighed distances.
 
-Wang \emph{et al.} take a slightly different approach to solve the same problem. They try to correct the distances found by replacing the euclidean distance of NN by a learned Mahalonobis distance for each class \todo{each descriptor? Check the paper}.
+Wang \emph{et al.} take a slightly different approach to solve the same problem. They try to correct the distances found by replacing the euclidean distance of NN by a learned Mahalonobis distance for each class \todo[inline]{each descriptor? Check the paper. Put in some more details: Perhaps send to Related Work???}.
 
-\todo[inline]{perhaps some related work of others, and, maybe include illustrations of the idea.}
+\todo[inline]{perhaps include illustrations of the idea.}
+
+\begin{figure}[hbt]
+    \centering
+    \missingfigure[figwidth=0.8\textwidth]{NBNN vs. optimal NBNN}
+\end{figure}
+
+% section limitations_and_extensions (end)
 
 \subsection{Local NBNN} % (fold)
-\label{sub:local_nbnn}
+\label{sec:local_nbnn}
 
-An adaptation of NBNN by McCann \& Lowe called local NBNN has another approach to solve some of the limitations of the original algorithm. The main idea is that it is not necessary to find a descriptor's nearest neighbor in each class, but that is sufficient to find the $k$ nearest neighbors over all classes. It is better, in fact. In the words of the authors, ``The question becomes, `What does this descriptor look like?', instead of `Does this descriptor look like one from a car? a duck? a face? a plane? \ldots' ''. This simplification of the query includes less time to find the NN of each class, because it is much more efficient to $k$ nearest neighbors in one collection, than to find the 1-NN in $n$ collections, even when $k>n$.
+An adaptation of NBNN by McCann \& Lowe called local NBNN\cite{mccann2012local} has another approach to solve some of the limitations of the original algorithm. Their main idea is that it is not necessary to find a descriptor's nearest neighbor in each class, but that is sufficient to find the $k$ nearest neighbors over all classes. It is better, in fact. In the words of the authors: ``The question becomes, `What does this descriptor look like?', instead of `Does this descriptor look like one from a car? a duck? a face? a plane? \ldots' ''. 
+\todo[inline]{Revise this sentence:
 
-Besides a time-complexity benifit of local NBNN, it also enhances the results of NBNN. Because only the $k$NN are taken into account, it might well be that not all classes will be involved for each descriptor in an image. In the original NBNN, these distances would still be taken into account, lowering the chance of the class to get the highest probability for the image by a possibly large amount. Local NBNN takes the $k+1$-th distance for these classes, making this effect much less significant. Liu \emph{et al.}\cite{liu2011defense} have hypohesized that in a sparse manifold space, such as the descriptor space, larger distance give a much worse estimate of membership to a class. This might be the cause for the improved results local NBNN gets compared to Boiman's NBNN. Another argument is that each descriptor should at most add a bit evidence to the probability of an object's class. It should not lower this probability. Otherwise the influence of background clutter could be too large.
+This simplification of the query includes less time to find the NN of each class, because it is much more efficient to $k$ nearest neighbors in one collection, than to find the 1-NN in $n$ collections, even when $k>n$.}
 
+Besides the time-complexity benefit, local NBNN also enhances the results of NBNN. Because only the $k$NN are taken into account, it might well be that not all classes will be involved for each descriptor in an image. In the original NBNN, these distances would still be taken into account, lowering the chance of the class to get the highest probability for the image by a possibly large amount. Local NBNN takes the $k+1$-th distance for these classes, making this effect much less significant. Liu \emph{et al.}\cite{liu2011defense} have hypothesized that in a sparse manifold space, such as the descriptor space, larger distance give a much worse estimate of membership to a class. This might be the cause for the improved results local NBNN gets compared to Boiman's NBNN. Another argument is that each descriptor should at most add a bit evidence to the probability of an object's class. It should not lower this probability. Otherwise the influence of background clutter could be too large.
 
-Local NBNN will be used as a basis for the object detection algorithm, because it is an efficient variant of NBNN, and extends to the $k>1$ case, which proved to be important in the detection case. This will be explained in Section \ref{sec:linking}.
+Local NBNN will be used as a basis for the object detection algorithm, because it is an efficient variant of NBNN, and extends to the $k>1$ case, which proved to be important in the detection case. This will be explained in Section \ref{cha:linking}.
 
 \begin{figure}[hbt]
     \centering
     \missingfigure[figwidth=0.8\textwidth]{Image showing the idea of local NBNN}
 \end{figure}
-% subsubsection local_nbnn (end)
+% subsection local_nbnn (end)
 
-% subsection limitations_and_extensions (end)
 
 % section naive_bayes_nearest_neighbor (end)

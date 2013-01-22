@@ -1,4 +1,4 @@
-\documentclass[a4paper,10pt]{report}
+\documentclass[a4paper,10pt]{article}
 \usepackage{amsmath}
 \usepackage{url}
 \usepackage[shadow]{todonotes}
@@ -9,10 +9,6 @@
 \DeclareMathOperator*{\argmin}{arg\,min}
 
 %opening
-\title{Object Detection using NBNN}
-
-\author{Maarten van der Velden\\maarten.vandervelden@student.uva.nl\\Student ID: 5743087\\ \\Supervisor\\dr. Jan van Gemert\\j.c.vangemert@uva.nl}
-\date{\today}
 
 \begin{document}
 
@@ -26,7 +22,7 @@
 %	HEADING SECTIONS
 %-------------------------------------------------------------------------------
 
-\textsc{\LARGE University of Amsterdam}\\[1.5cm] % Name of your university/college
+\textsc{\LARGE University of Amsterdam}\\[1.0cm] % Name of your university/college
 \textsc{\Large Artificial Intelligence}\\[0.5cm] % Major heading such as course name
 \textsc{\large Master Thesis}\\[0.5cm] % Minor heading such as course title
 
@@ -35,7 +31,9 @@
 %-------------------------------------------------------------------------------
 
 \HRule \\[0.4cm]
-{ \huge \bfseries Object Detection using NBNN}\\[0.4cm] % Title of your document
+% Title of your document
+{ \huge \bfseries Naive Bayes Nearest-Neighbor Object Detection}\\[0.1cm]
+{ \large Using Local NBNN and Exemplar-based Models to Solve Computer Vision Tasks}\\[0.2cm]
 \HRule \\[1.5cm]
  
 %-------------------------------------------------------------------------------
@@ -59,7 +57,7 @@ maarten.vandervelden@\\student.uva.nl
 dr. Jan van Gemert\\
 j.c.vangemert@uva.nl
 \end{flushright}
-\end{minipage}\\[4cm]
+\end{minipage}\\[2cm]
 
 % If you don't want a supervisor, uncomment the two lines below and remove the section above
 %\Large \emph{Author:}\\
@@ -87,23 +85,25 @@ j.c.vangemert@uva.nl
     bla
 \end{abstract}
 
-\tableofcontents
+% \tableofcontents
 
 % \pagenumbering{arabic}
 
-\include{Introduction}
-\include{RelatedWork}
-\include{NBNN}
-\include{Detection}
+\input{Introduction}
+\input{RelatedWork}
+\input{NBNN}
+\input{Detection}
 
-\include{NBNN-Detection}
-\include{Setup}
+\input{NBNN-Detection}
+\input{ExperimentsResults}
 
-\include{Results}
-\include{Conclusion}
-\include{Discussion}
+% \input{Results}
+\input{Conclusion}
+\input{Discussion}
 
+\todo[inline,color=yellow]{Solve inconsistencies in Bibligraphy: Put `IEEE 7th Conference on Computer Vision', or `Computer Vision, IEEE 7th Conference on' as is done with most references right now?
 
+Also: Use the `inproceedings'-tag or `article' for conference proceedings. Now it is mixed. Difference is that inproceedings give you: ``article title. In \emph{Conference}'', whereas articles leave the `In' out.}
 \bibliographystyle{is-plain}
 \bibliography{ref}
 
