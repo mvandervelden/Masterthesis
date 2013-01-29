@@ -188,7 +188,10 @@ def get_random_bg_descriptors(no_images, image_set, cls, descr_function, descr_p
     # get descriptors
     descriptors = get_image_descriptors(bg_images, descr_function, descr_path)
     log.debug(' --- Transferred to %s descriptor dicts: type: %s', len(descriptors), descriptors.__class__)
-    descr_arr = np.vstack([d for d in descriptors.values()])
+    descriptors = [d for d in descriptors.values()]
+    log.debug(' --- Transferred to %s descriptor lists: type: %s', len(descriptors), descriptors.__class__)
+    log.debug(' --- First elem, second part: type: %s, size: %s', descriptors[0][1].__class__, descriptors[0][1].shape)
+    descr_arr = np.vstack([d for p,d in descriptors])
     log.debug(' --- Transferred to array: %s type: %s', descr_arr.shape, descr_arr.__class__)
     return descr_arr
 
