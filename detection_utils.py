@@ -70,7 +70,7 @@ def threshold_distances(exemplars, points, distances, threshold):
         points.shape[0], exemplars.shape[0], distances.shape[0], old_dist_size)
     return exemplars, points, distances
 
-def get_hypotheses(exemplars, points, imwidth, imheight):
+def get_hypotheses(exemplars, points, imwidth, imheight, logger=None):
     """
     Make hypothesis from an exemplar-points pair
     exemplar: [rel_w = obj_w/sigma, rel_h = obj_h/sigma, rel_x_pos = (x-xmin)/obj_w, rel_y_pos = (y-ymin)/obj_h]
@@ -89,7 +89,8 @@ def get_hypotheses(exemplars, points, imwidth, imheight):
     array([[   0.  ,    0.  ,    1.  ,    1.  ],
            [  99.95,   99.5 ,  100.45,  100.5 ]])
     """
-    
+    if not logger is None:
+        log = logger
     log.info('  -- Getting hypotheses from %s points and %s exemplars (img dimensions: [%d, %d])',\
         points.shape, exemplars.shape, imwidth, imheight)
     hypotheses = np.zeros([exemplars.shape[0], 4])
