@@ -35,10 +35,12 @@ def load_batch(filename):
     
     return images
 
-def save_distances(path, cls, distances, points_list, images, nearest_exemplar_indexes):
+def save_distances(path, cls, distances, points_list, images, nearest_exemplar_indexes, logger=None):
     """ Save a list of distances, points, images and indexes of the point's 
         nearest exemplar indexes
     """
+    if not logger is None:
+        log = logger
     log.info('++ SAVING distances: path:%s, cls:%s, distances:%d, pts_list:%d, imgs:%d, NN_ex_idxs:%d', \
         path, cls, len(distances), len(points_list), len(images), len(nearest_exemplar_indexes))
     
@@ -51,7 +53,7 @@ def save_distances(path, cls, distances, points_list, images, nearest_exemplar_i
             cPickle.dump(images[i], dfile)
             cPickle.dump(nearest_exemplar_indexes[i], dfile)
 
-def load_distances(filename):
+def load_distances(filename, logger=None):
     """ Load distances, points and indexes of the point's nearest exemplar
         indexes of a certain image (im_id), or the full file content (im_id=None)
     
@@ -60,7 +62,8 @@ def load_distances(filename):
                     nearest_exemplar_indexes[no_descriptors, no_classes, k]
         
     """
-
+    if not logger is None:
+        log = logger
     with open(filename, 'rb') as f:
         distances = cPickle.load(f)
         allpoints = cPickle.load(f)
@@ -71,7 +74,40 @@ def load_distances(filename):
     
     return distances, allpoints, image, nearest_exemplar_indexes
 
-def save_exemplars(filename, exemplars):
+def save_points(filename, points, logger=None):
+    if not logger is None:
+        log = logger
+    with open(filename, 'wb') as dfile:
+        cPickle.dump(points, dfile)
+
+def load_points(filename, logger=None):
+    if not logger is None:
+        log = logger
+    with open(filename, 'rb') as f:
+        points = cPickle.load(f)
+    log.info('++ LOADING points from %s, pts:%s', filename, points.shape)
+    
+    return points
+
+def save_knn(filename, distances, exemplar_indexes, logger=None):
+    if not logger is None:
+        log = logger
+    with open(filename, 'wb') as dfile:
+        cPickle.dump(distances, dfile)
+        cPickle.dump(exemplar_indexes, dfile)
+
+def load_knn(filename, logger=None):
+    if not logger is None:
+        log = logger
+    with open(filename, 'rb') as f:
+        distances = cPickle.load(f)
+        exemplar_indexes = cPickle.load(f)
+    log.info('++ LOADING kNN distances & exemplars from %s, dist: %d, exemp: %d', \
+        filename, len(distances), len(exemplar_indexes))
+
+def save_exemplars(filename, exemplars, logger=None):
+    if not logger is None:
+        log = logger
     ex_stack = np.vstack(exemplars)
     
     log.info('++ SAVING exemplars to %s: len:%d, total:%s', filename, \
@@ -80,7 +116,9 @@ def save_exemplars(filename, exemplars):
         np.save(ef, ex_stack)
         # cPickle.dump(exemplars, ef)
     
-def load_exemplars(filename, exemplar_indexes = None):
+def load_exemplars(filename, exemplar_indexes = None, logger=None):
+    if not logger is None:
+        log = logger
     
     """ Load exemplars of the trained descriptors, and select the indexes needed
     (exemplar_indexes), or return the full array (exemplar_indexes = None)
@@ -92,9 +130,17 @@ def load_exemplars(filename, exemplar_indexes = None):
     # exemplars is an np.array, nx4(xk), where n=no of exemplars in a class, and k is the amount of NN taken (if >1)
     # the cols are [rel_bb_w, rel_bb_h, rel_x, rel_y]
     if not exemplar_indexes is None:
-        log.info('++ LOADING exemplars from %s: total:%s, selecting: %s indexes', \
-            filename, exemplars.shape, exemplar_indexes.shape)
-        return exemplars[exemplar_indexes]
+        if isinstance(exemplar_indexes, np.ndarray):
+            log.info('++ LOADING exemplars from %s: total:%s, selecting: %s indexes', \
+                filename, exemplars.shape, exemplar_indexes.shape)
+            return exemplars[exemplar_indexes]
+        elif isinstance(exemplar_indexes, list):
+            log.info('++ LOADING exemplars from %s: total:%s, selecting: %s indexes', \
+                filename, exemplars.shape, sum([len(n) for n in exemplar_indexes]))
+            sel_exemplars = []
+            for n in enumerate(exemplar_indexes):
+                sel_exemplars.append(exemplars[n])
+            return sel_exemplars
     else:
         log.info('++ LOADING exemplars from %s: total:%s, selecting: ALL', \
             filename, exemplars.shape)

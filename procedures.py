@@ -391,6 +391,7 @@ def make_voc_batches(descriptor_function, VOCopts, GLOBopts, TESTopts):
         save_batch(TESTopts['img_pickle_path']%(b+1), batch)
     log.info('==== SAVING TESTINFORMATION =====')
     save_testinfo(GLOBopts['tmp_dir']+'/testinfo.txt', batches, VOCopts.classes)
+    return batches
 
 def train_cal(train_images, descriptor_function, estimator, CALopts, TESTopts):
     for cls, images in train_images.items():

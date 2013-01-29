@@ -1,0 +1,87 @@
+\section{Related Work} % (fold)
+\label{cha:related_work}
+\todo[inline] {Needs revision and expansion (shorten the obvious parts, expand on interesting NBNN \& detection related papers)}
+
+\subsection{Image Classification} % (fold)
+\label{sec:image_classification}
+\todo[inline]{Talk of related non-NBNN classification methods}
+
+% section image_classification (end)
+
+\subsection{Image Detection} % (fold)
+\label{sec:image_detection}
+
+\todo[inline]{Talk of related non-NBNN detection methods (Get part based models and the like in here \ldots )}
+
+\todo[inline,color=green]{Next part comes from the Detection chapter, revision needed, and include something on exemplar models}
+
+The most intuitive way of thinking about object detection is probably to apply image classification at various windows within the image instead of on the image as a whole. This involves iterating over possible window locations, sizes and aspect ratios for the whole image, and determining the likelihood of each window of representing an object. This sliding window approach marks early detection methods.\cite{viola2004robust} The applicability of this approach however is fairly limited, because of the large number of possible windows to check. Therefore, lot of methods find a way to make this window search more efficient. Viola \& Jones\cite{viola2004robust} propose a cascade approach, where a very simple classification method is used on the full set of hypotheses for bounding boxes in order to cast most of them away early. On the difficult hypotheses a more sophisticated classification is done to narrow down the search more and more, each step using a better, and much slower classification algorithm. In contrast, Efficient Sub-window Search methods\cite{ lampert2008beyond, yeh2009fast, pedersoli2011coarse, behmo2010towards} model the problem into a branch-and-bound search method. They recursively split the window in two, find the response for the class on the current scale, and continue with the most promising leaf. When the response of both windows after a split is lower than the one above, the correct window is assumed to be on the above level.
+
+Another approach that recently gained more attention is that of detection by segmentation.\cite{van2011segmentation,zhang2010free} These methods rely on the fact that segmentation methods are meant to subdivide the image into segments that represent a semantic unity, like parts of objects or full objects. The resulting segments can be used as hypotheses for detecting objects. This means the amount of possible windows can be reduced heavily. Van de Sande \emph{et al.}\cite{van2011segmentation} use a hierarchical segmentation algorithm to make the detection scale invariant, and train discriminatively by focusing on hard examples. Zhang \emph{et al.}\cite{zhang2010free} do not explicitly segment the image, but just like many segmentation algorithms they do look for edges that enclose an object as a restraint for selecting it as a possible detection.
+
+Part-based models form a different approach on effectively finding hypothesis windows for objects.\cite{felzenszwalb2010object} These methods learn object models based on a combination and spatial organization of a number of designated, but unlabeled, parts. These parts are learned as a hidden variable during training, being groups of features reoccurring in the same formation in a certain area of bounding boxes of a class. Furthermore, the difference in scale between the full object window (the root) and its parts is fixed. In comparison with sliding-window approaches, this means a restriction in the number of possibilities for detection of objects. The relative scale of the parts should comply with that of the root scale. \todo{need to cite these, perhaps briefly mention them before...?}
+
+\begin{figure}[hbt]
+    \centering
+    \missingfigure[figwidth=0.8\textwidth]{Show images of the idea comparing the methods discussed}
+\end{figure}
+
+\todo[inline,color=red]{Next part comes from previous subsection of introduction, To Be Reviewed...}.
+
+With a choice of image descriptors, a class description and a training method, image classification can be performed. For object localization within an image however, a strategy is needed to estimate classifications for parts of images instead of images as a whole.
+
+The most straightforward method is to take a window on a test image, and to classify that part of the image as if it were an image in itself. This sliding window approach \todo[fancyline]{reference} is just a small conceptual step, but generates a lot of possible windows to be classified, therefore costing much computation. This hampers the applicability of this naive method. Smarter versions of this approach include include a divide-and-conquer tactic called branch-and-bound search. \cite{lampert2008beyond} In this method, a fitness (response) of the current window is calculated, and then the window is subdivided in two non-overlapping windows, the most promising of which is iteratively subdivided until the globally highest fitness is found. However being much faster than the vanilla sliding window approach, it has the disadvantage of covering hard boundaries between sub-windows, making it hard to find exact locations of objects.
+
+Part-based models have a different approach. This method models classes with special regional descriptors which define the relative orientation and scale of parts of an object with respect to the location and size of the object as a whole. \cite{leibe2004combined, chum2007exemplar, felzenszwalb2010object} These descriptors enable the detection algorithm to look for the arrangement of descriptors in a test image, and to define the most likely locations of objects. Some methods expand this into trying to create 3D models of classes, to make matching rotation independent. \todo[fancyline]{reference}
+
+% section image_detection (end)
+
+\section{NBNN Based Methods} % (fold)
+\label{sec:nbnn_based_methods}
+\todo[inline]{Talk of Boiman shortly, and of methods related to it, up till the most recent ones, so include Becker, Wang, Behmo, McCann, Tuytelaars, etc.\ldots}
+% section nbnn_based_methods (end)
+
+\subsection{Image Descriptors} % (fold)
+\label{sub:image_descriptors}
+
+\todo[inline,color=red]{Removed in the future(?)}.
+
+To be able to make a description of each object class, a representation of each (part of an) image is needed that best captures the informative aspects of the objects. The most basic descriptor type is to use the pixel values of the image. These capture the image exactly and might therefore seem very useful as descriptors of object types. The problem however with pixel values, is that images tend to vary wildly in them, even though the exact same object might pictured.
+
+There are a number of types of variation that may be expected when comparing arbitrary images of the same object type:
+\begin{description}
+    \item[Camera] Use of different cameras and compression algorithms (image filetypes) will cause a change of pixel values. Images might be darker or lighter, have a different balance of colors, more or less color depth, etc.
+    \item[Scene] Lighting of the scene may cause significant changes in pixel values, because of the change in intensity or in spectrum. Also, the background behind the object might change
+    \item[Orientation] Transformation of the object with respect to the image frame. An object might be on an arbitrary location in the image, rotated in various angles, viewed from up close or from far away.
+    \item[Occlusion] Objects might be partially out of sight, because they are not framed entirely, or because something is in front of them.
+    \item[Intra-class-variation] Objects from a single class may vary wildly in appearance. Imagine a number of objects that qualify as a chair, and how different these might look.
+\end{description}
+Therefore, raw pixel values might not be a very good choice as description on its own
+\todo[inline]{connect this with other descriptors, be shorter than now, focus on sift as that's what I'll use, give SIFT's advantages and limitations. Meaning TODO: revision of the following}
+
+In general, there are three kinds of descriptor types: global, regional and local descriptors. Pixel values are a type of local descriptors. These descriptors capture the local information (in this case at pixel level) very well, but they don't take their context into account. This is what regional descriptors do. They describe in a concise way what is to be derived from a small region of pixels in an image. Usually, these describe local changes in intensity, edges, lines, corners or blobs, and are very popular in computer vision. Global features describe characteristics of the image as a whole. 
+
+Very often, multiple kinds of descriptors are used together to make a description of an image, and of objects.
+
+% subsection image_descriptors (end)
+
+\subsection{Training Methods} % (fold)
+\label{sub:training_methods}
+\todo[inline,color=red]{Removed in the future(?)}.
+
+
+\todo[inline]{Better be incorporated in the previous subsections, otherwise it will be too much repetition... small piece on BoF and similar methods. small piece on the following subsection. Perhaps at the end of the NBNN section, as `other classification methods'??}
+
+\todo[inline]{(perhaps diverge a little to other methods that use NN and detection, but in a different way (SVM-kNN, galleguillos, etc.), !related work section!, but I dropped that, lets see later on).}
+
+
+With the representation of images, it becomes possible to make a model for each object class to be detected. In this way, test images can be matched with each class model to find out which is the most likely.
+
+To be able to make a class description, sample images are needed, annotated with a description of what the image represents. This is the training set. From this set, the descriptors found can be labeled with the correct class, so a description of each can be made. Usually this is done in a learning phase.
+
+
+Bag of Words is another popular method \cite{lazebnik2006beyond, van2011exploiting} \todo[fancyline]{continue this as an overview}
+
+% subsection training_methods (end)
+
+% chapter related_work (end)

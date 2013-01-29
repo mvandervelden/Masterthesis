@@ -1,0 +1,47 @@
+
+\section{NBNN in an Exemplar-based Detection Model} % (fold)
+\label{cha:linking}
+\todo[inline]{In the end, explain that Becker's approach is similar, but emphasize the difference here, [[by using taking im2class distances into account, which Becker does not really do.]]$>>$ Earlier statement, Is this true? And is it relevant??}
+
+NBNN classification and Chum's exemplar model detection can be combined into a new detection method, because the exemplar model has more in common with the NBNN approach than most other detection methods. Exemplar models are based on image-to-class distance, like NBNN. This provides a natural way of linking both methods.
+
+Chum \emph{et al.}\cite{chum2007exemplar} uses interest point detectors and a codebook approach for their exemplars. The descriptor space is quantized like regular codebook classification methods do, even though they take the location of the object relative to the descriptor as basis for clustering the visual words, and not the descriptors themselves.
+
+In contrast to classification methods however, the exemplar models use image-to-class distance when testing. Like explained in Section \ref{sub:boiman_s_nbnn}, while most codebook methods \todo{cite} compare images to each other, in exemplar model detection the individual features are compared to the quantized exemplars. Because these exemplars have a designated class, not the distance between images forms the basis for classification, but the distance of a query image to each class.
+
+This shows a way to use the NBNN representation within the exemplar model. The un-quantized descriptors of NBNN are used as exemplars, and each descriptor in the query image votes for the hypothesis calculated from its nearest exemplar in each class. 
+
+This meets the requirements set in Section \ref{cha:naive_bayes_nearest_neighbor} rather well. The weight of each hypothesis defined by Chum can quite easily be exchanged for a weight based on the distance of the underlying descriptor to its nearest exemplar. The only difference is that, where classification is based on the full image, detection only has support from a subset of the image. This means NN detection may not be expected to come as near to the Bayes optimal classifier as classification does.
+
+The main difference between the Chum method and the proposed one would be that our new method would generate a great many more hypotheses, because dense sampling generates more samples per image than interest point sampling. This hurts the method's efficiency, but it is not an option to drop the dense sampling, because NBNN relies on the large amount of descriptors. It also means that the separate descriptors of NBNN give less support to a hypothesis, on average, than interest point exemplars give. That is the reason why summing NN distances over a whole image works that well for classification, as seen in Equation \eqref{eq:nbnnclass}. From this equation, and from the observation that the more specific descriptors for a certain class generate the highest difference in distance, 
+
+
+\todo[inline]{Thinnk of what to write here... previous thought: (weighted difference ( $\frac{d^- - d^+}{d^+}$ ) in distance is a bit difficult to justify, because the decision boundary is shifted, but it is compliant with Boiman's statement that the biggest differences matter most)}
+
+
+\subsection{Foreground-Background classification} % (fold)
+\label{sec:foreground_background_classification}
+\todo[inline]{PERHAPS MORE RELEVANT IN SETUP SECTION??? Write something about fg/bg classification (is that the right term?). Show some images illustrating the idea}
+% section foreground_background_classification (end)
+
+\subsection{Descriptor Aliasing} % (fold)
+\label{sec:descriptor_aliasing}
+
+An issue that arises using exemplar-NBNN detection is that certain descriptors may be very similar to not one, but multiple near neighbors. These neighbors might refer to totally different exemplars, generating a variety of hypotheses. This effect can be called descriptor aliasing, and is shown in Figure \ref{fig:aliasing}.
+
+\begin{figure}[hbt]
+    \label{fig:aliasing}
+    \centering
+    \missingfigure[figwidth=0.8\textwidth]{Images that shows perceptual aliasing e.g. the ballet example of boiman, should work}
+\end{figure}
+
+This problem can be fixed by taking more than one neighbor into account, which translates to setting $k>1$ in the $k$NN phase of exemplar-NBNN. This would mean that all $n\leq k$ neighbors that are closer to the foreground than the nearest background descriptor will be used to make detection hypotheses.
+
+% section descriptor_aliasing (end)
+
+\subsection{Dense Sampling Or Key Point Detection} % (fold)
+\label{sec:dense_sampling_or_key_point_detection}
+\todo[inline,color=red]{If I have time to test this, it might be a good place to explain the differences}
+% section dense_sampling_or_key_point_detection (end)
+
+% chapter linking (end)

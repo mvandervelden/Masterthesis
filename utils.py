@@ -25,7 +25,9 @@ def get_confidence_values(distances):
         cv.append(-d.sum()/no_descriptors)
     return cv
 
-def sort_descriptors(descriptors, images):
+def sort_descriptors(descriptors, images, logger=None):
+    if not logger is None:
+        log = logger
     log.debug('  - Sorting descriptors: %d, imgs:%d',len(descriptors), len(images))
     image_list = [(im_id, p, d) for im_id, (p, d) in descriptors.items()]
     del descriptors
@@ -151,7 +153,9 @@ def getopts(configfile):
     else:
         return GLOBopts, DESCRopts, NBNNopts, TESTopts, None
 
-def init_descriptor(DESCRopts):
+def init_descriptor(DESCRopts, logger=None):
+    if not logger is None:
+        log = logger
     log.info(' ++ Initializing descriptor class %s with options: %s', DESCRopts[0], DESCRopts[1].items())
     if DESCRopts[0] == 'DescriptorUint8':
         return descriptor.DescriptorUint8(**DESCRopts[1])
@@ -162,7 +166,9 @@ def init_descriptor(DESCRopts):
     else:
         raise Exception("Descriptor type '%s' unknown, check your cfg file"%DESCRopts[0])
 
-def init_estimator(path, NBNNopts):
+def init_estimator(path, NBNNopts, logger=None):
+    if not logger is None:
+        log = logger
     log.info(' ++ Initializing estimator class %s (path:%s), with options: %s', NBNNopts[0], path, NBNNopts[1].items())
     if NBNNopts[0] == 'behmo':
         return nbnn.OptNBNNEstimator(path, **NBNNopts[1])

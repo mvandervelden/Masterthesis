@@ -35,11 +35,13 @@ The NBNN classification rule is recast using log-odds increments (are the poster
 
 Very useful paper for the settings of NBNN. For VOC it seems less useful: lNBNN does not compensate for differences in sampling over classes, which is fine for Caltech, but not for VOC where the distribution of classes is far from uniform. Would only be useful if you compensate somewhere for skewed distributions over classes. Speedup is not very large with small amounts of classes, as in VOC. 
 
-@article{mccann2011local,
+@inproceedings{mccann2012local,
   title={Local Naive Bayes Nearest Neighbor for Image Classification},
   author={McCann, S. and Lowe, D.G.},
-  journal={Arxiv preprint arXiv:1112.0059},
-  year={2011}
+  booktitle={Computer Vision and Pattern Recognition (CVPR), 2012 IEEE Conference on},
+  pages={3650--3656},
+  year={2012},
+  organization={IEEE}
 }
 Tuytelaars 2011 (NBNN kernel)
 
@@ -393,4 +395,77 @@ Use context on 3 levels: pixel, region, object interactions, and 3 types: semant
   pages={21--27},
   year={1967},
   publisher={IEEE}
+}
+
+@inproceedings{liu2011defense,
+  title={In defense of soft-assignment coding},
+  author={Liu, L. and Wang, L. and Liu, X.},
+  booktitle={Computer Vision (ICCV), 2011 IEEE International Conference on},
+  pages={2486--2493},
+  year={2011},
+  organization={IEEE}
+}
+
+########## DATASETS ###########
+@misc{pascal-voc-2007,
+	author = "Everingham, M. and Van~Gool, L. and Williams, C. K. I. and Winn, J. and Zisserman, A.",
+	title = "The {PASCAL} {V}isual {O}bject {C}lasses {C}hallenge 2007 {(VOC2007)} {R}esults",
+	howpublished = "http://www.pascal-network.org/challenges/VOC/voc2007/workshop/index.html"}
+
+L. Fei-Fei, R. Fergus and P. Perona. Learning generative visual models
+from few training examples: an incremental Bayesian approach tested on
+101 object categories. IEEE. CVPR 2004, Workshop on Generative-Model
+Based Vision. 2004
+@article{caltech101,
+  title={Learning generative visual models from few training examples: An incremental bayesian approach tested on 101 object categories},
+  author={Fei-Fei, L. and Fergus, R. and Perona, P.},
+  journal={Computer Vision and Image Understanding},
+  volume={106},
+  number={1},
+  pages={59--70},
+  year={2007},
+  publisher={Elsevier}
+}
+
+@article{graz2001,
+  title={Weak hypotheses and boosting for generic object detection and recognition},
+  author={Opelt, A. and Fussenegger, M. and Pinz, A. and Auer, P.},
+  journal={Computer Vision-ECCV 2004},
+  pages={71--84},
+  year={2004},
+  publisher={Springer}
+}
+
+######## FEATURES ######
+SIFT features:
+@article{lowe2004distinctive,
+  title={Distinctive image features from scale-invariant keypoints},
+  author={Lowe, D.G.},
+  journal={International journal of computer vision},
+  volume={60},
+  number={2},
+  pages={91--110},
+  year={2004},
+  publisher={Springer}
+}
+
+RootSIFT
+@inproceedings{arandjelovic2012three,
+  title={Three things everyone should know to improve object retrieval},
+  author={Arandjelovic, R. and Zisserman, A.},
+  booktitle={Computer Vision and Pattern Recognition (CVPR), 2012 IEEE Conference on},
+  pages={2911--2918},
+  year={2012},
+  organization={IEEE}
+}
+ColorSIFT
+@article{vandeSande2010colorSIFT,
+  author       = "van de Sande, K.E.A. and Gevers, T. and Snoek, C.G.M.",
+  title        = "Evaluating Color Descriptors for Object and Scene Recognition",
+  journal      = "IEEE Transactions on Pattern Analysis and Machine Intelligence",
+  number       = "9",
+  volume       = "32",
+  pages        = "1582--1596",
+  year         = "2010",
+}  url          = "http://www.science.uva.nl/research/publications/2010/vandeSandeTPAMI2010"
 }
