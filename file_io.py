@@ -64,6 +64,8 @@ def load_distances(filename, logger=None):
     """
     if not logger is None:
         log = logger
+    else:
+        log = logging.getLogger(__name__)
     with open(filename, 'rb') as f:
         distances = cPickle.load(f)
         allpoints = cPickle.load(f)
@@ -77,12 +79,16 @@ def load_distances(filename, logger=None):
 def save_points(filename, points, logger=None):
     if not logger is None:
         log = logger
+    else:
+        log = logging.getLogger(__name__)
     with open(filename, 'wb') as dfile:
         cPickle.dump(points, dfile)
 
 def load_points(filename, logger=None):
     if not logger is None:
         log = logger
+    else:
+        log = logging.getLogger(__name__)
     with open(filename, 'rb') as f:
         points = cPickle.load(f)
     log.info('++ LOADING points from %s, pts:%s', filename, points.shape)
@@ -92,6 +98,8 @@ def load_points(filename, logger=None):
 def save_knn(filename, distances, exemplar_indexes, logger=None):
     if not logger is None:
         log = logger
+    else:
+        log = logging.getLogger(__name__)
     with open(filename, 'wb') as dfile:
         cPickle.dump(distances, dfile)
         cPickle.dump(exemplar_indexes, dfile)
@@ -99,6 +107,8 @@ def save_knn(filename, distances, exemplar_indexes, logger=None):
 def load_knn(filename, logger=None):
     if not logger is None:
         log = logger
+    else:
+        log = logging.getLogger(__name__)
     with open(filename, 'rb') as f:
         distances = cPickle.load(f)
         exemplar_indexes = cPickle.load(f)
@@ -108,6 +118,8 @@ def load_knn(filename, logger=None):
 def save_exemplars(filename, exemplars, logger=None):
     if not logger is None:
         log = logger
+    else:
+        log = logging.getLogger(__name__)
     ex_stack = np.vstack(exemplars)
     
     log.info('++ SAVING exemplars to %s: len:%d, total:%s', filename, \
@@ -119,6 +131,8 @@ def save_exemplars(filename, exemplars, logger=None):
 def load_exemplars(filename, exemplar_indexes = None, logger=None):
     if not logger is None:
         log = logger
+    else:
+        log = logging.getLogger(__name__)
     
     """ Load exemplars of the trained descriptors, and select the indexes needed
     (exemplar_indexes), or return the full array (exemplar_indexes = None)

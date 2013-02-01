@@ -28,6 +28,8 @@ def get_confidence_values(distances):
 def sort_descriptors(descriptors, images, logger=None):
     if not logger is None:
         log = logger
+    else:
+        log = logging.getLogger(__name__)
     log.debug('  - Sorting descriptors: %d, imgs:%d',len(descriptors), len(images))
     image_list = [(im_id, p, d) for im_id, (p, d) in descriptors.items()]
     del descriptors
@@ -175,6 +177,8 @@ def init_descriptor(DESCRopts, logger=None):
 def init_estimator(path, NBNNopts, logger=None):
     if not logger is None:
         log = logger
+    else:
+        log = logging.getLogger(__name__)
     log.info(' ++ Initializing estimator class %s (path:%s), with options: %s', NBNNopts[0], path, NBNNopts[1].items())
     if NBNNopts[0] == 'behmo':
         return nbnn.OptNBNNEstimator(path, **NBNNopts[1])
