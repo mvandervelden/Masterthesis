@@ -26,9 +26,7 @@ if __name__ == "__main__":
         for cls in VOCopts.classes:
             log.info('==== INIT ESTIMATOR FOR CLASS %s ====', cls)
             estimator = init_estimator(GLOBopts['nbnn_path']%cls, NBNNopts)
-        
-            # Train
-            
+            # Train 
             if NBNNopts[0] == 'behmo':
                 load_behmo_estimator(descriptor_function, estimator, cls, VOCopts, \
                     train_set = GLOBopts['train_set'],\
