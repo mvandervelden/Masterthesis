@@ -91,6 +91,8 @@ def get_hypotheses(exemplars, points, imwidth, imheight, logger=None):
     """
     if not logger is None:
         log = logger
+    else:
+        log = logging.getLogger(__name__)
     log.info('  -- Getting hypotheses from %s points and %s exemplars (img dimensions: [%d, %d])',\
         points.shape, exemplars.shape, imwidth, imheight)
     hypotheses = np.zeros([exemplars.shape[0], 4])
