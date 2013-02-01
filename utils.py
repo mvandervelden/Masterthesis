@@ -138,9 +138,11 @@ def getopts(configfile):
         # Set paths
         DETopts[1]['exemplar_path'] = '/'.join([tmpdir, DETopts[1]['exemplar_path']])
         DETopts[1]['distances_path'] = '/'.join([tmpdir, DETopts[1]['distances_path']])
+        DETopts[1]['knn_path'] = '/'.join([tmpdir, DETopts[1]['knn_path']])
         DETopts[1]['hypotheses_path'] = '/'.join([tmpdir, DETopts[1]['hypotheses_path']])
         exemplar_dir = '/'.join(DETopts[1]['exemplar_path'].split('/')[:-1])
         distances_dir = '/'.join(DETopts[1]['distances_path'].split('/')[:-1])
+        distances_dir = '/'.join(DETopts[1]['knn_path'].split('/')[:-1])
         hypotheses_dir = '/'.join(DETopts[1]['hypotheses_path'].split('/')[:-1])
         assert_dir(exemplar_dir)
         assert_dir(distances_dir)
@@ -156,6 +158,8 @@ def getopts(configfile):
 def init_descriptor(DESCRopts, logger=None):
     if not logger is None:
         log = logger
+    else:
+        log = logging.getLogger(__name__)
     log.info(' ++ Initializing descriptor class %s with options: %s', DESCRopts[0], DESCRopts[1].items())
     if DESCRopts[0] == 'DescriptorUint8':
         return descriptor.DescriptorUint8(**DESCRopts[1])

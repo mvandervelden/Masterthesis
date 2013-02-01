@@ -195,7 +195,7 @@ def get_knn((image, configfile)):
                 cls, distances.shape, allpoints.shape, im.im_id, \
                 nearest_exemplar_indexes.shape)
         if not im.im_id == im_id:
-            log.warning("WRONG im_id, wrong distance pkl loaded!!: %s ≠ %s",im_id, im.im_id)
+            log.warning("WRONG im_id, wrong distance pkl loaded!!: %s != %s",im_id, im.im_id)
         distlist.append(distances)
         ptslist.append(allpoints)
         exemp_idxlist.append(nearest_exemplar_indexes)
@@ -349,7 +349,7 @@ if __name__ == "__main__":
     log.info('==== INIT ESTIMATOR FOR CLASS ====')
     estimator = init_estimator(GLOBopts['nbnn_path']%'estimator', NBNNopts)
     
-    train_local(classes, descriptors_function, estimator, VOCopts, GLOBopts, NBNNopts, TESTopts, DETopts, log):
+    train_local(classes, descriptors_function, estimator, VOCopts, GLOBopts, NBNNopts, TESTopts, DETopts, log)
     
     log.info('==== TRAINING FINISHED ====')
     
