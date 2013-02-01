@@ -63,4 +63,5 @@ if __name__ == "__main__":
                 exemplar_path = DETopts[1]['exemplar_path'])
     elif GLOBopts['setmode'] == 'cls_graz_person':
         # 'Graz01 detection set train/test: 100 negative (50 bg, 50 other class), 100 positive, randomly selected
+        pass
     log.info('==== TRAINING FINISHED ====')

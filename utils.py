@@ -138,12 +138,14 @@ def getopts(configfile):
         # Set paths
         DETopts[1]['exemplar_path'] = '/'.join([tmpdir, DETopts[1]['exemplar_path']])
         DETopts[1]['distances_path'] = '/'.join([tmpdir, DETopts[1]['distances_path']])
-        DETopts[1]['knn_path'] = '/'.join([tmpdir, DETopts[1]['knn_path']])
         DETopts[1]['hypotheses_path'] = '/'.join([tmpdir, DETopts[1]['hypotheses_path']])
         exemplar_dir = '/'.join(DETopts[1]['exemplar_path'].split('/')[:-1])
         distances_dir = '/'.join(DETopts[1]['distances_path'].split('/')[:-1])
-        distances_dir = '/'.join(DETopts[1]['knn_path'].split('/')[:-1])
         hypotheses_dir = '/'.join(DETopts[1]['hypotheses_path'].split('/')[:-1])
+        if 'knn_path' in DETopts[1]:
+            DETopts[1]['knn_path'] = '/'.join([tmpdir, DETopts[1]['knn_path']])
+            distances_dir = '/'.join(DETopts[1]['knn_path'].split('/')[:-1])
+            assert_dir(distances_dir)
         assert_dir(exemplar_dir)
         assert_dir(distances_dir)
         assert_dir(hypotheses_dir)
