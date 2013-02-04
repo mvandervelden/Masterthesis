@@ -38,10 +38,10 @@ cp $CFGFILE $RESFOLDER
 CFGFILE=`echo "${RESFOLDER}/${CFGFILE}"`
 echo "CFGFILE COPIED TO: $CFGFILE"
 
-# echo "Running training"
-# python train_detection.py $CFGFILE
-# echo "Making batches"
-# python make_detection_batches.py $CFGFILE
+echo "Running training"
+python train_detection.py $CFGFILE
+echo "Making batches"
+python make_detection_batches.py $CFGFILE
 
 echo "Reading cfg $CFGFILE"
 NNTHREADS=`cat $CFGFILE | awk '$1 ~ /nn_threads/ { print $3 }'`
@@ -68,21 +68,21 @@ fi
 echo "Iterations: $NO_FULL_ITS"
 echo "FULL_ITS: $FULL_ITS"
 echo "It_sizes: $IT_SIZES"
-# for B in `seq 1 $NO_BATCHES`; do
-#     echo "Running batch $B"
-#     START_CLS=0
-#     for SZ in $IT_SIZES; do
-#         echo "Running iteration of $SZ processes"
-#         STOP_CLS=$(($START_CLS+$SZ-1))
-#         for P in `seq $START_CLS $STOP_CLS`; do
-#             CLS=${CLASSES[$P]}
-#             echo "Running NN on class no $P ($CLS)"
-#             python get_detection_distances.py $CFGFILE $B $CLS&
-#         done
-#         wait
-#         START_CLS=$(($START_CLS+$SZ))
-#     done
-# done
+for B in `seq 1 $NO_BATCHES`; do
+    echo "Running batch $B"
+    START_CLS=0
+    for SZ in $IT_SIZES; do
+        echo "Running iteration of $SZ processes"
+        STOP_CLS=$(($START_CLS+$SZ-1))
+        for P in `seq $START_CLS $STOP_CLS`; do
+            CLS=${CLASSES[$P]}
+            echo "Running NN on class no $P ($CLS)"
+            python get_detection_distances.py $CFGFILE $B $CLS&
+        done
+        wait
+        START_CLS=$(($START_CLS+$SZ))
+    done
+done
 
 echo "Running detection"
 # perform detection (clustering on all images) per image

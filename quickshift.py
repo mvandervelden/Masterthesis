@@ -28,8 +28,13 @@ def quickshift(data, tau=np.inf):
             overlap = get_overlap(di, dj)
             if overlap > 0:
                 indexes[i][j] = overlap
-
-    log.debug('indexes: shape %s, first: %s, last: %s',len(indexes), indexes[0].items()[0], indexes[-1].items()[-1])
+    try:
+        log.debug('indexes: shape %s, first: %s, last: %s',len(indexes), indexes[0].items()[0], indexes[-1].items()[-1])
+    except Exception as e:
+        log.error("Something wrong with indexes: %s", indexes)
+        log.error(e)
+        raise e
+    
     E = overlap_to_E(indexes)
     log.debug('E: shape %s, first: %s, last: %s', len(E), E[0], E[-1])
     parents = np.arange(N)

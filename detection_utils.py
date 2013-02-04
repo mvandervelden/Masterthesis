@@ -95,6 +95,7 @@ def get_hypotheses(exemplars, points, imwidth, imheight, logger=None):
         log = logging.getLogger(__name__)
     log.info('  -- Getting hypotheses from %s points and %s exemplars (img dimensions: [%d, %d])',\
         points.shape, exemplars.shape, imwidth, imheight)
+    log.debug(' --- Check on Points vals: max: %s, min: %s', points.max(0), points.min(0))
     hypotheses = np.zeros([exemplars.shape[0], 4])
     # Make sure hypotheses lie within image bounds!!! (minimum and maximum within image bounds)
     
@@ -105,6 +106,16 @@ def get_hypotheses(exemplars, points, imwidth, imheight, logger=None):
 
     log.info('  -- found %s hypotheses', hypotheses.shape)
     if hypotheses.shape[0] > 0:
+        if hypotheses[:,0].max() > imwidth:
+            log.warning("Hypotheses coords outside imwidth detected:")
+            log.warning("hyp: %s", hypotheses[hypotheses[:,0] > imwidth])
+            log.warning("pts: %s", points[hypotheses[:,0] > imwidth])
+            log.warning("exm: %s", exemplars[hypotheses[:,0] > imwidth])
+        if hypotheses[:,1].max() > imheight:
+            log.warning("Hypotheses coords outside imheight detected:")
+            log.warning("hyp: %s", hypotheses[hypotheses[:,1] > imheight])
+            log.warning("pts: %s", points[hypotheses[:,1] > imheight])
+            log.warning("exm: %s", exemplars[hypotheses[:,1] > imheight])
         log.info('  - hyp example: %s from point: %s and exemplar: %s', hypotheses[0,:], points[0,:], exemplars[0,:])
         log.info('  - hyp example: %s from point: %s and exemplar: %s', hypotheses[-1,:], points[-1,:], exemplars[-1,:])
     return hypotheses

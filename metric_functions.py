@@ -35,6 +35,11 @@ def dist_qh(dist_array):
     >>> dist_qh(np.array([[0., 1], [100,0],[0,0]]))
     array([ inf,  -1.,  nan])
     """
+    if not dist_array[:,0].min() > 0:
+        log.warning('Some fg distances <= 0 encountered: vals: %s', dist_array[dist_array[:,0]<=0,0])
+        rep = 1e-25
+        log.warning('Replacing this with %f',rep)
+        dist_array[dist_array[:,0]<=0,0] = rep
     return (dist_array[:,1] - dist_array[:,0]) / dist_array[:,0]
 
 def bb_energy(bb, i, pt_array, dist_array):

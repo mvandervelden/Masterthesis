@@ -41,6 +41,8 @@ def save_distances(path, cls, distances, points_list, images, nearest_exemplar_i
     """
     if not logger is None:
         log = logger
+    else:
+        log = logging.getLogger(__name__)
     log.info('++ SAVING distances: path:%s, cls:%s, distances:%d, pts_list:%d, imgs:%d, NN_ex_idxs:%d', \
         path, cls, len(distances), len(points_list), len(images), len(nearest_exemplar_indexes))
     
