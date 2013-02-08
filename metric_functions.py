@@ -117,6 +117,14 @@ def bb_qh(bb, i, pt_array, dist_array):
     
     return ( (bg_d - fg_d)/fg_d ).mean()
 
+def bb_descr_fg(bb, i, pt_array, dist_array):
+    """ Return the bb's descriptor fg dist
+    """
+    if len(dist_array.shape) == 1:
+        return dist_array[i]
+    else:
+        return dist_array[i,0]
+
 def bb_descrqh(bb, i, pt_array, dist_array):
     """ original Qh: hypothesis quality = relative distance of its descriptor
     (does not take into account descriptors other than the one that defines the
@@ -126,7 +134,8 @@ def bb_descrqh(bb, i, pt_array, dist_array):
     >>> bb_descrqh([10,15,20,25],2,np.array([[0,0],[10,10],[15,15],[20,20],[25,25],[15,20]]), np.array([[10.,10],[10,20],[30,10],[5,50],[50,5],[7,70]]))
     -0.66666666666666663
     """
-    fg_d = dist_array[i,0]
+    if len(dist_array.shape) == 1:
+        raise IndexError("bb_descrqh does not work when only 1 distance measure is given: shape =%s"%(dist_array.shape))
     return (dist_array[i,1] - fg_d)/fg_d
 
 def bb_uniform(bb, i, pt_array, dist_array):
@@ -158,7 +167,11 @@ def det_qh(det, i, pt_array, dist_array):
     >>> det_qh([10,15,20,25],[2,3],np.array([[0,0],[10,10],[15,15],[20,20],[25,25],[15,20]]), np.array([[10.,10],[10,20],[30,10],[5,50],[50,5],[7,70]]))
     4.166666666666667
     """
-    return dist_qh(dist_array[i,:]).mean()
+    if len(dist_array.shape) == 1:
+        # No bg_dists, so take fg_d:
+        return dist_array[i].mean()
+    else:
+        return dist_qh(dist_array[i,:]).mean()
 
     
 def det_qd(det, i, pt_array, dist_array):

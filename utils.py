@@ -146,8 +146,8 @@ def getopts(configfile):
         hypotheses_dir = '/'.join(DETopts[1]['hypotheses_path'].split('/')[:-1])
         if 'knn_path' in DETopts[1]:
             DETopts[1]['knn_path'] = '/'.join([tmpdir, DETopts[1]['knn_path']])
-            distances_dir = '/'.join(DETopts[1]['knn_path'].split('/')[:-1])
-            assert_dir(distances_dir)
+            knn_dir = '/'.join(DETopts[1]['knn_path'].split('/')[:-1])
+            assert_dir(knn_dir)
         assert_dir(exemplar_dir)
         assert_dir(distances_dir)
         assert_dir(hypotheses_dir)
@@ -174,7 +174,7 @@ def init_descriptor(DESCRopts, logger=None):
     else:
         raise Exception("Descriptor type '%s' unknown, check your cfg file"%DESCRopts[0])
 
-def init_estimator(path, NBNNopts, logger=None):
+def init_estimator(path, NBNNopts, logger=None, always_init=True):
     if not logger is None:
         log = logger
     else:

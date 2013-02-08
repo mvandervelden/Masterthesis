@@ -43,6 +43,7 @@ def save_distances(path, cls, distances, points_list, images, nearest_exemplar_i
         log = logger
     else:
         log = logging.getLogger(__name__)
+    
     log.info('++ SAVING distances: path:%s, cls:%s, distances:%d, pts_list:%d, imgs:%d, NN_ex_idxs:%d', \
         path, cls, len(distances), len(points_list), len(images), len(nearest_exemplar_indexes))
     
@@ -83,8 +84,10 @@ def save_points(filename, points, logger=None):
         log = logger
     else:
         log = logging.getLogger(__name__)
+    
     with open(filename, 'wb') as dfile:
         cPickle.dump(points, dfile)
+    log.info("+++ SAVED POINTS: size: %s to file: %s", points.shape, filename)
 
 def load_points(filename, logger=None):
     if not logger is None:
@@ -116,6 +119,7 @@ def load_knn(filename, logger=None):
         exemplar_indexes = cPickle.load(f)
     log.info('++ LOADING kNN distances & exemplars from %s, dist: %d, exemp: %d', \
         filename, len(distances), len(exemplar_indexes))
+    return distances, exemplar_indexes
 
 def save_exemplars(filename, exemplars, logger=None):
     if not logger is None:
@@ -149,6 +153,7 @@ def load_exemplars(filename, exemplar_indexes = None, logger=None):
         if isinstance(exemplar_indexes, np.ndarray):
             log.info('++ LOADING exemplars from %s: total:%s, selecting: %s indexes', \
                 filename, exemplars.shape, exemplar_indexes.shape)
+            
             return exemplars[exemplar_indexes]
         elif isinstance(exemplar_indexes, list):
             log.info('++ LOADING exemplars from %s: total:%s, selecting: %s indexes', \

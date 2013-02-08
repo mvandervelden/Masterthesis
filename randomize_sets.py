@@ -49,10 +49,10 @@ def randomize_trainsets(appendix):
     classes =['aeroplane','bicycle','bird','boat','bottle','bus','car','cat',\
         'chair','cow','diningtable','dog','horse','motorbike','person',\
         'pottedplant','sheep','sofa','train','tvmonitor']
-    base_trainset = 'VOCdevkit/VOC2007/ImageSets/Main/train.txt'
-    base_clstrainset = 'VOCdevkit/VOC2007/ImageSets/Main/%s_train.txt'
-    output_trainset = 'VOCdevkit/VOC2007/ImageSets/Main/train%s.txt'
-    output_clstrainset = 'VOCdevkit/VOC2007/ImageSets/Main/%s_train%s.txt'
+    base_trainset = 'VOCdevkit/VOC2007/ImageSets/Main/trainval.txt'
+    base_clstrainset = 'VOCdevkit/VOC2007/ImageSets/Main/%s_trainval.txt'
+    output_trainset = 'VOCdevkit/VOC2007/ImageSets/Main/trainval%s.txt'
+    output_clstrainset = 'VOCdevkit/VOC2007/ImageSets/Main/%s_trainval%s.txt'
     
     seed = random.random()
     
@@ -136,6 +136,6 @@ def randomize_graz01_sets(appendix):
     
 
 if __name__ == "__main__":
-    randomize_graz01_sets(sys.argv[1])
-    # randomize_trainsets(sys.argv[1])
+    # randomize_graz01_sets(sys.argv[1])
+    randomize_trainsets(sys.argv[1])
     # randomize_tud_bg(sys.argv[1])

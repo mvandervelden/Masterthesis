@@ -40,3 +40,17 @@ echo "CFGFILE COPIED TO: $CFGFILE"
 
 echo "Running local NBNN Detection"
 python local_exemplar_nbnn.py $CFGFILE
+
+echo "Tarballing results and tmpfiles"
+# tar -czf ${TGZFILE}.tmp.tgz --exclude=*.dbin* --exclude=*.dtxt --exclude=*.data --exclude=*.index $TMPFOLDER
+# tar -czf ${TGZFILE}.res.tgz $RESFOLDER
+tar -czf ${TGZFILE}.txt.tgz ${RESFOLDER}/*.txt
+
+echo "Cleaning up tmp-dir"
+rm -rf /local/vdvelden
+
+DURATION=$(echo "$(date +%s) - $START" | bc)
+DUR_H=$(echo "$DURATION/3600" | bc)
+DUR_M=$(echo "($DURATION-$DUR_H*3600)/60" | bc)
+DUR_S=$(echo "($DURATION - $DUR_H*3600 - $DUR_M*60)" | bc)
+echo "FINISHED ALL IN $DUR_H:$DUR_M:$DUR_S"
