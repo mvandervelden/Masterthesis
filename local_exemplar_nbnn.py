@@ -10,12 +10,24 @@ from utils import *
 from procedures import *
 from file_io import *
 from detection_utils import *
+from metric_functions import *
+from quickshift import *
 
 def train_local(classes, descriptors_function, estimator, VOCopts, GLOBopts, NBNNopts, TESTopts, DETopts, log):
+
+    DETmode = DETopts[0]
+    DETopts = DETopts[1]
+
     for i, cls in enumerate(classes):
         # Get classes images, descriptors, and add it to the estimator
         log.info('==== GET CLASS %d: %s IMAGES ====', i, cls)
-        img_set = read_image_set(VOCopts,cls+'_'+GLOBopts['train_set'])
+        if cls == 'background':
+            set_name = GLOBopts['train_set']
+        else:
+            set_name = cls+'_'+GLOBopts['train_set']
+        img_set = read_image_set(VOCopts,set_name)
+        exemplar_path = DETopts['exemplar_path']%cls
+        
         if GLOBopts['train_sel'] == 'segment':
             log.info('==== LOADING OBJECT SEGMENTATION MASKS ====')
             load_object_segmentations(VOCopts.object_mask_path, img_set)
@@ -38,7 +50,7 @@ def train_local(classes, descriptors_function, estimator, VOCopts, GLOBopts, NBN
                             descriptors, exemplars=True)
                     estimator.add_class(cls, cls_descriptors)
                     log.info('==== SAVING EXEMPLARS to %s ====', exemplar_path)
-                    save_exemplars(exemplar_path%cls, exemplars)
+                    save_exemplars(exemplar_path, exemplars)
             else:
                 # Add bg descriptors
                 bg_descriptors = get_bbox_bg_descriptors(objects, descriptors)
@@ -56,10 +68,13 @@ def train_local(classes, descriptors_function, estimator, VOCopts, GLOBopts, NBN
                 log.info(' --- pts: %s, descr: %s', \
                         descriptors[im.im_id][0].shape, \
                         descriptors[im.im_id][1].shape)
-                # Find which objects are cls
-                object_ids = [o.object_id for o in im.objects]
-                cls_obj_ids = [o.object_id for o in im.objects \
-                        if o.class_name == cls]
+                if not cls == 'background':
+                    # Find which objects are cls
+                    object_ids = [o.object_id for o in im.objects]
+                    cls_obj_ids = [o.object_id for o in im.objects \
+                            if o.class_name == cls]
+                else:
+                    cls_obj_ids = [0]
                 log.info(' --- objects in image: %s, cls ids: %s', \
                         [(o.object_id, o.class_name) for o in im.objects], \
                         cls_obj_ids)
@@ -106,12 +121,12 @@ def train_local(classes, descriptors_function, estimator, VOCopts, GLOBopts, NBN
             estimator.add_class(cls, cls_descr)
             if not cls == 'background':
                 log.info('==== SAVING EXEMPLARS to %s ====', exemplar_path)
-                save_exemplars(exemplar_path%cls, exemplars)
+                save_exemplars(exemplar_path, exemplars)
         log.info('=== CLS %s (%d/%d) ADDED ===',cls, i, len(classes))
 
 
 def get_detection_dists((batch_no, cls, batch, configfile)):
-    
+    images = batch
     # Get options into dicts
     VOCopts = VOC.fromConfig(configfile)
     GLOBopts, DESCRopts, NBNNopts, TESTopts, DETopts = getopts(configfile)
@@ -145,10 +160,10 @@ def get_detection_dists((batch_no, cls, batch, configfile)):
 
     del descriptors_array
     
-    log.debug("-- returning array of shape %s"%(cls_dst.shape,))
-    log.debug("-- mean estimate: %s"%np.mean(cls_dst))
-    log.debug("-- max estimate: %s"%np.max(cls_dst))
-    log.debug("-- min estimate: %s"%np.min(cls_dst))
+    log.debug("-- returning array of shape %s",cls_dst.shape)
+    log.debug("-- mean estimate: %s",np.mean(cls_dst))
+    log.debug("-- max estimate: %s",np.max(cls_dst))
+    log.debug("-- min estimate: %s",np.min(cls_dst))
     log.debug("-- min/max descr_idx:%d/%d",nn_descr_idxs.min(),nn_descr_idxs.max())
     log.debug("-- no of descr_indexes %s",nn_descr_idxs.shape)
     
@@ -183,14 +198,15 @@ def get_knn((image, configfile)):
     
     classes = VOCopts.classes + ['background']
     no_classes = len(classes)
-    
+    log.info("Local NN cfg:%s, im:%s, no_cls:%d",configfile, im_id, no_classes)
     distlist = []
     ptslist = []
     exemp_idxlist = []
     
     for cls in classes:
+        log.info("Handling class: %s", cls)
         distances, allpoints, im, nearest_exemplar_indexes = load_distances( \
-                DETopts['distances_path']%(im_id, cls), logger=log)
+                DETopts[1]['distances_path']%(im_id, cls), logger=log)
         log.info('--Adding cls %s: %s dists, %s pts, im: %s, %s ex_idxs', \
                 cls, distances.shape, allpoints.shape, im.im_id, \
                 nearest_exemplar_indexes.shape)
@@ -203,9 +219,10 @@ def get_knn((image, configfile)):
     distances = np.hstack(distlist)
     exemplar_indexes = np.hstack(exemp_idxlist)
     log.info('Got %s distance matrix, and %s exemplar_idx', distances.shape, exemplar_indexes.shape)
-    # Save points, same over all classes of an image
-    save_points(DETopts['knn_path']%(im_id, 'points'), ptslist[0], logger=log)
+    # Save points, same over all classes of an image, so ptslist[0]
+    save_points(DETopts[1]['knn_path']%(im_id, 'points'), ptslist[0], logger=log)
     
+    log.info("Reshape distance & exemplar idxs")
     k = TESTopts['k']
     # n= no of descriptors in test image
     n = distances.shape[0]
@@ -221,7 +238,7 @@ def get_knn((image, configfile)):
     cls_exempl = [[[] for nn in range(n)] for c in classes]
     
     log.info('Reshaped dist & ex_ind: %s & %s', distances.shape, exemplar_indexes.shape)
-    log.info('Argsort shape: %s'. asort.shape)
+    log.info('Argsort shape: %s', asort.shape)
     log.info('cls_idxs shape: %s', cls_idxs.shape)
     log.info('cls_dists (%d lists of %d lists) & cls_exempl (%d lists of %d lists)', \
             len(cls_dists), len(cls_dists[0]), len(cls_exempl), len(cls_exempl[0]))
@@ -234,6 +251,7 @@ def get_knn((image, configfile)):
         for j, cl in enumerate(sort_cls):
             cls_dists[cl][i].append(sort_dists[j])
             cls_exempl[cl][i].append(sort_exempl[j])
+    log.info('Built lists of cls_dists and cls_exempl')
     total_dists = 0
     goal = k*n
     for c in range(no_classes):
@@ -241,7 +259,7 @@ def get_knn((image, configfile)):
         no_cls_dists = sum([len(n) for n in cls_dists[c]])
         total_dists += no_cls_dists
         log.info('Saving knn for cls %s, %d dists', cls, no_cls_dists)
-        save_knn(DETopts['knn_path']%(im_id, cls), cls_dists[c], cls_exempl[c], logger=log)
+        save_knn(DETopts[1]['knn_path']%(im_id, cls), cls_dists[c], cls_exempl[c], logger=log)
         log.info('Saved %d of %d distances', total_dists, goal)
     log.info("===FINISHED kNN SUBDIVISION===")
     # compare nearest neighbors
@@ -265,10 +283,16 @@ def detection((image, cls, configfile)):
     log.info('==== LOADING kNN DISTANCES ====')
     distances, nearest_exemplar_indexes = load_knn(DETopts['knn_path']%(im_id, cls), \
             logger=log)
-    pointslist = [[points[i] for k in n] for i,n in enumerate(nearest_exemplar_indexes)]
+    log.debug("Got %d distances, %d ex_indexes, element of idx_list: %s", len(distances), len(nearest_exemplar_indexes), nearest_exemplar_indexes[0])
+    pointslist = [[points[i,:] for k in n] for i,n in enumerate(nearest_exemplar_indexes)]
+    log.debug('Built a pointslist: len = %d, inner list len: %d', len(pointslist), len(pointslist[0]))
     points = np.vstack([p for ppp in pointslist for p in ppp])
-    nearest_exemplar_indexes = np.vstack([e for eee in nearest_exemplar_indexes for e in eee])
-    distances = np.vstack([d for ddd in distances for d in ddd])
+    log.debug('Built a pointsarray: shape: %s', points.shape)
+    nearest_exemplar_indexes = np.hstack([e for eee in nearest_exemplar_indexes for e in eee])
+    log.debug('Built n_ex_ind array: %s', nearest_exemplar_indexes.shape)
+    distances = np.hstack([d for ddd in distances for d in ddd])
+    log.debug('Built distances array: %s', distances.shape)
+    
     log.info('==== LOADING NEAREST EXEMPLARS ====')
     exemplars = load_exemplars(DETopts['exemplar_path']%cls, nearest_exemplar_indexes, logger=log)
     
@@ -277,9 +301,11 @@ def detection((image, cls, configfile)):
     hypotheses = get_hypotheses(exemplars, points, image.width, image.height, logger=log)
     if hypotheses.shape[0] == 0:
         log.debug("== FOUND NO HYPOTHESES WITH fg_d < bg_d. No clustering possible!")
+    log.info('==== GET HYPOTHESIS VALUES ====')
     hvalues = get_hypothesis_values(hypotheses, distances, points, eval(DETopts['hypothesis_metric']))
+    log.debug('HVALS shape: %s', hvalues.shape)
     ranking = sort_values(hvalues)
-    
+    log.debug('Ranking shape: %s', ranking.shape)
     # Keep only the best n descriptors (largest relative margin d+, d-)
     if 'hyp_cutoff' in DETopts:
         log.info('Using %s hypotheses, out of %d', DETopts['hyp_cutoff'], hypotheses.shape[0])
@@ -319,6 +345,54 @@ def detection((image, cls, configfile)):
     log.info('==== FINISHED DETECTION ====')
     
 
+def rank_detections((cls, configfile)):
+    
+    VOCopts = VOC.fromConfig(configfile)
+    GLOBopts, DESCRopts, NBNNopts, TESTopts, DETopts = getopts(configfile)
+    DETopts = DETopts[1]
+    # Setup logger
+    log = init_log(GLOBopts['log_path'], 'ranking_%s'%cls, 'w')
+    
+    log.info("Making VOC results files cfg:%s, cls:%s",configfile, cls)
+    
+    outputf = GLOBopts['res_dir']+'/comp3_det_%s_%s.txt'%(GLOBopts['test_set'], cls)
+    
+    vimages = read_image_set(VOCopts, GLOBopts['test_set'])
+    log.info('Ranking images: %s',' '.join([im.im_id for im in vimages]))
+    all_detections = []
+    all_det_vals = []
+    all_det_imids = []
+    for vimage in vimages:
+        im_id = vimage.im_id
+        log.info('Parsing image %s detections...', im_id)
+        detfile = GLOBopts['result_path']%(im_id, cls)
+    
+        detections, reflist, distances, points = load_detections(detfile,im_id)
+        if detections.shape[0] == 0:
+            log.info("No detections for image %s, skip this image",im_id)
+            continue
+        if not isinstance(reflist[0], np.ndarray):
+            # If reflist is a lst of lists instead of a list of ndarrays, convert
+            reflist = [np.array(l) for l in reflist]
+        log.info(" Detections: %s, Reflist: %s (max: %d), distances: %s, points: %s", detections.shape, len(reflist), max([l.max() for l in reflist]), distances.shape, points.shape)
+        detection_vals = get_detection_values(detections, reflist, distances, points, eval(DETopts['detection_metric']))
+        log.info("im %s: det shape=%s, det_vals shape=%s"%(im_id, detections.shape, detection_vals.shape))
+        all_detections.append(detections)
+        all_det_vals.append(detection_vals)
+        imids = np.array([im_id for i in range(detections.shape[0])])
+        all_det_imids.append(imids)
+        log.info("stored imids shape:%s", imids.shape)
+    all_detections = np.vstack(all_detections)
+    all_det_vals = np.vstack(all_det_vals)
+    all_det_imids = np.hstack(all_det_imids)
+    log.info("Found %s detections, %s vals, %s imids", all_detections.shape, all_det_vals.shape, all_det_imids.shape)
+    ranking = sort_values(all_det_vals)
+    log.info("ranking shape: %s", ranking.shape)
+    
+    save_voc_results(outputf, all_detections[ranking], all_det_vals[ranking], all_det_imids[ranking])
+    
+    log.info('FINISHED')
+
 if __name__ == "__main__":
     
     # Get config settings
@@ -346,10 +420,11 @@ if __name__ == "__main__":
     log.info('==============================')
     
     # VOC07 detection
+    
     log.info('==== INIT ESTIMATOR FOR CLASS ====')
     estimator = init_estimator(GLOBopts['nbnn_path']%'estimator', NBNNopts)
     
-    train_local(classes, descriptors_function, estimator, VOCopts, GLOBopts, NBNNopts, TESTopts, DETopts, log)
+    train_local(classes, descriptor_function, estimator, VOCopts, GLOBopts, NBNNopts, TESTopts, DETopts, log)
     
     log.info('==== TRAINING FINISHED ====')
     
@@ -364,7 +439,7 @@ if __name__ == "__main__":
     """ Now, Do stuff per batch and per class, so multithread!"""
     
     no_batches = len(batches)
-
+    
     log.info("No of NN-threads: %d:",nn_threads)
     log.info("No of batches: %d",no_batches)
     log.info("No of classes: %d", no_classes)
@@ -377,20 +452,19 @@ if __name__ == "__main__":
     argtuples = []
     for batch_no, batch in enumerate(batches):
         for cls in classes:
-            log.info('ADD BATCH NO: %d, CLS: %d to the pool')
+            log.info('ADD BATCH NO: %d, CLS: %s to the pool', batch_no, cls)
             argtuples.append((batch_no, cls, batch, configfile))
     nn_pool.map(get_detection_dists, argtuples)
     
-    # GET THE OVERALL kNN
-    
+    # GET THE OVERALL kNN    
     log.info('==============================')
-    log.info('===== NN for all IMAGES ======')
+    log.info('===== K-NN for all IMAGES ====')
     log.info('==============================')
     
     knn_pool = Pool(processes = det_threads)
     argtuples = []
     for batch in batches:
-        for im in batches:
+        for im in batch:
             argtuples.append((im, configfile))
     knn_pool.map(get_knn, argtuples)
     
@@ -401,11 +475,24 @@ if __name__ == "__main__":
     det_pool = Pool(processes = det_threads)
     argtuples = []
     for batch in batches:
-        for im in batches:
+        for im in batch:
             for cls in classes:
                 if not cls == 'background':
                     argtuples.append((im, cls, configfile))
     det_pool.map(detection, argtuples)
+    
+    log.info('==============================')
+    log.info('======= RANK DETECTIONS ======')
+    log.info('==============================')
+    
+    rank_pool = Pool(processes = det_threads)
+    argtuples = []
+    for cls in classes:
+        if not cls == 'background':
+            argtuples.append((cls, configfile))
+    rank_pool.map(rank_detections, argtuples)
+    
+    
     log.info('==============================')
     log.info('======== FINISHED TEST =======')
     log.info('==============================')

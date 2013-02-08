@@ -1,19 +1,41 @@
-import logging, logging.config
-import os, os.path, subprocess
+def print_log_record_on_error(func):
+    def wrap(self, *args, **kwargs):
+        try:
+            return func(self, *args, **kwargs)
+        except:
+            import sys
+            print >>sys.stderr, "Unable to create log message msg=%r, args=%r " % (
+                getattr(self, 'msg', '?'), getattr(self, 'args', '?'))
+            raise
+    return wrap
 
+import logging
+logging.LogRecord.getMessage = print_log_record_on_error(logging.LogRecord.getMessage)
+
+
+import logging.config
+import os, os.path, subprocess
+import re
 
 def init_log(log_path, cls, mode='a'):
     # print "log_path: %s, log_file: %s"%(log_path, log_path%cls)
     # print "mode:", mode
     # Setup a config file
-    subprocess.call(["./setlog.sh", log_path%cls, mode])
+    
+    nlog = log_path%cls
+    nlogcfg = nlog+'.cfg'
+    with open('blank.log.cfg', 'r') as f:
+        blog = f.read()
+    blog2 = re.sub("'blank.log','a'", "'%s','%s'"%(log_path%cls, mode), blog)
+    with open(nlogcfg, 'w') as f:
+        f.write(blog2)
     
     # Setup logger
-    logging.config.fileConfig(log_path%(cls)+'.cfg', \
+    logging.config.fileConfig(nlogcfg, \
         disable_existing_loggers=False)
     log = logging.getLogger('')
     # Remove config file
-    os.remove(log_path%(cls)+'.cfg')
+    os.remove(nlogcfg)
     f = MemuseFilter()
     log.handlers[0].addFilter(f)
     return log

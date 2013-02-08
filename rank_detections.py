@@ -21,7 +21,6 @@ if __name__ == "__main__":
     
     # logging.basicConfig(stream=sys.stdout, level=logging.INFO)
     # log = logging.getLogger(__name__)
-
     
     log.info("Making VOC results files cfg:%s, cls:%s",configfile, cls)
     
@@ -38,6 +37,9 @@ if __name__ == "__main__":
         detfile = GLOBopts['result_path']%(im_id, cls)
     
         detections, reflist, distances, points = load_detections(detfile,im_id)
+        if detections.shape[0] == 0:
+            log.info("No detections for image %s, skip this image",im_id)
+            continue
         if not isinstance(reflist[0], np.ndarray):
             # If reflist is a lst of lists instead of a list of ndarrays, convert
             reflist = [np.array(l) for l in reflist]

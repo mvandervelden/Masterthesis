@@ -5,6 +5,34 @@ import logging
 np.seterr(all='raise')
 log = logging.getLogger(__name__)
 
+def single_link_clustering(hypotheses, hvalues, overlap, indexes, ranking, DETopts):
+    detections = []
+    dist_references = []
+    while not indexes is None:
+        # Cluster hypotheses' overlap to get the biggest cluster (it's hypotheses' indexes)
+        left = np.sum(~(hvalues[:] == 0))
+        log.debug('  no. of hypothesis left: %d',left)
+        log.debug('  no. of overlaps left: %d, should be %d/2 * (%d-1)=%.1f',overlap.shape[0], left, left,left/2.0*(left-1))
+        
+        if left > 1:
+            log.debug('  --  Clustering again')
+            best_cluster_idx = cluster_hypotheses(overlap, indexes, DETopts['theta_m'])
+        elif left == 1:
+            log.debug('  --  No need for clustering, only 1 hypothesis left, val: %f', hvalues.sum())
+            best_cluster_idx = np.where(~(hvalues == 0))[0]
+            log.debug('   - ID: %s',best_cluster_idx)
+            
+        # merge the biggest cluster of hypotheses into a detection, and append it
+        log.debug(' Best cluster size: %d',best_cluster_idx.shape[0])
+        detection = merge_cluster(hypotheses[best_cluster_idx])
+        refs = ranking[best_cluster_idx]
+        log.debug(' Detection found: %s, refs: %s',detection, refs)
+        detections.append(detection)
+        dist_references.append(refs)
+        # Select hypotheses to remove based on the cluster and the removal threshold theta_p
+        hvalues, overlap, indexes = remove_cluster(best_cluster_idx, detection, hypotheses, hvalues, overlap, indexes, DETopts['theta_p'])
+    return detections, dist_references
+
 def threshold_distances(exemplars, points, distances, threshold):
     """ threshold distances
     
@@ -61,10 +89,16 @@ def threshold_distances(exemplars, points, distances, threshold):
                 distances_th.append(distances[i])
                 points_th.append(points[i])
                 exemplars_th.append(exemplars[i])
-            
-    exemplars = np.vstack(exemplars_th)
-    points = np.vstack(points_th)
-    distances = np.vstack(distances_th)
+    if len(exemplars_th) > 0:
+        log.info('Adding exemplars for %d descriptors', len(exemplars_th))
+        exemplars = np.vstack(exemplars_th)
+        points = np.vstack(points_th)
+        distances = np.vstack(distances_th)
+    else:
+        log.info('Adding no exemplars')
+        exemplars = np.zeros([0,4])
+        points = np.zeros([0,5])
+        distances = np.zeros([0,2])
     log.debug(" -- Shapes  AFTER: exemplars: %s, points: %s, dist: %s", exemplars.shape, points.shape, distances.shape)
     log.debug("Removing points where fg_d > bg_d: Keeping %d (=%d? =%d?) points from %d total, because of Becker thresholding",\
         points.shape[0], exemplars.shape[0], distances.shape[0], old_dist_size)

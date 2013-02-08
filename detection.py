@@ -11,34 +11,6 @@ from detection_utils import *
 from metric_functions import *
 from quickshift import *
 
-def single_link_clustering(hypotheses, hvalues, overlap, indexes, ranking, DETopts):
-    detections = []
-    dist_references = []
-    while not indexes is None:
-        # Cluster hypotheses' overlap to get the biggest cluster (it's hypotheses' indexes)
-        left = np.sum(~(hvalues[:] == 0))
-        log.debug('  no. of hypothesis left: %d',left)
-        log.debug('  no. of overlaps left: %d, should be %d/2 * (%d-1)=%.1f',overlap.shape[0], left, left,left/2.0*(left-1))
-        
-        if left > 1:
-            log.debug('  --  Clustering again')
-            best_cluster_idx = cluster_hypotheses(overlap, indexes, DETopts['theta_m'])
-        elif left == 1:
-            log.debug('  --  No need for clustering, only 1 hypothesis left, val: %f', hvalues.sum())
-            best_cluster_idx = np.where(~(hvalues == 0))[0]
-            log.debug('   - ID: %s',best_cluster_idx)
-            
-        # merge the biggest cluster of hypotheses into a detection, and append it
-        log.debug(' Best cluster size: %d',best_cluster_idx.shape[0])
-        detection = merge_cluster(hypotheses[best_cluster_idx])
-        refs = ranking[best_cluster_idx]
-        log.debug(' Detection found: %s, refs: %s',detection, refs)
-        detections.append(detection)
-        dist_references.append(refs)
-        # Select hypotheses to remove based on the cluster and the removal threshold theta_p
-        hvalues, overlap, indexes = remove_cluster(best_cluster_idx, detection, hypotheses, hvalues, overlap, indexes, DETopts['theta_p'])
-    return detections, dist_references
-
 if __name__ == '__main__':
     np.seterr(all='raise')
     # Get config settings
@@ -75,6 +47,7 @@ if __name__ == '__main__':
         log.debug("== FOUND NO POINTS WITH fg_d < bg_d!!! CONTINUE WITHOUT THRESHOLDED DISTANCES...")
     elif exemplars_th.shape[0] == 0:
         log.debug("== FOUND NO POINTS WITH fg_d < bg_d!!! NO DETECTIONS FOR THIS CLASS-IMAGE PAIR")
+        save_detections(GLOBopts['result_path']%(im_id, cls), np.array([]), np.array([]))
         exit()
     else:
         # Use thresholded distances
