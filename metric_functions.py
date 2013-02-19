@@ -169,10 +169,20 @@ def det_qh(det, i, pt_array, dist_array):
     """
     if len(dist_array.shape) == 1:
         # No bg_dists, so take fg_d:
-        return dist_array[i].mean()
+        return dist_array[i].mean()*-1
     else:
         return dist_qh(dist_array[i,:]).mean()
 
+def det_mean_descrfg(det, i, pt_array, dist_array):
+    """ """
+    
+    return dist_array[i].mean()
+
+def det_sum_descrfg(det, i, pt_array, dist_array):
+    """
+    """
+    
+    return dist_array[i].sum()
     
 def det_qd(det, i, pt_array, dist_array):
     """ Idea: never supply qh/qd, but give (as i) a list of indexes that
