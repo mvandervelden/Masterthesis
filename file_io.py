@@ -186,7 +186,12 @@ def load_hypotheses(filename):
         im_exemplars = cPickle.load(f)
     return (hypotheses, points, im_exemplars)
 
-def save_detections(filename, detections, reflist, descr_distances=None, descr_points=None):
+def save_detections(filename, detections, reflist, descr_distances=None, descr_points=None, logger=None):
+    if not logger is None:
+        log = logger
+    else:
+        log = logging.getLogger(__name__)
+    
     if descr_distances is None:
         descr_distances = np.array([])
     if descr_points is None:
@@ -200,7 +205,12 @@ def save_detections(filename, detections, reflist, descr_distances=None, descr_p
             cPickle.dump(descr_distances, pklfile)
             cPickle.dump(descr_points, pklfile)
 
-def load_detections(filename, im_id):
+def load_detections(filename, im_id, logger=None):
+    if not logger is None:
+        log = logger
+    else:
+        log = logging.getLogger(__name__)
+    
     with open(filename, 'rb') as f:
         detections = cPickle.load(f)
         reflist = cPickle.load(f)
@@ -226,10 +236,15 @@ def load_quickshift_tree(filename):
         filename, parents.shape, distances.shape)
     return parents, distances
 
-def save_voc_results(filename, detections, values, im_ids):
+def save_voc_results(filename, detections, values, im_ids, logger=None):
     """Assuming values is array with values higher=more confidence
     
     """
+    if not logger is None:
+        log = logger
+    else:
+        log = logging.getLogger(__name__)
+    
     log.info('++SAVING voc_results file to %s: detections:%s',filename, detections.shape)
     if len(values.shape)>1:
         # If values consist of multiple columns, enumerate to get the confidence

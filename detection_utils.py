@@ -162,7 +162,12 @@ def get_hypothesis_values(hypotheses, distances, points, metric):
         vals[h] = metric(hypotheses[h,:], h, points, distances)
     return vals
 
-def get_detection_values(detections, reflist, distances, points, metric):
+def get_detection_values(detections, reflist, distances, points, metric, logger=None):
+    if not logger is None:
+        log = logger
+    else:
+        log = logging.getLogger(__name__)
+    
     log.info('  -- get detection values for %s detections (metric:%s, %s references, %s distances, %s points)', \
         detections.shape, metric.__name__, len(reflist),distances.shape, points.shape)
     if not metric.__name__ == 'det_becker':
@@ -174,7 +179,12 @@ def get_detection_values(detections, reflist, distances, points, metric):
     log.debug('  -- found %d values', len(vals))
     return vals
 
-def sort_values(values):
+def sort_values(values, logger=None):
+    if not logger is None:
+        log = logger
+    else:
+        log = logging.getLogger(__name__)
+    
     if len(values.shape) == 1:
         s = values.argsort()
         log.debug(' -- ranking dimensions: %s', s.shape)

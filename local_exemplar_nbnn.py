@@ -376,7 +376,7 @@ def rank_detections((cls, configfile)):
         log.info('Parsing image %s detections...', im_id)
         detfile = GLOBopts['result_path']%(im_id, cls)
     
-        detections, reflist, distances, points = load_detections(detfile,im_id)
+        detections, reflist, distances, points = load_detections(detfile,im_id, logger=log)
         if detections.shape[0] == 0:
             log.info("No detections for image %s, skip this image",im_id)
             continue
@@ -384,7 +384,7 @@ def rank_detections((cls, configfile)):
             # If reflist is a lst of lists instead of a list of ndarrays, convert
             reflist = [np.array(l) for l in reflist]
         log.info(" Detections: %s, Reflist: %s (max: %d), distances: %s, points: %s", detections.shape, len(reflist), max([l.max() for l in reflist]), distances.shape, points.shape)
-        detection_vals = get_detection_values(detections, reflist, distances, points, eval(DETopts['detection_metric']))
+        detection_vals = get_detection_values(detections, reflist, distances, points, eval(DETopts['detection_metric']), logger=log)
         log.info("im %s: det shape=%s, det_vals shape=%s"%(im_id, detections.shape, detection_vals.shape))
         all_detections.append(detections)
         all_det_vals.append(detection_vals)
@@ -395,10 +395,10 @@ def rank_detections((cls, configfile)):
     all_det_vals = np.vstack(all_det_vals)
     all_det_imids = np.hstack(all_det_imids)
     log.info("Found %s detections, %s vals, %s imids", all_detections.shape, all_det_vals.shape, all_det_imids.shape)
-    ranking = sort_values(all_det_vals)
+    ranking = sort_values(all_det_vals, logger=log)
     log.info("ranking shape: %s", ranking.shape)
     
-    save_voc_results(outputf, all_detections[ranking], all_det_vals[ranking], all_det_imids[ranking])
+    save_voc_results(outputf, all_detections[ranking], all_det_vals[ranking], all_det_imids[ranking], logger=log)
     
     log.info('FINISHED')
 
