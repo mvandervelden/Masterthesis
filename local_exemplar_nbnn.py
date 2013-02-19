@@ -283,9 +283,18 @@ def detection((image, cls, configfile)):
     log.info('==== LOADING kNN DISTANCES ====')
     distances, nearest_exemplar_indexes = load_knn(DETopts['knn_path']%(im_id, cls), \
             logger=log)
-    log.debug("Got %d distances, %d ex_indexes, element of idx_list: %s", len(distances), len(nearest_exemplar_indexes), nearest_exemplar_indexes[0])
+    
+    no_distances = sum([len(d) for d in distances])
+    log.debug("Got %d distance_lists, %d ex_indexes_lists, element of idx_list: %s", len(distances), len(nearest_exemplar_indexes), nearest_exemplar_indexes[0])
+    log.debug("no of distances: %d, no of ex_ix: %d", no_distances, sum([len(n) for n in nearest_exemplar_indexes]))
+    if no_distances == 0:
+        log.debug('No distances found for im %s, cls %s, k=%d. NO DETECTIONS TO BE FOUND', im_id, cls, TESTopts['k'])
+        save_detections(GLOBopts['result_path']%(im_id, cls), np.zeros([0,4]), np.zeros([0,1]))
+        log.info('==== FINISHED DETECTION ====')
+        return
+    log.debug('Number of distances found %d > 0', no_distances)
     pointslist = [[points[i,:] for k in n] for i,n in enumerate(nearest_exemplar_indexes)]
-    log.debug('Built a pointslist: len = %d, inner list len: %d', len(pointslist), len(pointslist[0]))
+    log.debug('Built a pointslist: len = %d, inner list sum: %d', len(pointslist), sum([len(p) for p in pointslist]))
     points = np.vstack([p for ppp in pointslist for p in ppp])
     log.debug('Built a pointsarray: shape: %s', points.shape)
     nearest_exemplar_indexes = np.hstack([e for eee in nearest_exemplar_indexes for e in eee])
@@ -408,9 +417,13 @@ if __name__ == "__main__":
     
     nn_threads = GLOBopts['nn_threads']
     det_threads = GLOBopts['det_threads']
-    classes = VOCopts.classes + ['background']
-    no_classes = len(classes)
+    test_classes = VOCopts.classes
+    train_classes = ['aeroplane','bicycle','bird','boat','bottle','bus','car','cat',\
+        'chair','cow','diningtable','dog','horse','motorbike','person',\
+        'pottedplant','sheep','sofa','train','tvmonitor', 'background']
     
+    no_test_classes = len(test_classes)
+    no_train_classes = len(train_classes)
     
     log.info('==== INIT DESCRIPTOR FUNCTION ====')
     descriptor_function = init_descriptor(DESCRopts[0])
@@ -424,7 +437,7 @@ if __name__ == "__main__":
     log.info('==== INIT ESTIMATOR FOR CLASS ====')
     estimator = init_estimator(GLOBopts['nbnn_path']%'estimator', NBNNopts)
     
-    train_local(classes, descriptor_function, estimator, VOCopts, GLOBopts, NBNNopts, TESTopts, DETopts, log)
+    train_local(train_classes, descriptor_function, estimator, VOCopts, GLOBopts, NBNNopts, TESTopts, DETopts, log)
     
     log.info('==== TRAINING FINISHED ====')
     
@@ -442,7 +455,8 @@ if __name__ == "__main__":
     
     log.info("No of NN-threads: %d:",nn_threads)
     log.info("No of batches: %d",no_batches)
-    log.info("No of classes: %d", no_classes)
+    log.info("No of train classes: %d", no_train_classes)
+    log.info("No of test classes: %d", no_test_classes)
     
     log.info('==============================')
     log.info('===== NN for all BATCHES =====')
@@ -451,7 +465,7 @@ if __name__ == "__main__":
     nn_pool = Pool(processes = nn_threads)
     argtuples = []
     for batch_no, batch in enumerate(batches):
-        for cls in classes:
+        for cls in train_classes:
             log.info('ADD BATCH NO: %d, CLS: %s to the pool', batch_no, cls)
             argtuples.append((batch_no, cls, batch, configfile))
     nn_pool.map(get_detection_dists, argtuples)
@@ -476,7 +490,7 @@ if __name__ == "__main__":
     argtuples = []
     for batch in batches:
         for im in batch:
-            for cls in classes:
+            for cls in test_classes:
                 if not cls == 'background':
                     argtuples.append((im, cls, configfile))
     det_pool.map(detection, argtuples)
@@ -487,7 +501,7 @@ if __name__ == "__main__":
     
     rank_pool = Pool(processes = det_threads)
     argtuples = []
-    for cls in classes:
+    for cls in test_classes:
         if not cls == 'background':
             argtuples.append((cls, configfile))
     rank_pool.map(rank_detections, argtuples)
