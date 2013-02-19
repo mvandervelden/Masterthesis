@@ -126,6 +126,8 @@ echo "Tarballing results and tmpfiles"
 # tar -czf ${TGZFILE}.tmp.tgz --exclude=*.dbin* --exclude=*.dtxt --exclude=*.data --exclude=*.index $TMPFOLDER
 tar -czf ${TGZFILE}.res.tgz $RESFOLDER
 
+scp ${TGZFILE}.*.tgz fs4.das4.science.uva.nl:/var/scratch/vdvelden/
+
 echo "Cleaning up tmp-dir"
 rm -rf /local/vdvelden
 
