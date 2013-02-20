@@ -364,41 +364,53 @@ def rank_detections((cls, configfile)):
     
     log.info("Making VOC results files cfg:%s, cls:%s",configfile, cls)
     
-    outputf = GLOBopts['res_dir']+'/comp3_det_%s_%s.txt'%(GLOBopts['test_set'], cls)
-    
     vimages = read_image_set(VOCopts, GLOBopts['test_set'])
     log.info('Ranking images: %s',' '.join([im.im_id for im in vimages]))
-    all_detections = []
-    all_det_vals = []
-    all_det_imids = []
-    for vimage in vimages:
-        im_id = vimage.im_id
-        log.info('Parsing image %s detections...', im_id)
-        detfile = GLOBopts['result_path']%(im_id, cls)
     
-        detections, reflist, distances, points = load_detections(detfile,im_id, logger=log)
-        if detections.shape[0] == 0:
-            log.info("No detections for image %s, skip this image",im_id)
-            continue
-        if not isinstance(reflist[0], np.ndarray):
-            # If reflist is a lst of lists instead of a list of ndarrays, convert
-            reflist = [np.array(l) for l in reflist]
-        log.info(" Detections: %s, Reflist: %s (max: %d), distances: %s, points: %s", detections.shape, len(reflist), max([l.max() for l in reflist]), distances.shape, points.shape)
-        detection_vals = get_detection_values(detections, reflist, distances, points, eval(DETopts['detection_metric']), logger=log)
-        log.info("im %s: det shape=%s, det_vals shape=%s"%(im_id, detections.shape, detection_vals.shape))
-        all_detections.append(detections)
-        all_det_vals.append(detection_vals)
-        imids = np.array([im_id for i in range(detections.shape[0])])
-        all_det_imids.append(imids)
-        log.info("stored imids shape:%s", imids.shape)
-    all_detections = np.vstack(all_detections)
-    all_det_vals = np.vstack(all_det_vals)
-    all_det_imids = np.hstack(all_det_imids)
-    log.info("Found %s detections, %s vals, %s imids", all_detections.shape, all_det_vals.shape, all_det_imids.shape)
-    ranking = sort_values(all_det_vals, logger=log)
-    log.info("ranking shape: %s", ranking.shape)
+    det_metrics = DETopts['detection_metric']
+    ranking_paths = DETopts['ranking_paths'] 
+    for det_metric, ranking_path in zip(det_metrics, ranking_paths):
+        
+        outputf = ranking_path%(GLOBopts['test_set'], cls)
+        
+        all_detections = []
+        all_det_vals = []
+        all_det_imids = []
+        
+        for vimage in vimages:
+            im_id = vimage.im_id
+            log.info('Parsing image %s detections...', im_id)
+            detfile = GLOBopts['result_path']%(im_id, cls)
     
-    save_voc_results(outputf, all_detections[ranking], all_det_vals[ranking], all_det_imids[ranking], logger=log)
+            detections, reflist, distances, points = load_detections(detfile,im_id, logger=log)
+            if detections.shape[0] == 0:
+                log.info("No detections for image %s, skip this image",im_id)
+                continue
+            if not isinstance(reflist[0], np.ndarray):
+                # If reflist is a lst of lists instead of a list of ndarrays, convert
+                reflist = [np.array(l) for l in reflist]
+            log.info(" Detections: %s, Reflist: %s (max: %d), distances: %s, points: %s", \
+                    detections.shape, len(reflist), max([l.max() for l in reflist]), \
+                    distances.shape, points.shape)
+            detection_vals = get_detection_values(detections, reflist, distances, \
+                    points, eval(det_metric), logger=log)
+            log.info("im %s: det shape=%s, det_vals shape=%s"%(im_id, \
+                    detections.shape, detection_vals.shape))
+            all_detections.append(detections)
+            all_det_vals.append(detection_vals)
+            imids = np.array([im_id for i in range(detections.shape[0])])
+            all_det_imids.append(imids)
+            log.info("stored imids shape:%s", imids.shape)
+        all_detections = np.vstack(all_detections)
+        all_det_vals = np.vstack(all_det_vals)
+        all_det_imids = np.hstack(all_det_imids)
+        log.info("Found %s detections, %s vals, %s imids", all_detections.shape, \
+                all_det_vals.shape, all_det_imids.shape)
+        ranking = sort_values(all_det_vals, logger=log)
+        log.info("ranking shape: %s", ranking.shape)
+    
+        save_voc_results(outputf, all_detections[ranking], all_det_vals[ranking], \
+                all_det_imids[ranking], logger=log)
     
     log.info('FINISHED')
 
@@ -408,6 +420,9 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         raise Exception("Please give a config file as command line argument")
     configfile = sys.argv[1]
+    if len(sys.argv) == 3:
+        if sys.argv[2] == '--rankingonly':
+            rankingonly = True
     
     VOCopts = VOC.fromConfig(configfile)
     GLOBopts, DESCRopts, NBNNopts, TESTopts, DETopts = getopts(configfile)
@@ -428,72 +443,73 @@ if __name__ == "__main__":
     log.info('==== INIT DESCRIPTOR FUNCTION ====')
     descriptor_function = init_descriptor(DESCRopts[0])
     
-    log.info('==============================')
-    log.info('========== TRAINING ==========')
-    log.info('==============================')
+    if not rankingonly:
+        log.info('==============================')
+        log.info('========== TRAINING ==========')
+        log.info('==============================')
     
-    # VOC07 detection
+        # VOC07 detection
     
-    log.info('==== INIT ESTIMATOR FOR CLASS ====')
-    estimator = init_estimator(GLOBopts['nbnn_path']%'estimator', NBNNopts)
+        log.info('==== INIT ESTIMATOR FOR CLASS ====')
+        estimator = init_estimator(GLOBopts['nbnn_path']%'estimator', NBNNopts)
     
-    train_local(train_classes, descriptor_function, estimator, VOCopts, GLOBopts, NBNNopts, TESTopts, DETopts, log)
+        train_local(train_classes, descriptor_function, estimator, VOCopts, GLOBopts, NBNNopts, TESTopts, DETopts, log)
     
-    log.info('==== TRAINING FINISHED ====')
+        log.info('==== TRAINING FINISHED ====')
     
-    log.info('==============================')
-    log.info('======== MAKE BATCHES ========')
-    log.info('==============================')
+        log.info('==============================')
+        log.info('======== MAKE BATCHES ========')
+        log.info('==============================')
     
-    # Save descriptors of test set to disk
-    batches = make_voc_batches(descriptor_function, VOCopts, GLOBopts, TESTopts)
-    log.info('==== BATCHMAKING FINISHED ====')
+        # Save descriptors of test set to disk
+        batches = make_voc_batches(descriptor_function, VOCopts, GLOBopts, TESTopts)
+        log.info('==== BATCHMAKING FINISHED ====')
     
-    """ Now, Do stuff per batch and per class, so multithread!"""
+        """ Now, Do stuff per batch and per class, so multithread!"""
     
-    no_batches = len(batches)
+        no_batches = len(batches)
     
-    log.info("No of NN-threads: %d:",nn_threads)
-    log.info("No of batches: %d",no_batches)
-    log.info("No of train classes: %d", no_train_classes)
-    log.info("No of test classes: %d", no_test_classes)
+        log.info("No of NN-threads: %d:",nn_threads)
+        log.info("No of batches: %d",no_batches)
+        log.info("No of train classes: %d", no_train_classes)
+        log.info("No of test classes: %d", no_test_classes)
     
-    log.info('==============================')
-    log.info('===== NN for all BATCHES =====')
-    log.info('==============================')
+        log.info('==============================')
+        log.info('===== NN for all BATCHES =====')
+        log.info('==============================')
     
-    nn_pool = Pool(processes = nn_threads)
-    argtuples = []
-    for batch_no, batch in enumerate(batches):
-        for cls in train_classes:
-            log.info('ADD BATCH NO: %d, CLS: %s to the pool', batch_no, cls)
-            argtuples.append((batch_no, cls, batch, configfile))
-    nn_pool.map(get_detection_dists, argtuples)
+        nn_pool = Pool(processes = nn_threads)
+        argtuples = []
+        for batch_no, batch in enumerate(batches):
+            for cls in train_classes:
+                log.info('ADD BATCH NO: %d, CLS: %s to the pool', batch_no, cls)
+                argtuples.append((batch_no, cls, batch, configfile))
+        nn_pool.map(get_detection_dists, argtuples)
     
-    # GET THE OVERALL kNN    
-    log.info('==============================')
-    log.info('===== K-NN for all IMAGES ====')
-    log.info('==============================')
+        # GET THE OVERALL kNN    
+        log.info('==============================')
+        log.info('===== K-NN for all IMAGES ====')
+        log.info('==============================')
     
-    knn_pool = Pool(processes = det_threads)
-    argtuples = []
-    for batch in batches:
-        for im in batch:
-            argtuples.append((im, configfile))
-    knn_pool.map(get_knn, argtuples)
+        knn_pool = Pool(processes = det_threads)
+        argtuples = []
+        for batch in batches:
+            for im in batch:
+                argtuples.append((im, configfile))
+        knn_pool.map(get_knn, argtuples)
     
-    # DETECTION PER IMAGE
-    log.info('==============================')
-    log.info('== DETECTION FOR ALL IMAGES ==')
-    log.info('==============================')
-    det_pool = Pool(processes = det_threads)
-    argtuples = []
-    for batch in batches:
-        for im in batch:
-            for cls in test_classes:
-                if not cls == 'background':
-                    argtuples.append((im, cls, configfile))
-    det_pool.map(detection, argtuples)
+        # DETECTION PER IMAGE
+        log.info('==============================')
+        log.info('== DETECTION FOR ALL IMAGES ==')
+        log.info('==============================')
+        det_pool = Pool(processes = det_threads)
+        argtuples = []
+        for batch in batches:
+            for im in batch:
+                for cls in test_classes:
+                    if not cls == 'background':
+                        argtuples.append((im, cls, configfile))
+        det_pool.map(detection, argtuples)
     
     log.info('==============================')
     log.info('======= RANK DETECTIONS ======')

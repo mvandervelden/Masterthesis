@@ -74,6 +74,7 @@ def getopts(configfile):
     GLOBopts['descriptor_path'] = GLOBopts['tmp_dir']+'/descriptors/%s.dbin'
     GLOBopts['nbnn_path'] = GLOBopts['tmp_dir']+'/nbnn/%s'
     tmpdir = GLOBopts['tmp_dir']
+    resdir = GLOBopts['res_dir']
     
     DESCRopts = []
     for i,d in enumerate(["TEST-DESCRIPTOR", "TRAIN-DESCRIPTOR"]):
@@ -155,6 +156,16 @@ def getopts(configfile):
             DETopts[1]['quickshift_tree_path'] = '/'.join([tmpdir, DETopts[1]['quickshift_tree_path']])
             quickshift_tree_dir = '/'.join(DETopts[1]['quickshift_tree_path'].split('/')[:-1])
             assert_dir(quickshift_tree_dir)
+        
+        dm = DETopts[1]['det_metric']
+        dmlist = dm.split(',')
+        DETopts[1]['det_metric'] = dmlist
+        rankpathlist = []
+        for d in dmlist:
+            rdir = '/'.join([resdir, d])
+            assert_dir(rdir)
+            rankpathlist.append(rdir + '/comp3_det_%s_%s.txt')
+        DETopts[1]['det_path'] = rankpathlist
         return GLOBopts, DESCRopts, NBNNopts, TESTopts, DETopts
     else:
         return GLOBopts, DESCRopts, NBNNopts, TESTopts, None

@@ -2,6 +2,8 @@ from utils import *
 from numpy import *
 import logging
 
+"""GENERAL RULE: < MEANS SMALLER DIST, MEANS HIGHER RANKING"""
+
 log = logging.getLogger(__name__)
 
 def dist_fg(dist_array):
@@ -125,17 +127,17 @@ def bb_descr_fg(bb, i, pt_array, dist_array):
     else:
         return dist_array[i,0]
 
-def bb_descrqh(bb, i, pt_array, dist_array):
+def bb_descr_qh(bb, i, pt_array, dist_array):
     """ original Qh: hypothesis quality = relative distance of its descriptor
     (does not take into account descriptors other than the one that defines the
     BB)
     
     doctest:
-    >>> bb_descrqh([10,15,20,25],2,np.array([[0,0],[10,10],[15,15],[20,20],[25,25],[15,20]]), np.array([[10.,10],[10,20],[30,10],[5,50],[50,5],[7,70]]))
+    >>> bb_descr_qh([10,15,20,25],2,np.array([[0,0],[10,10],[15,15],[20,20],[25,25],[15,20]]), np.array([[10.,10],[10,20],[30,10],[5,50],[50,5],[7,70]]))
     -0.66666666666666663
     """
     if len(dist_array.shape) == 1:
-        raise IndexError("bb_descrqh does not work when only 1 distance measure is given: shape =%s"%(dist_array.shape))
+        raise IndexError("bb_descr_qh does not work when only 1 distance measure is given: shape =%s"%(dist_array.shape))
     return (dist_array[i,1] - fg_d)/fg_d
 
 def bb_uniform(bb, i, pt_array, dist_array):
@@ -169,16 +171,16 @@ def det_qh(det, i, pt_array, dist_array):
     """
     if len(dist_array.shape) == 1:
         # No bg_dists, so take fg_d:
-        return dist_array[i].mean()*-1
+        return det_mean_descr_fg(det, i, pt_array, dist_array)
     else:
-        return dist_qh(dist_array[i,:]).mean()
+        return dist_qh(dist_array[i,:]).mean()-1
 
-def det_mean_descrfg(det, i, pt_array, dist_array):
+def det_mean_descr_fg(det, i, pt_array, dist_array):
     """ """
     
     return dist_array[i].mean()
 
-def det_sum_descrfg(det, i, pt_array, dist_array):
+def det_sum_descr_fg(det, i, pt_array, dist_array):
     """
     """
     
@@ -194,9 +196,9 @@ def det_qd(det, i, pt_array, dist_array):
     2
     """
     if isinstance(i,np.ndarray):
-        return i.shape[0]
+        return i.shape[0]*-1
     elif isinstance(i,list):
-        return len(i)
+        return len(i)*-1
     
 def det_becker(det, i, pt_array, dist_array):
     """ Idea: never supply qh/qd, but give (as i) a list of indexes that
@@ -225,7 +227,7 @@ def det_bg(det, i, pt_array, dist_array):
     >>> det_bg([10,15,20,25],[2,3],np.array([[0,0],[10,10],[15,15],[20,20],[25,25],[15,20]]), np.array([[10.,10],[10,20],[30,10],[5,50],[50,5],[7,70]]))
     None
     """
-    return bb_bg(det, i, pt_array, dist_array)
+    return bb_bg(det, i, pt_array, dist_array)*-1
 
 if __name__ == "__main__":
     import doctest
