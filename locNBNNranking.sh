@@ -2,7 +2,6 @@
 #$ -l h_rt=500:00:00
 #$ -cwd
 
-
 source ~/.bash_profile
 
 START=$(date +%s)
@@ -33,22 +32,26 @@ echo "TMPFOLDER: $TMPFOLDER"
 echo "RESFOLDER: $RESFOLDER"
 echo "TGZFILE: $TGZFILE"
 
-mkdir $RESFOLDER
-cp $CFGFILE $RESFOLDER
-CFGFILE=`echo "${RESFOLDER}/${CFGFILE}"`
-echo "CFGFILE COPIED TO: $CFGFILE"
+echo "EXTRACT ${TGZFILE}.res.tgz"
+cp scratchdisk/${TGZFILE}.res.tgz ${RESFOLDER}
+mkdir ${RESFOLDER}
+cd ${RESFOLDER}
+tar -xzf ${TGZFILE}.res.tgz
+TTFOLDER=`echo $RESFOLDER | awk '{if (substr($0, 1, 1)=="/") print substr($0,2); else print $0}'`
+CURDIR=`pwd`
+echo "MOVE RES FROM ${TTFOLDER} to ${CURDIR}"
+mv ${TTFOLDER}/* .
+cd ~/code
 
-echo "Running local NBNN Detection"
-python local_exemplar_nbnn.py $CFGFILE
+echo "Running local NBNN Detection --rankingonly"
+python local_exemplar_nbnn.py $CFGFILE --rankingonly
 
-echo "Tarballing results and tmpfiles"
-# tar -czf ${TGZFILE}.tmp.tgz --exclude=*.dbin* --exclude=*.dtxt --exclude=*.data --exclude=*.index $TMPFOLDER
-tar -czf ${TGZFILE}.res.tgz $RESFOLDER
+echo "Tarballing txtfiles"
 tar -czf ${TGZFILE}.rankings.tgz ${RESFOLDER}/*/*.txt
-scp ${TGZFILE}.*.tgz fs4.das4.science.uva.nl:/var/scratch/vdvelden/
+scp ${TGZFILE}.rankings.tgz fs4.das4.science.uva.nl:/var/scratch/vdvelden/
 
 echo "Cleaning up tmp-dir"
-rm -rf /local/vdvelden
+# rm -rf /local/vdvelden
 
 DURATION=$(echo "$(date +%s) - $START" | bc)
 DUR_H=$(echo "$DURATION/3600" | bc)
