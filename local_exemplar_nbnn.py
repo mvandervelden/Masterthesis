@@ -564,10 +564,15 @@ if __name__ == "__main__":
     nn_threads = GLOBopts['nn_threads']
     det_threads = GLOBopts['det_threads']
     rank_threads = GLOBopts['rank_threads']
-    test_classes = VOCopts.classes
-    train_classes = ['aeroplane','bicycle','bird','boat','bottle','bus','car','cat',\
-        'chair','cow','diningtable','dog','horse','motorbike','person',\
-        'pottedplant','sheep','sofa','train','tvmonitor', 'background']
+    set_mode = GLOBopts['setmode']
+    if set_mode == 'voc':
+        test_classes = VOCopts.classes
+        train_classes = ['aeroplane','bicycle','bird','boat','bottle','bus','car','cat',\
+            'chair','cow','diningtable','dog','horse','motorbike','person',\
+            'pottedplant','sheep','sofa','train','tvmonitor', 'background']
+    elif set_mode == 'becker':
+        test_classes = ['motorbike', 'background']
+        train_classes = ['motorbike', 'background']
     
     no_test_classes = len(test_classes)
     no_train_classes = len(train_classes)
@@ -585,31 +590,41 @@ if __name__ == "__main__":
         log.info('==== INIT ESTIMATOR FOR CLASS ====')
         estimator = init_estimator(GLOBopts['nbnn_path']%'estimator', NBNNopts)
         
-        train_local(train_classes, descriptor_function, estimator, VOCopts, GLOBopts, NBNNopts, TESTopts, DETopts, log)
-            
+        if set_mode == 'voc':
+            train_local(train_classes, descriptor_function, estimator, VOCopts, GLOBopts, NBNNopts, TESTopts, DETopts, log)
+        else:
+            load_becker_estimator(descriptor_function, estimator, VOCopts, \
+                train_set = GLOBopts['train_set'],\
+                descriptor_path = GLOBopts['descriptor_path'],\
+                exemplar_path = DETopts[1]['exemplar_path'])
+        
         log.info('==== TRAINING FINISHED ====')
-            
+        
         log.info('==============================')
         log.info('======== MAKE BATCHES ========')
         log.info('==============================')
-            
+        
         # Save descriptors of test set to disk
+        if GLOBopts['setmode'] == 'becker':
+            orig_impath = VOCopts.image_path
+            VOCopts.image_path = VOCopts.image_path[:-4]+'.png'
         batches = make_voc_batches(descriptor_function, VOCopts, GLOBopts, TESTopts)
+        VOCopts.image_path = orig_impath
         log.info('==== BATCHMAKING FINISHED ====')
-            
+        
         """ Now, Do stuff per batch and per class, so multithread!"""
-            
+        
         no_batches = len(batches)
-            
+        
         log.info("No of NN-threads: %d:",nn_threads)
         log.info("No of batches: %d",no_batches)
         log.info("No of train classes: %d", no_train_classes)
         log.info("No of test classes: %d", no_test_classes)
-            
+        
         log.info('==============================')
         log.info('===== NN for all BATCHES =====')
         log.info('==============================')
-            
+        
         nn_pool = Pool(processes = nn_threads)
         argtuples = []
         for batch_no, batch in enumerate(batches):

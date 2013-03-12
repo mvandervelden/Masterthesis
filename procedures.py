@@ -237,7 +237,7 @@ def load_becker_estimator(descriptor_function, estimator, VOCopts, \
             fg_descr.append(imdescr[1])
 
         log.info('--- Adding %s descriptor arrays to class %s', len(fg_descr), cls)
-        estimator.add_class(cls, fg_descr) #TODO SHOULD WORK....
+        estimator.add_class(cls, fg_descr) 
         if not exemplar_path is None:
             log.info('==== SAVING EXEMPLARS to %s ====', exemplar_path)
             save_exemplars(exemplar_path%cls, exemplars)
@@ -263,7 +263,7 @@ def load_becker_estimator(descriptor_function, estimator, VOCopts, \
         log.info('==== Select which DESCRIPTORS are %s ====', cls)
         bg_descriptors = get_background_descriptors(img_set, descriptors)
         log.info('--- Adding %s descriptor arrays to class %s', len(bg_descriptors), cls)
-        estimator.add_class(cls, bg_descriptors) #TODO SHOULD WORK...
+        estimator.add_class(cls, bg_descriptors) 
 
 def load_behmo_estimator(descriptor_function, estimator, cls, VOCopts, \
         train_set='train', descriptor_path=None, exemplar_path=None):
@@ -380,6 +380,7 @@ def train_behmo(descriptor_function, estimator, cls, VOCopts, val_set='val', \
     
 
 def make_voc_batches(descriptor_function, VOCopts, GLOBopts, TESTopts):
+
     log.info('==== GENERATING TEST IMAGES =====')
     test_images = read_image_set(VOCopts, GLOBopts['test_set'])
     log.info('==== GENERATING AND SAVING TEST DESCRIPTORS =====')
