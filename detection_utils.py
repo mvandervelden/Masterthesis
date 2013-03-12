@@ -2,7 +2,7 @@
 import numpy as np
 import logging
 
-np.seterr(all='raise')
+# np.seterr(all='raise')
 log = logging.getLogger(__name__)
 
 def single_link_clustering(hypotheses, hvalues, overlap, indexes, ranking, DETopts):

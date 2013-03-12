@@ -12,7 +12,7 @@ from metric_functions import *
 from quickshift import *
 
 if __name__ == '__main__':
-    np.seterr(all='raise')
+    # np.seterr(all='raise')
     # Get config settings
     if len(sys.argv) < 5:
         raise Exception("arguments expected: cfgfile batch_no class im_id")
