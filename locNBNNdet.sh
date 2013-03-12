@@ -6,7 +6,7 @@
 source ~/.bash_profile
 
 START=$(date +%s)
-rm -rf /local/vdvelden
+# rm -rf /local/vdvelden
 mkdir /local/vdvelden
 
 # Default config file.
@@ -47,8 +47,8 @@ tar -czf ${TGZFILE}.res.tgz $RESFOLDER
 tar -czf ${TGZFILE}.rankings.tgz ${RESFOLDER}/*/*.txt
 scp ${TGZFILE}.*.tgz fs4.das4.science.uva.nl:/var/scratch/vdvelden/
 
-echo "Cleaning up tmp-dir"
-rm -rf /local/vdvelden
+# echo "Cleaning up tmp-dir"
+# rm -rf /local/vdvelden
 
 DURATION=$(echo "$(date +%s) - $START" | bc)
 DUR_H=$(echo "$DURATION/3600" | bc)

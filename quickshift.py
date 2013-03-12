@@ -61,18 +61,18 @@ def quickshift(data, tau=np.inf):
         # dists_i is the minimal distance, inf implies no Ej > Ei within
         # distance tau from the point
         
-    return parents, dists
+    return parents, dists, E
 
 def cluster_quickshift(hypotheses, tau, save_tree_path=None):
     N = hypotheses.shape[0]
     try:
-        parents, dists = quickshift(hypotheses, tau)
+        parents, dists, E = quickshift(hypotheses, tau)
     except FloatingPointError as e:
         print "Floating Point error encountered in quickshift: %s"%e
         log.error("Floating Point error encountered in quickshift: %s", e)
-        
+    
     if not save_tree_path is None:
-        save_quickshift_tree(save_tree_path, parents, dists)
+        save_quickshift_tree(save_tree_path, parents, dists, E)
     # parents = array of length N (no of hypotheses) where the values represent the parent hypothesis of the i'th hypothesis
     # dists = array of length N where the valeus represent the distance to the parent node
     # if parents[i] = i, this is a root node --> a detection

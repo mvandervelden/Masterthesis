@@ -170,7 +170,7 @@ def get_detection_values(detections, reflist, distances, points, metric, logger=
     
     log.info('  -- get detection values for %s detections (metric:%s, %s references, %s distances, %s points)', \
         detections.shape, metric.__name__, len(reflist),distances.shape, points.shape)
-    if not metric.__name__ == 'det_becker':
+    if not metric.__name__ in  ['det_becker','det_qd_exempfg']:
         vals = np.zeros(detections.shape[0])
     else:
         vals = np.zeros([detections.shape[0],2])

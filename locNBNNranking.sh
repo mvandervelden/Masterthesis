@@ -5,7 +5,7 @@
 source ~/.bash_profile
 
 START=$(date +%s)
-rm -rf /local/vdvelden
+# rm -rf /local/vdvelden
 mkdir /local/vdvelden
 
 # Default config file.
@@ -33,8 +33,8 @@ echo "RESFOLDER: $RESFOLDER"
 echo "TGZFILE: $TGZFILE"
 
 echo "EXTRACT ${TGZFILE}.res.tgz"
-cp scratchdisk/${TGZFILE}.res.tgz ${RESFOLDER}
 mkdir ${RESFOLDER}
+cp scratchdisk/${TGZFILE}.res.tgz ${RESFOLDER}
 cd ${RESFOLDER}
 tar -xzf ${TGZFILE}.res.tgz
 TTFOLDER=`echo $RESFOLDER | awk '{if (substr($0, 1, 1)=="/") print substr($0,2); else print $0}'`

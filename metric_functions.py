@@ -55,7 +55,10 @@ def bb_energy(bb, i, pt_array, dist_array):
     """
 
     pts_in_bb = points_in_bb(bb, pt_array)
-    return dist_array[pts_in_bb,0].sum() + dist_array[~pts_in_bb, 1].sum()
+    if len(dist_array.shape) > 1:
+        return dist_array[pts_in_bb,0].sum() + dist_array[~pts_in_bb, 1].sum()
+    else:
+        raise ValueError("No Background distances available to calculate Energy distance of.")
 
 def bb_wenergy(bb, i, pt_array, dist_array):
     """ Calculate the weighted energy of a Bounding Box: E = sum of distances of
@@ -66,15 +69,18 @@ def bb_wenergy(bb, i, pt_array, dist_array):
     >>> bb_energy([10,15,20,25],1,np.array([[0,0],[10,10],[15,15],[20,20],[25,25],[15,20]]), np.array([[10,10],[10,20],[30,10],[5,50],[50,5],[7,70]]))
     
     """
-    n=pt_array.shape[0]
-    pts_in_bb = points_in_bb(bb, pt_array)
-    m = pts_in_bb.shape[0]
-    print n, m
-    a=dist_array[pts_in_bb,0].sum()/m
-    b=dist_array[~pts_in_bb, 1].sum()/(n-m)
-    return  a+b
+    if len(dist_array.shape) > 1:
+        n=pt_array.shape[0]
+        pts_in_bb = points_in_bb(bb, pt_array)
+        m = pts_in_bb.shape[0]
+        # print n, m
+        a=dist_array[pts_in_bb,0].sum()/m
+        b=dist_array[~pts_in_bb, 1].sum()/(n-m)
+        return  a+b
+    else:
+        raise ValueError("No Background distances available to calculate Energy distance of.")
 
-def bb_fg(bb, i, pt_array, dist_array):
+def bb_full_fg(bb, i, pt_array, dist_array):
     """ Calculate the mean fg-distances of a Bounding Box: D = mean of fg-distances of
     descriptors inside BB
     
@@ -83,9 +89,12 @@ def bb_fg(bb, i, pt_array, dist_array):
     14.0
     """
     pts_in_bb = points_in_bb(bb, pt_array)
-    return dist_array[pts_in_bb,0].mean()
+    if len(dist_array.shape) > 1:
+        return dist_array[pts_in_bb,0].mean()
+    else:
+        return dist_array[pts_in_bb].mean()
 
-def bb_bg(bb, i, pt_array, dist_array):
+def bb_full_bg(bb, i, pt_array, dist_array):
     """ Calculate the mean bg-distances of a Bounding Box: D = mean of bg-distances of
     descriptors inside BB
     
@@ -94,9 +103,12 @@ def bb_bg(bb, i, pt_array, dist_array):
     None
     """
     pts_in_bb = points_in_bb(bb, pt_array)
-    return dist_array[pts_in_bb,1].mean()
+    if len(dist_array.shape) > 1:
+        return dist_array[pts_in_bb,1].mean()
+    else:
+        raise ValueError("No Background distances available to calculate mean distance of.")
 
-def bb_qh(bb, i, pt_array, dist_array):
+def bb_full_qh(bb, i, pt_array, dist_array):
     """ Calculate the mean Qh-distances of a Bounding Box: Sum of Qh dists of
     all descriptors inside BB
     
@@ -119,7 +131,7 @@ def bb_qh(bb, i, pt_array, dist_array):
     
     return ( (bg_d - fg_d)/fg_d ).mean()
 
-def bb_descr_fg(bb, i, pt_array, dist_array):
+def bb_exemp_fg(bb, i, pt_array, dist_array):
     """ Return the bb's descriptor fg dist
     """
     if len(dist_array.shape) == 1:
@@ -127,17 +139,17 @@ def bb_descr_fg(bb, i, pt_array, dist_array):
     else:
         return dist_array[i,0]
 
-def bb_descr_qh(bb, i, pt_array, dist_array):
+def bb_exemp_qh(bb, i, pt_array, dist_array):
     """ original Qh: hypothesis quality = relative distance of its descriptor
     (does not take into account descriptors other than the one that defines the
     BB)
     
     doctest:
-    >>> bb_descr_qh([10,15,20,25],2,np.array([[0,0],[10,10],[15,15],[20,20],[25,25],[15,20]]), np.array([[10.,10],[10,20],[30,10],[5,50],[50,5],[7,70]]))
+    >>> bb_exemp_qh([10,15,20,25],2,np.array([[0,0],[10,10],[15,15],[20,20],[25,25],[15,20]]), np.array([[10.,10],[10,20],[30,10],[5,50],[50,5],[7,70]]))
     -0.66666666666666663
     """
     if len(dist_array.shape) == 1:
-        raise IndexError("bb_descr_qh does not work when only 1 distance measure is given: shape =%s"%(dist_array.shape))
+        raise IndexError("bb_exemp_qh does not work when only 1 distance measure is given: shape =%s"%(dist_array.shape))
     return (dist_array[i,1] - fg_d)/fg_d
 
 def bb_uniform(bb, i, pt_array, dist_array):
@@ -159,7 +171,11 @@ def det_energy(det, i, pt_array, dist_array):
     """
     return bb_energy(det, i, pt_array, dist_array)
 
-def det_qh(det, i, pt_array, dist_array):
+def det_wenergy(det, i, pt_array, dist_array):
+    
+    return bb_wenergy(det, i, pt_array, dist_array)
+
+def det_exemp_qh(det, i, pt_array, dist_array):
     """ Define the value of a detection by its Qh value
     Idea: never supply qh and qd, but give (as i) a list of indexes that
         make up the detection: qh can be computed from that (dist_qh for the sublist)
@@ -170,21 +186,14 @@ def det_qh(det, i, pt_array, dist_array):
     4.166666666666667
     """
     if len(dist_array.shape) == 1:
-        # No bg_dists, so take fg_d:
-        return det_mean_descr_fg(det, i, pt_array, dist_array)
+        raise IndexError("det_exemp_qh does not work when only 1 distance measure is given: shape =%s"%(dist_array.shape))
+        return det_exemp_mean_fg(det, i, pt_array, dist_array)
     else:
         return dist_qh(dist_array[i,:]).mean()-1
-
-def det_mean_descr_fg(det, i, pt_array, dist_array):
-    """ """
     
-    return dist_array[i].mean()
-
-def det_sum_descr_fg(det, i, pt_array, dist_array):
-    """
-    """
+def det_full_qh(det, i, pt_array, dist_array):
     
-    return dist_array[i].sum()
+    return bb_full_qh(det, i, pt_array, dist_array)
     
 def det_qd(det, i, pt_array, dist_array):
     """ Idea: never supply qh/qd, but give (as i) a list of indexes that
@@ -209,25 +218,47 @@ def det_becker(det, i, pt_array, dist_array):
     >>> det_becker([10,15,20,25],[2,3],np.array([[0,0],[10,10],[15,15],[20,20],[25,25],[15,20]]), np.array([[10.,10],[10,20],[30,10],[5,50],[50,5],[7,70]]))
     (2, 4.166666666666667)
     """
-    return (det_qd(det, i, pt_array, dist_array), det_qh(det, i, pt_array, dist_array))
+    return (det_qd(det, i, pt_array, dist_array), det_exemp_qh(det, i, pt_array, dist_array))
 
-def det_fg(det, i, pt_array, dist_array):
+def det_qd_exempfg(det, i, pt_array, dist_array):
+    
+    return (det_qd(det, i, pt_array, dist_array), det_exemp_mean_fg(det, i, pt_array, dist_array))
+
+def det_exemp_mean_fg(det, i, pt_array, dist_array):
+    """ """
+    
+    return dist_array[i,0].mean()
+
+def det_exemp_sum_fg(det, i, pt_array, dist_array):
+    """
+    """
+    
+    return dist_array[i,0].sum()
+
+def det_full_fg(det, i, pt_array, dist_array):
     """
     
     doctest:
     >>> det_fg([10,15,20,25],[2,3],np.array([[0,0],[10,10],[15,15],[20,20],[25,25],[15,20]]), np.array([[10.,10],[10,20],[30,10],[5,50],[50,5],[7,70]]))
     14.0
     """
-    return bb_fg(det, i, pt_array, dist_array)
+    return bb_full_fg(det, i, pt_array, dist_array)
 
-def det_bg(det, i, pt_array, dist_array):
+def det_exemp_bg(det, i, pt_array, dist_array):
+    return dist_array[i,1].mean()
+
+def det_full_bg(det, i, pt_array, dist_array):
     """
     
     doctest:
     >>> det_bg([10,15,20,25],[2,3],np.array([[0,0],[10,10],[15,15],[20,20],[25,25],[15,20]]), np.array([[10.,10],[10,20],[30,10],[5,50],[50,5],[7,70]]))
     None
     """
-    return bb_bg(det, i, pt_array, dist_array)*-1
+    return bb_full_bg(det, i, pt_array, dist_array)*-1
+
+def det_random(det, i, pt_array, dist_array):
+    return random.random()
+
 
 if __name__ == "__main__":
     import doctest

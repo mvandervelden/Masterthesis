@@ -1,6 +1,7 @@
-import sys
+import sys, traceback
 import numpy as np
 from multiprocessing import Pool
+import multiprocessing
 
 from logutils import *
 from nbnn import *
@@ -12,6 +13,34 @@ from file_io import *
 from detection_utils import *
 from metric_functions import *
 from quickshift import *
+
+""" Multiprocessing error handling """
+# Shortcut to multiprocessing's logger
+def error(msg, *args):
+    return multiprocessing.get_logger().error(msg, *args)
+
+class LogExceptions(object):
+    def __init__(self, callable):
+        self.__callable = callable
+        return
+
+    def __call__(self, *args, **kwargs):
+        try:
+            result = self.__callable(*args, **kwargs)
+
+        except Exception as e:
+            # Here we add some debugging help. If multiprocessing's
+            # debugging is on, it will arrange to log the traceback
+            error(traceback.format_exc())
+            # Re-raise the original exception so the Pool worker can
+            # clean up
+            raise
+
+        # It was fine, give a normal answer
+        return result
+    pass
+
+""" LOCAL NBNN FUNCTIONS """
 
 def train_local(classes, descriptors_function, estimator, VOCopts, GLOBopts, NBNNopts, TESTopts, DETopts, log):
 
@@ -196,7 +225,9 @@ def get_knn((image, configfile)):
     
     log.info("Local NN cfg:%s, im:%s",configfile, im_id)
     
-    classes = VOCopts.classes + ['background']
+    classes = ['aeroplane','bicycle','bird','boat','bottle','bus','car','cat',\
+            'chair','cow','diningtable','dog','horse','motorbike','person',\
+            'pottedplant','sheep','sofa','train','tvmonitor', 'background']
     no_classes = len(classes)
     log.info("Local NN cfg:%s, im:%s, no_cls:%d",configfile, im_id, no_classes)
     distlist = []
@@ -225,41 +256,54 @@ def get_knn((image, configfile)):
     log.info("Reshape distance & exemplar idxs")
     k = TESTopts['k']
     # n= no of descriptors in test image
-    n = distances.shape[0]
+    N = distances.shape[0]
     # Make a selection of the k nearest neighbors overall
     
-    distances = np.reshape(distances,[n, no_classes*k])
-    exemplar_indexes = np.reshape(exemplar_indexes, [n,no_classes*k])
+    distances = np.reshape(distances,[N, no_classes*k])
+    exemplar_indexes = np.reshape(exemplar_indexes, [N,no_classes*k])
     asort = np.argsort(distances)
     
     cls_idxs = np.array([i for i in range(no_classes) for kkk in range(k)])
     
-    cls_dists = [[[] for nn in range(n)] for c in classes]
-    cls_exempl = [[[] for nn in range(n)] for c in classes]
+    cls_dists = [[[] for nn in range(N)] for c in classes]
+    cls_bg_dists = [[np.inf for nn in range(N)] for c in classes]
+    cls_exempl = [[[] for nn in range(N)] for c in classes]
     
     log.info('Reshaped dist & ex_ind: %s & %s', distances.shape, exemplar_indexes.shape)
     log.info('Argsort shape: %s', asort.shape)
     log.info('cls_idxs shape: %s', cls_idxs.shape)
     log.info('cls_dists (%d lists of %d lists) & cls_exempl (%d lists of %d lists)', \
             len(cls_dists), len(cls_dists[0]), len(cls_exempl), len(cls_exempl[0]))
+    log.info('cls_bg_dists (%d lists of %d lists)', len(cls_bg_dists), len(cls_bg_dists[0]))
     
-    for i in range(n):
+    for i in range(N):
+        # Iterate over all descriptors i, and get the k nearest of these
         sort_dists = distances[i,asort[i,:k]]
+        # Get their classes
         sort_cls = cls_idxs[asort[i,:k]]
+        # Get their exemplar indexes
         sort_exempl = exemplar_indexes[i,asort[i,:k]]
+        # Get nearest bg_dist for each class
+        for j, d in enumerate(sort_dists):
+            for cl in range(no_classes):
+                if (not cl == sort_cls[j]) and cls_bg_dists[cl][i] > d:
+                    cls_bg_dists[cl][i] = d
         
+        # Get near dists & exemplars for each class
         for j, cl in enumerate(sort_cls):
             cls_dists[cl][i].append(sort_dists[j])
             cls_exempl[cl][i].append(sort_exempl[j])
+        
     log.info('Built lists of cls_dists and cls_exempl')
     total_dists = 0
-    goal = k*n
+    goal = k*N
     for c in range(no_classes):
         cls = classes[c]
         no_cls_dists = sum([len(n) for n in cls_dists[c]])
+        no_bg_dists = len(cls_bg_dists[c])
         total_dists += no_cls_dists
-        log.info('Saving knn for cls %s, %d dists', cls, no_cls_dists)
-        save_knn(DETopts[1]['knn_path']%(im_id, cls), cls_dists[c], cls_exempl[c], logger=log)
+        log.info('Saving knn for cls %s, %d dists, %d bg_dists', cls, no_cls_dists, no_bg_dists)
+        save_knn(DETopts[1]['knn_path']%(im_id, cls), cls_dists[c], cls_bg_dists[c], cls_exempl[c], logger=log)
         log.info('Saved %d of %d distances', total_dists, goal)
     log.info("===FINISHED kNN SUBDIVISION===")
     # compare nearest neighbors
@@ -281,15 +325,16 @@ def detection((image, cls, configfile)):
     points = load_points(DETopts['knn_path']%(im_id, 'points'),logger=log)
     
     log.info('==== LOADING kNN DISTANCES ====')
-    distances, nearest_exemplar_indexes = load_knn(DETopts['knn_path']%(im_id, cls), \
+    distances, bg_distances, nearest_exemplar_indexes = load_knn(DETopts['knn_path']%(im_id, cls), \
             logger=log)
     
     no_distances = sum([len(d) for d in distances])
-    log.debug("Got %d distance_lists, %d ex_indexes_lists, element of idx_list: %s", len(distances), len(nearest_exemplar_indexes), nearest_exemplar_indexes[0])
-    log.debug("no of distances: %d, no of ex_ix: %d", no_distances, sum([len(n) for n in nearest_exemplar_indexes]))
+    no_bg_distances = len(bg_distances)
+    log.debug("Got %d distance_lists, %d bg_distance lists, %d ex_indexes_lists, element of idx_list: %s", len(distances), len(bg_distances), len(nearest_exemplar_indexes), nearest_exemplar_indexes[0])
+    log.debug("No of distances: %d, no of bg_dists: %d, no of ex_ix: %d", no_distances, no_bg_distances, sum([len(n) for n in nearest_exemplar_indexes]))
     if no_distances == 0:
         log.debug('No distances found for im %s, cls %s, k=%d. NO DETECTIONS TO BE FOUND', im_id, cls, TESTopts['k'])
-        save_detections(GLOBopts['result_path']%(im_id, cls), np.zeros([0,4]), np.zeros([0,1]))
+        save_detections(GLOBopts['result_path']%(im_id, cls), np.zeros([0,4]), np.zeros([0,2]))
         log.info('==== FINISHED DETECTION ====')
         return
     log.debug('Number of distances found %d > 0', no_distances)
@@ -299,7 +344,16 @@ def detection((image, cls, configfile)):
     log.debug('Built a pointsarray: shape: %s', points.shape)
     nearest_exemplar_indexes = np.hstack([e for eee in nearest_exemplar_indexes for e in eee])
     log.debug('Built n_ex_ind array: %s', nearest_exemplar_indexes.shape)
+    bg_dist = []
+    for i, d in enumerate(distances):
+        for j, ddd in enumerate(d):
+            bg_dist.append(bg_distances[i])
+    bg_distances = np.hstack(bg_dist)
+    log.debug('Built bg_distances array: %s', bg_distances.shape)
     distances = np.hstack([d for ddd in distances for d in ddd])
+    log.debug('Built distances array: %s', distances.shape)
+
+    distances = np.vstack([distances, bg_distances]).T
     log.debug('Built distances array: %s', distances.shape)
     
     log.info('==== LOADING NEAREST EXEMPLARS ====')
@@ -365,14 +419,19 @@ def rank_detections((cls, configfile)):
     log.info("Making VOC results files cfg:%s, cls:%s",configfile, cls)
     
     vimages = read_image_set(VOCopts, GLOBopts['test_set'])
-    log.info('Ranking images: %s',' '.join([im.im_id for im in vimages]))
+    log.info('Ranking %s images. ',len(vimages))
     
     det_metrics = DETopts['detection_metric']
-    ranking_paths = DETopts['ranking_paths'] 
-    for det_metric, ranking_path in zip(det_metrics, ranking_paths):
-        
-        outputf = ranking_path%(GLOBopts['test_set'], cls)
-        
+    ranking_path = DETopts['ranking_path'] 
+    for det_metric in det_metrics:
+        log.debug("Ranking for metric: %s, path: %s", det_metric, ranking_path)
+        outputf = ranking_path%(det_metric, GLOBopts['test_set'], cls)
+        if 'hyp_' in det_metric:
+            hyp = True
+            metric = det_metric[4:]
+        else:
+            hyp = False
+            metric = det_metric
         all_detections = []
         all_det_vals = []
         all_det_imids = []
@@ -381,19 +440,74 @@ def rank_detections((cls, configfile)):
             im_id = vimage.im_id
             log.info('Parsing image %s detections...', im_id)
             detfile = GLOBopts['result_path']%(im_id, cls)
+            
+            if hyp:
+                # hypothesis based ranking method
+                log.setLevel(logging.WARNING)
+                image = vimage
+                log.info('=== LOADING POINTS ===')
+                points = load_points(DETopts['knn_path']%(im_id, 'points'),logger=log)
+                log.info('==== LOADING kNN DISTANCES ====')
+                distances, bg_distances, nearest_exemplar_indexes = load_knn(DETopts['knn_path']%(im_id, cls), \
+                        logger=log)
+                no_distances = sum([len(d) for d in distances])
+                no_bg_distances = len(bg_distances)
+                log.debug("Got %d distance_lists, %d bg_distance lists, %d ex_indexes_lists, element of idx_list: %s", len(distances), len(bg_distances), len(nearest_exemplar_indexes), nearest_exemplar_indexes[0])
+                log.debug("No of distances: %d, no of bg_dists: %d, no of ex_ix: %d", no_distances, no_bg_distances, sum([len(n) for n in nearest_exemplar_indexes]))
+                if no_distances == 0:
+                    log.warning('No distances found for im %s, cls %s, k=%s. NO RANKING TO BE FOUND', im_id, cls, TESTopts['k'])
+                    log.warning('==== FINISHED RANKING im %s, cls %s ====', image.im_id, cls)
+                    continue
+                log.debug('Number of distances found %d > 0', no_distances)
+                pointslist = [[points[i,:] for k in n] for i,n in enumerate(nearest_exemplar_indexes)]
+                log.debug('Built a pointslist: len = %d, inner list sum: %d', len(pointslist), sum([len(p) for p in pointslist]))
+                points = np.vstack([p for ppp in pointslist for p in ppp])
+                log.debug('Built a pointsarray: shape: %s', points.shape)
+                nearest_exemplar_indexes = np.hstack([e for eee in nearest_exemplar_indexes for e in eee])
+                log.debug('Built n_ex_ind array: %s', nearest_exemplar_indexes.shape)
+                bg_dist = []
+                for i, d in enumerate(distances):
+                    for j, ddd in enumerate(d):
+                        bg_dist.append(bg_distances[i])
+                bg_distances = np.hstack(bg_dist)
+                log.debug('Built bg_distances array: %s', bg_distances.shape)
+                distances = np.hstack([d for ddd in distances for d in ddd])
+                log.debug('Built distances array: %s', distances.shape)
+                distances = np.vstack([distances, bg_distances]).T
+                log.debug('Combined distances array: %s', distances.shape)
     
-            detections, reflist, distances, points = load_detections(detfile,im_id, logger=log)
-            if detections.shape[0] == 0:
-                log.info("No detections for image %s, skip this image",im_id)
-                continue
-            if not isinstance(reflist[0], np.ndarray):
-                # If reflist is a lst of lists instead of a list of ndarrays, convert
-                reflist = [np.array(l) for l in reflist]
-            log.info(" Detections: %s, Reflist: %s (max: %d), distances: %s, points: %s", \
-                    detections.shape, len(reflist), max([l.max() for l in reflist]), \
-                    distances.shape, points.shape)
-            detection_vals = get_detection_values(detections, reflist, distances, \
-                    points, eval(det_metric), logger=log)
+                log.info('==== LOADING NEAREST EXEMPLARS ====')
+                exemplars = load_exemplars(DETopts['exemplar_path']%cls, nearest_exemplar_indexes, logger=log)
+    
+                log.info('==== GET HYPOTHESES ====')
+                hypotheses = get_hypotheses(exemplars, points, image.width, image.height, logger=log)
+                if hypotheses.shape[0] == 0:
+                    log.warning("== FOUND NO HYPOTHESES . No ranking possible!")
+                
+                detections = hypotheses
+                reflist = [[i] for i in range(hypotheses.shape[0])]
+                log.setLevel(logging.DEBUG)
+            else:
+                detections, reflist, distances, points = load_detections(detfile,im_id, logger=log)
+                if detections.shape[0] == 0:
+                    log.warning("No detections for image %s, skip this image",im_id)
+                    continue
+                if not isinstance(reflist[0], np.ndarray):
+                    # If reflist is a lst of lists instead of a list of ndarrays, convert
+                    reflist = [np.array(l) for l in reflist]
+                log.info(" Detections: %s, Reflist: %s (max: %d), distances: %s, points: %s", \
+                        detections.shape, len(reflist), max([l.max() for l in reflist]), \
+                        distances.shape, points.shape)
+            if metric == 'qs_density':
+                qs_parents, qs_dists, qs_E = load_quickshift_tree(DETopts['quickshift_tree_path']%(cls, im_id))
+                boolroots = np.array([i==p for i,p in enumerate(qs_parents)])
+                log.debug('boolroots sum, size: %s, %s', boolroots.sum(), boolroots.shape)
+                qs_E = np.array(qs_E)
+                detection_vals = qs_E[boolroots]
+                log.info('Quickshift density Estimates of detections: size: %s', detection_vals.shape)
+            else:
+                detection_vals = get_detection_values(detections, reflist, distances, \
+                        points, eval(metric), logger=log)
             log.info("im %s: det shape=%s, det_vals shape=%s"%(im_id, \
                     detections.shape, detection_vals.shape))
             all_detections.append(detections)
@@ -402,15 +516,20 @@ def rank_detections((cls, configfile)):
             all_det_imids.append(imids)
             log.info("stored imids shape:%s", imids.shape)
         all_detections = np.vstack(all_detections)
-        all_det_vals = np.vstack(all_det_vals)
+        if len(all_det_vals[0].shape) > 1:
+            all_det_vals = np.vstack(all_det_vals)
+        else:
+            all_det_vals = np.hstack(all_det_vals)
         all_det_imids = np.hstack(all_det_imids)
         log.info("Found %s detections, %s vals, %s imids", all_detections.shape, \
                 all_det_vals.shape, all_det_imids.shape)
-        ranking = sort_values(all_det_vals, logger=log)
-        log.info("ranking shape: %s", ranking.shape)
-    
-        save_voc_results(outputf, all_detections[ranking], all_det_vals[ranking], \
-                all_det_imids[ranking], logger=log)
+        if len(all_det_vals.shape) > 1:
+            ranking = sort_values(all_det_vals, logger=log)
+            log.info("ranking shape: %s", ranking.shape)
+            save_voc_results(outputf, all_detections[ranking], all_det_vals[ranking], \
+                    all_det_imids[ranking], logger=log)
+        else:
+            save_voc_results(outputf, all_detections, all_det_vals, all_det_imids, logger=log)
     
     log.info('FINISHED')
 
@@ -423,15 +542,28 @@ if __name__ == "__main__":
     if len(sys.argv) == 3:
         if sys.argv[2] == '--rankingonly':
             rankingonly = True
+            testlogging = False
+        elif sys.argv[2] == '--testlogging':
+            testlogging = True
+            rankingonly = False
+    else:
+        rankingonly = False
+        testlogging = False
     
     VOCopts = VOC.fromConfig(configfile)
     GLOBopts, DESCRopts, NBNNopts, TESTopts, DETopts = getopts(configfile)
+
+    # Setup multiprocessing logging
+    multiprocessing.log_to_stderr()
+    mplogger = multiprocessing.get_logger()
+    mplogger.setLevel(logging.INFO)
     
     # Setup logger
     log = init_log(GLOBopts['log_path'], 'training', 'w')
     
     nn_threads = GLOBopts['nn_threads']
     det_threads = GLOBopts['det_threads']
+    rank_threads = GLOBopts['rank_threads']
     test_classes = VOCopts.classes
     train_classes = ['aeroplane','bicycle','bird','boat','bottle','bus','car','cat',\
         'chair','cow','diningtable','dog','horse','motorbike','person',\
@@ -443,85 +575,87 @@ if __name__ == "__main__":
     log.info('==== INIT DESCRIPTOR FUNCTION ====')
     descriptor_function = init_descriptor(DESCRopts[0])
     
-    if not rankingonly:
-        log.info('==============================')
-        log.info('========== TRAINING ==========')
-        log.info('==============================')
-    
-        # VOC07 detection
-    
-        log.info('==== INIT ESTIMATOR FOR CLASS ====')
-        estimator = init_estimator(GLOBopts['nbnn_path']%'estimator', NBNNopts)
-    
-        train_local(train_classes, descriptor_function, estimator, VOCopts, GLOBopts, NBNNopts, TESTopts, DETopts, log)
-    
-        log.info('==== TRAINING FINISHED ====')
-    
-        log.info('==============================')
-        log.info('======== MAKE BATCHES ========')
-        log.info('==============================')
-    
-        # Save descriptors of test set to disk
-        batches = make_voc_batches(descriptor_function, VOCopts, GLOBopts, TESTopts)
-        log.info('==== BATCHMAKING FINISHED ====')
-    
-        """ Now, Do stuff per batch and per class, so multithread!"""
-    
-        no_batches = len(batches)
-    
-        log.info("No of NN-threads: %d:",nn_threads)
-        log.info("No of batches: %d",no_batches)
-        log.info("No of train classes: %d", no_train_classes)
-        log.info("No of test classes: %d", no_test_classes)
-    
-        log.info('==============================')
-        log.info('===== NN for all BATCHES =====')
-        log.info('==============================')
-    
-        nn_pool = Pool(processes = nn_threads)
-        argtuples = []
-        for batch_no, batch in enumerate(batches):
-            for cls in train_classes:
-                log.info('ADD BATCH NO: %d, CLS: %s to the pool', batch_no, cls)
-                argtuples.append((batch_no, cls, batch, configfile))
-        nn_pool.map(get_detection_dists, argtuples)
-    
-        # GET THE OVERALL kNN    
-        log.info('==============================')
-        log.info('===== K-NN for all IMAGES ====')
-        log.info('==============================')
-    
-        knn_pool = Pool(processes = det_threads)
-        argtuples = []
-        for batch in batches:
-            for im in batch:
-                argtuples.append((im, configfile))
-        knn_pool.map(get_knn, argtuples)
-    
-        # DETECTION PER IMAGE
-        log.info('==============================')
-        log.info('== DETECTION FOR ALL IMAGES ==')
-        log.info('==============================')
-        det_pool = Pool(processes = det_threads)
-        argtuples = []
-        for batch in batches:
-            for im in batch:
-                for cls in test_classes:
-                    if not cls == 'background':
-                        argtuples.append((im, cls, configfile))
-        det_pool.map(detection, argtuples)
+    # if not rankingonly:
+        # log.info('==============================')
+        # log.info('========== TRAINING ==========')
+        # log.info('==============================')
+        #     
+        # # VOC07 detection
+        #     
+        # log.info('==== INIT ESTIMATOR FOR CLASS ====')
+        # estimator = init_estimator(GLOBopts['nbnn_path']%'estimator', NBNNopts)
+        # 
+        # # train_local(train_classes, descriptor_function, estimator, VOCopts, GLOBopts, NBNNopts, TESTopts, DETopts, log)
+        #     
+        # log.info('==== TRAINING FINISHED ====')
+        #     
+        # log.info('==============================')
+        # log.info('======== MAKE BATCHES ========')
+        # log.info('==============================')
+        #     
+        # # Save descriptors of test set to disk
+        # batches = make_voc_batches(descriptor_function, VOCopts, GLOBopts, TESTopts)
+        # log.info('==== BATCHMAKING FINISHED ====')
+        #     
+        # """ Now, Do stuff per batch and per class, so multithread!"""
+        #     
+        # no_batches = len(batches)
+        #     
+        # log.info("No of NN-threads: %d:",nn_threads)
+        # log.info("No of batches: %d",no_batches)
+        # log.info("No of train classes: %d", no_train_classes)
+        # log.info("No of test classes: %d", no_test_classes)
+        #     
+        # log.info('==============================')
+        # log.info('===== NN for all BATCHES =====')
+        # log.info('==============================')
+            
+        # nn_pool = Pool(processes = nn_threads)
+        # argtuples = []
+        # for batch_no, batch in enumerate(batches):
+        #     for cls in train_classes:
+        #         log.info('ADD BATCH NO: %d, CLS: %s to the pool', batch_no, cls)
+        #         argtuples.append((batch_no, cls, batch, configfile))
+        # nn_pool.map(LogExceptions(get_detection_dists), argtuples)
+        # nn_pool.close()
+        
+        # # GET THE OVERALL kNN
+        # log.info('==============================')
+        # log.info('===== K-NN for all IMAGES ====')
+        # log.info('==============================')
+        #     
+        # knn_pool = Pool(processes = det_threads)
+        # argtuples = []
+        # for batch in batches:
+        #     for im in batch:
+        #         argtuples.append((im, configfile))
+        # knn_pool.map(LogExceptions(get_knn), argtuples)
+        # knn_pool.close()
+        # # DETECTION PER IMAGE
+        # log.info('==============================')
+        # log.info('== DETECTION FOR ALL IMAGES ==')
+        # log.info('==============================')
+        # det_pool = Pool(processes = det_threads)
+        # argtuples = []
+        # for batch in batches:
+        #     for im in batch:
+        #         for cls in test_classes:
+        #             if not cls == 'background':
+        #                 argtuples.append((im, cls, configfile))
+        # det_pool.map(LogExceptions(detection), argtuples)
+        # det_pool.close()
     
     log.info('==============================')
     log.info('======= RANK DETECTIONS ======')
     log.info('==============================')
     
-    rank_pool = Pool(processes = det_threads)
+    rank_pool = Pool(processes = rank_threads)
     argtuples = []
     for cls in test_classes:
         if not cls == 'background':
             argtuples.append((cls, configfile))
-    rank_pool.map(rank_detections, argtuples)
-    
+    rank_pool.map(LogExceptions(rank_detections), argtuples)
+    rank_pool.close()
     
     log.info('==============================')
     log.info('======== FINISHED TEST =======')

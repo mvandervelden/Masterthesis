@@ -58,6 +58,8 @@ def getopts(configfile):
         GLOBopts['nn_threads'] = int(GLOBopts['nn_threads'])
     if 'det_threads' in GLOBopts:
         GLOBopts['det_threads'] = int(GLOBopts['det_threads'])
+    if 'rank_threads' in GLOBopts:
+        GLOBopts['rank_threads'] = int(GLOBopts['rank_threads'])
     if 'randbg' in GLOBopts:
         GLOBopts['randbg'] = int(GLOBopts['randbg'])
     
@@ -145,27 +147,31 @@ def getopts(configfile):
         exemplar_dir = '/'.join(DETopts[1]['exemplar_path'].split('/')[:-1])
         distances_dir = '/'.join(DETopts[1]['distances_path'].split('/')[:-1])
         hypotheses_dir = '/'.join(DETopts[1]['hypotheses_path'].split('/')[:-1])
+        assert_dir(exemplar_dir)
+        assert_dir(distances_dir)
+        assert_dir(hypotheses_dir)
         if 'knn_path' in DETopts[1]:
             DETopts[1]['knn_path'] = '/'.join([tmpdir, DETopts[1]['knn_path']])
             knn_dir = '/'.join(DETopts[1]['knn_path'].split('/')[:-1])
             assert_dir(knn_dir)
-        assert_dir(exemplar_dir)
-        assert_dir(distances_dir)
-        assert_dir(hypotheses_dir)
+        if 'ranking_path' in DETopts[1]:
+            DETopts[1]['ranking_path'] = '/'.join([resdir, DETopts[1]['ranking_path']])
+            rank_dir = '/'.join(DETopts[1]['ranking_path'].split('/')[:-2])
+            assert_dir(rank_dir)
+        
         if 'quickshift_tree_path' in DETopts[1]:
             DETopts[1]['quickshift_tree_path'] = '/'.join([tmpdir, DETopts[1]['quickshift_tree_path']])
             quickshift_tree_dir = '/'.join(DETopts[1]['quickshift_tree_path'].split('/')[:-1])
             assert_dir(quickshift_tree_dir)
         
-        dm = DETopts[1]['det_metric']
+        dm = DETopts[1]['detection_metric']
         dmlist = dm.split(',')
-        DETopts[1]['det_metric'] = dmlist
-        rankpathlist = []
+        DETopts[1]['detection_metric'] = dmlist
+        
         for d in dmlist:
-            rdir = '/'.join([resdir, d])
+            rdir = '/'.join(DETopts[1]['ranking_path'].split('/')[:-1])%d
+            filef = DETopts[1]['ranking_path'].split('/')[-1]
             assert_dir(rdir)
-            rankpathlist.append(rdir + '/comp3_det_%s_%s.txt')
-        DETopts[1]['det_path'] = rankpathlist
         return GLOBopts, DESCRopts, NBNNopts, TESTopts, DETopts
     else:
         return GLOBopts, DESCRopts, NBNNopts, TESTopts, None

@@ -100,13 +100,14 @@ def load_points(filename, logger=None):
     
     return points
 
-def save_knn(filename, distances, exemplar_indexes, logger=None):
+def save_knn(filename, distances, bg_distances, exemplar_indexes, logger=None):
     if not logger is None:
         log = logger
     else:
         log = logging.getLogger(__name__)
     with open(filename, 'wb') as dfile:
         cPickle.dump(distances, dfile)
+        cPickle.dump(bg_distances, dfile)
         cPickle.dump(exemplar_indexes, dfile)
 
 def load_knn(filename, logger=None):
@@ -116,10 +117,11 @@ def load_knn(filename, logger=None):
         log = logging.getLogger(__name__)
     with open(filename, 'rb') as f:
         distances = cPickle.load(f)
+        bg_distances = cPickle.load(f)
         exemplar_indexes = cPickle.load(f)
-    log.info('++ LOADING kNN distances & exemplars from %s, dist: %d, exemp: %d', \
-        filename, len(distances), len(exemplar_indexes))
-    return distances, exemplar_indexes
+    log.info('++ LOADING kNN distances & exemplars from %s, dist: %d, bg_dsts: %d, exemp: %d', \
+        filename, len(distances), len(bg_distances), len(exemplar_indexes))
+    return distances, bg_distances, exemplar_indexes
 
 def save_exemplars(filename, exemplars, logger=None):
     if not logger is None:
@@ -221,23 +223,26 @@ def load_detections(filename, im_id, logger=None):
         descr_points.shape)
     return detections, reflist, descr_distances, descr_points
 
-def save_quickshift_tree(filename, parents, distances):
-    log.info('++ SAVING quickshift tree to %s: parents: %s, distances:%s', \
-        filename, parents.shape, distances.shape)
+def save_quickshift_tree(filename, parents, distances, E):
+    log.info('++ SAVING quickshift tree to %s: parents: %s, distances:%s, E: %s', \
+        filename, parents.shape, distances.shape, len(E))
     with open(filename, 'wb') as pklfile:
         cPickle.dump(parents, pklfile)
         cPickle.dump(distances, pklfile)
+        cPickle.dump(E, pklfile)
 
 def load_quickshift_tree(filename):
     with open(filename, 'rb') as f:
         parents = cPickle.load(f)
         distances = cPickle.load(f)
-    log.info('++ LOADING quickshift tree from %s: parents: %s, distances: %s',\
-        filename, parents.shape, distances.shape)
-    return parents, distances
+        E = cPickle.load(f)
+    log.info('++ LOADING quickshift tree from %s: parents: %s, distances: %s, E:%s',\
+        filename, parents.shape, distances.shape, len(E))
+    return parents, distances, E
 
 def save_voc_results(filename, detections, values, im_ids, logger=None):
-    """Assuming values is array with values higher=more confidence
+    """Assuming values is array with values lower = more confidence (less distance).
+        VOC wants confidence (higher = more confidence), so invert
     
     """
     if not logger is None:
@@ -251,10 +256,12 @@ def save_voc_results(filename, detections, values, im_ids, logger=None):
         l = values.shape
         firstval = values[0,:]
         lastval = values[-1,:]
-        values = np.arange(l[0])
+        values = np.arange(l[0], 0, -1)
         log.info('made values of shape: %s into range [0,...,%d]',l, values.shape[0])
         log.info('first entry was: %s, and becomes %d',firstval, values[0])
         log.info('last entry was: %s, and becomes %d',lastval, values[-1])
+    else:
+        values = values * -1
     with open(filename, 'w') as f:
         for i in xrange(values.shape[0]):
             f.write("%s %f %s\n"%(im_ids[i], values[i], "%f %f %f %f"%tuple(detections[i,:])))
