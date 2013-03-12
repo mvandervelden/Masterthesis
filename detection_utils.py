@@ -191,6 +191,7 @@ def sort_values(values, logger=None):
         return s
     else:
         # Sort values in increasing order, by first col first, then by sec col
+        # NB: Sorts from small to large: Becker: small clusters first, small qh vals first (which are both 'bad' values)
         s = np.lexsort(np.fliplr(values).T)
         log.debug(' -- ranking dimensions: %s', s.shape)
         return s
