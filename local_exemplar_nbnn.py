@@ -372,7 +372,7 @@ def detection((image, cls, configfile)):
     # Keep only the best n descriptors (largest relative margin d+, d-)
     if 'hyp_cutoff' in DETopts:
         log.info('Using %s hypotheses, out of %d', DETopts['hyp_cutoff'], hypotheses.shape[0])
-        ranking = ranking[:int(DETopts['hyp_cutoff'])]
+        ranking = ranking[-int(DETopts['hyp_cutoff']):]
     hvalues = hvalues[ranking]
     hypotheses = hypotheses[ranking]
     # Make sure points and distances are selected and sorted in the same way, and saved with the detections
@@ -575,75 +575,75 @@ if __name__ == "__main__":
     log.info('==== INIT DESCRIPTOR FUNCTION ====')
     descriptor_function = init_descriptor(DESCRopts[0])
     
-    # if not rankingonly:
-        # log.info('==============================')
-        # log.info('========== TRAINING ==========')
-        # log.info('==============================')
-        #     
-        # # VOC07 detection
-        #     
-        # log.info('==== INIT ESTIMATOR FOR CLASS ====')
-        # estimator = init_estimator(GLOBopts['nbnn_path']%'estimator', NBNNopts)
-        # 
-        # # train_local(train_classes, descriptor_function, estimator, VOCopts, GLOBopts, NBNNopts, TESTopts, DETopts, log)
-        #     
-        # log.info('==== TRAINING FINISHED ====')
-        #     
-        # log.info('==============================')
-        # log.info('======== MAKE BATCHES ========')
-        # log.info('==============================')
-        #     
-        # # Save descriptors of test set to disk
-        # batches = make_voc_batches(descriptor_function, VOCopts, GLOBopts, TESTopts)
-        # log.info('==== BATCHMAKING FINISHED ====')
-        #     
-        # """ Now, Do stuff per batch and per class, so multithread!"""
-        #     
-        # no_batches = len(batches)
-        #     
-        # log.info("No of NN-threads: %d:",nn_threads)
-        # log.info("No of batches: %d",no_batches)
-        # log.info("No of train classes: %d", no_train_classes)
-        # log.info("No of test classes: %d", no_test_classes)
-        #     
-        # log.info('==============================')
-        # log.info('===== NN for all BATCHES =====')
-        # log.info('==============================')
+    if not rankingonly:
+        log.info('==============================')
+        log.info('========== TRAINING ==========')
+        log.info('==============================')
             
-        # nn_pool = Pool(processes = nn_threads)
-        # argtuples = []
-        # for batch_no, batch in enumerate(batches):
-        #     for cls in train_classes:
-        #         log.info('ADD BATCH NO: %d, CLS: %s to the pool', batch_no, cls)
-        #         argtuples.append((batch_no, cls, batch, configfile))
-        # nn_pool.map(LogExceptions(get_detection_dists), argtuples)
-        # nn_pool.close()
+        # VOC07 detection
+            
+        log.info('==== INIT ESTIMATOR FOR CLASS ====')
+        estimator = init_estimator(GLOBopts['nbnn_path']%'estimator', NBNNopts)
         
-        # # GET THE OVERALL kNN
-        # log.info('==============================')
-        # log.info('===== K-NN for all IMAGES ====')
-        # log.info('==============================')
-        #     
-        # knn_pool = Pool(processes = det_threads)
-        # argtuples = []
-        # for batch in batches:
-        #     for im in batch:
-        #         argtuples.append((im, configfile))
-        # knn_pool.map(LogExceptions(get_knn), argtuples)
-        # knn_pool.close()
-        # # DETECTION PER IMAGE
-        # log.info('==============================')
-        # log.info('== DETECTION FOR ALL IMAGES ==')
-        # log.info('==============================')
-        # det_pool = Pool(processes = det_threads)
-        # argtuples = []
-        # for batch in batches:
-        #     for im in batch:
-        #         for cls in test_classes:
-        #             if not cls == 'background':
-        #                 argtuples.append((im, cls, configfile))
-        # det_pool.map(LogExceptions(detection), argtuples)
-        # det_pool.close()
+        train_local(train_classes, descriptor_function, estimator, VOCopts, GLOBopts, NBNNopts, TESTopts, DETopts, log)
+            
+        log.info('==== TRAINING FINISHED ====')
+            
+        log.info('==============================')
+        log.info('======== MAKE BATCHES ========')
+        log.info('==============================')
+            
+        # Save descriptors of test set to disk
+        batches = make_voc_batches(descriptor_function, VOCopts, GLOBopts, TESTopts)
+        log.info('==== BATCHMAKING FINISHED ====')
+            
+        """ Now, Do stuff per batch and per class, so multithread!"""
+            
+        no_batches = len(batches)
+            
+        log.info("No of NN-threads: %d:",nn_threads)
+        log.info("No of batches: %d",no_batches)
+        log.info("No of train classes: %d", no_train_classes)
+        log.info("No of test classes: %d", no_test_classes)
+            
+        log.info('==============================')
+        log.info('===== NN for all BATCHES =====')
+        log.info('==============================')
+            
+        nn_pool = Pool(processes = nn_threads)
+        argtuples = []
+        for batch_no, batch in enumerate(batches):
+            for cls in train_classes:
+                log.info('ADD BATCH NO: %d, CLS: %s to the pool', batch_no, cls)
+                argtuples.append((batch_no, cls, batch, configfile))
+        nn_pool.map(LogExceptions(get_detection_dists), argtuples)
+        nn_pool.close()
+        
+        # GET THE OVERALL kNN
+        log.info('==============================')
+        log.info('===== K-NN for all IMAGES ====')
+        log.info('==============================')
+            
+        knn_pool = Pool(processes = det_threads)
+        argtuples = []
+        for batch in batches:
+            for im in batch:
+                argtuples.append((im, configfile))
+        knn_pool.map(LogExceptions(get_knn), argtuples)
+        knn_pool.close()
+        # DETECTION PER IMAGE
+        log.info('==============================')
+        log.info('== DETECTION FOR ALL IMAGES ==')
+        log.info('==============================')
+        det_pool = Pool(processes = det_threads)
+        argtuples = []
+        for batch in batches:
+            for im in batch:
+                for cls in test_classes:
+                    if not cls == 'background':
+                        argtuples.append((im, cls, configfile))
+        det_pool.map(LogExceptions(detection), argtuples)
+        det_pool.close()
     
     log.info('==============================')
     log.info('======= RANK DETECTIONS ======')

@@ -25,7 +25,7 @@ def dist_bg(dist_array):
     >>> dist_bg(np.array([[0,0],[0,0.5],[1000.000,9999999.034534]]))
     array([  0.00000000e+00,   5.00000000e-01,   9.99999903e+06])
     """
-    return dist_array[:,1]
+    return dist_array[:,1]*-1
 
 def dist_qh(dist_array):
     """ From a distance array, returns the Qh distance: Relative distance
@@ -42,7 +42,7 @@ def dist_qh(dist_array):
         rep = 1e-25
         log.warning('Replacing this with %f',rep)
         dist_array[dist_array[:,0]<=0,0] = rep
-    return (dist_array[:,1] - dist_array[:,0]) / dist_array[:,0]
+    return (-1*(dist_array[:,1] - dist_array[:,0])) / dist_array[:,0]
 
 def bb_energy(bb, i, pt_array, dist_array):
     """ Calculate the energy of a Bounding Box: E = sum of distances of
@@ -104,7 +104,7 @@ def bb_full_bg(bb, i, pt_array, dist_array):
     """
     pts_in_bb = points_in_bb(bb, pt_array)
     if len(dist_array.shape) > 1:
-        return dist_array[pts_in_bb,1].mean()
+        return dist_array[pts_in_bb,1].mean()*-1
     else:
         raise ValueError("No Background distances available to calculate mean distance of.")
 
@@ -129,7 +129,7 @@ def bb_full_qh(bb, i, pt_array, dist_array):
         fg_d[fg_d==0] = fg_d[fg_d>0].min()/1.e99
     log.debug(' -- bb_qh: out:%f',( (bg_d - fg_d)/fg_d ).mean())
     
-    return ( (bg_d - fg_d)/fg_d ).mean()
+    return ( (bg_d - fg_d)/fg_d ).mean()*-1
 
 def bb_exemp_fg(bb, i, pt_array, dist_array):
     """ Return the bb's descriptor fg dist
@@ -150,7 +150,7 @@ def bb_exemp_qh(bb, i, pt_array, dist_array):
     """
     if len(dist_array.shape) == 1:
         raise IndexError("bb_exemp_qh does not work when only 1 distance measure is given: shape =%s"%(dist_array.shape))
-    return (dist_array[i,1] - fg_d)/fg_d
+    return (-1*(dist_array[i,1] - fg_d))/fg_d
 
 def bb_uniform(bb, i, pt_array, dist_array):
     """ Define the value of a BB uniformly: each BB has value 1.
@@ -189,7 +189,7 @@ def det_exemp_qh(det, i, pt_array, dist_array):
         raise IndexError("det_exemp_qh does not work when only 1 distance measure is given: shape =%s"%(dist_array.shape))
         return det_exemp_mean_fg(det, i, pt_array, dist_array)
     else:
-        return dist_qh(dist_array[i,:]).mean()-1
+        return dist_qh(dist_array[i,:]).mean()
     
 def det_full_qh(det, i, pt_array, dist_array):
     
@@ -245,7 +245,7 @@ def det_full_fg(det, i, pt_array, dist_array):
     return bb_full_fg(det, i, pt_array, dist_array)
 
 def det_exemp_bg(det, i, pt_array, dist_array):
-    return dist_array[i,1].mean()
+    return dist_array[i,1].mean()*-1
 
 def det_full_bg(det, i, pt_array, dist_array):
     """
@@ -254,7 +254,7 @@ def det_full_bg(det, i, pt_array, dist_array):
     >>> det_bg([10,15,20,25],[2,3],np.array([[0,0],[10,10],[15,15],[20,20],[25,25],[15,20]]), np.array([[10.,10],[10,20],[30,10],[5,50],[50,5],[7,70]]))
     None
     """
-    return bb_full_bg(det, i, pt_array, dist_array)*-1
+    return bb_full_bg(det, i, pt_array, dist_array)
 
 def det_random(det, i, pt_array, dist_array):
     return random.random()
