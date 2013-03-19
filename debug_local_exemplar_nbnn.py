@@ -545,11 +545,9 @@ if __name__ == "__main__":
     configfile = sys.argv[1]
     if len(sys.argv) == 3:
         if sys.argv[2] == '--rankingonly':
-            print 'rankingonly'
             rankingonly = True
             testlogging = False
         elif sys.argv[2] == '--testlogging':
-            print 'testlogging'
             testlogging = True
             rankingonly = False
     else:

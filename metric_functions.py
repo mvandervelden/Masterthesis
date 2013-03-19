@@ -150,7 +150,7 @@ def bb_exemp_qh(bb, i, pt_array, dist_array):
     """
     if len(dist_array.shape) == 1:
         raise IndexError("bb_exemp_qh does not work when only 1 distance measure is given: shape =%s"%(dist_array.shape))
-    return (-1*(dist_array[i,1] - fg_d))/fg_d
+    return (-1*(dist_array[i,1] - dist_array[i,0]))/dist_array[i,0]
 
 def bb_uniform(bb, i, pt_array, dist_array):
     """ Define the value of a BB uniformly: each BB has value 1.
