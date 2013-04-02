@@ -416,6 +416,7 @@ def rank_detections((cls, configfile)):
     
     VOCopts = VOC.fromConfig(configfile)
     GLOBopts, DESCRopts, NBNNopts, TESTopts, DETopts = getopts(configfile)
+    DETmethod = DETopts[0]
     DETopts = DETopts[1]
     # Setup logger
     log = init_log(GLOBopts['log_path'], 'ranking_%s'%cls, 'w')
@@ -426,6 +427,10 @@ def rank_detections((cls, configfile)):
     log.info('Ranking %s images. ',len(vimages))
     
     det_metrics = DETopts['detection_metric']
+    if 'qs_density' in det_metrics and not DETmethod == 'quickshift':
+        log.debug("Skipping qs_density, because not clustered with quickshift")
+        det_metrics.remove('qs_density')
+    
     ranking_path = DETopts['ranking_path'] 
     for det_metric in det_metrics:
         log.debug("Ranking for metric: %s, path: %s", det_metric, ranking_path)
@@ -502,7 +507,8 @@ def rank_detections((cls, configfile)):
                 log.info(" Detections: %s, Reflist: %s (max: %d), distances: %s, points: %s", \
                         detections.shape, len(reflist), max([l.max() for l in reflist]), \
                         distances.shape, points.shape)
-            if metric == 'qs_density':
+            
+            if metric == 'qs_density' and DETmethod == 'quickshift':
                 qs_parents, qs_dists, qs_E = load_quickshift_tree(DETopts['quickshift_tree_path']%(cls, im_id))
                 boolroots = np.array([i==p for i,p in enumerate(qs_parents)])
                 log.debug('boolroots sum, size: %s, %s', boolroots.sum(), boolroots.shape)
