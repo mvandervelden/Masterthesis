@@ -30,10 +30,11 @@ The main difference between the Chum method and the proposed one would be that o
 An issue that arises using exemplar-NBNN detection is that certain descriptors may be very similar to not one, but multiple neighbors. These neighbors might refer to totally different exemplars, generating a variety of hypotheses. This effect can be called descriptor aliasing, and is shown in Figure \ref{fig:aliasing}.
 \JanTodo{Show repeating structures, i.e. no single BB can fit}
 \JanTodo{Will be interesting. Also the figure from Tuytelaars-NBNN-kernel could be related?}
+
 \begin{figure}[hbt]
-    \label{fig:aliasing}
     \centering
     \missingfigure[figwidth=0.8\textwidth]{Images that shows perceptual aliasing e.g. the ballet example of boiman, should work}
+    \label{fig:aliasing}
 \end{figure}
 
 This problem can be fixed by taking more than one neighbor into account, which translates to setting $k>1$ in the $k$NN phase of exemplar-NBNN. This would mean that all $n\leq k$ neighbors that are closer to the foreground than the nearest background descriptor will be used to make detection hypotheses.

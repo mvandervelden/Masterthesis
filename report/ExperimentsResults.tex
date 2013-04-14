@@ -4,7 +4,7 @@
 
 ALSO: INCLUDE RESULTS!}
 
-The previously elaborated theory on local NBNN exemplar model detection was tested in a number of experiments. First, the NBNN detection experiments of Becker \cite{becker2012codebook} were replicated to validate the implementation, see Section \ref{sec:nbnn_detection}. These experiments were altered in a number of ways, to see the effects of different descriptors, feature selection rules, clustering algorithms and using Behmo's optimized NBNN approach (Section \ref{sec:nbnndet_improved}). In the final experiment, McCann's Local NBNN was integrated into the detection algorithm (Section \ref{sec:local_nbnn_detection}). Most tests were performed on both the TUDmotorbikes and VOC2007 benchmark detection sets.
+The previously elaborated theory on local NBNN exemplar model detection was tested in a number of experiments. First, the NBNN detection experiments of Becker \cite{becker2012codebook} were replicated to validate the implementation, see Section \ref{sec:nbnn_detection}. These experiments were altered in a number of ways, to see the effects of different descriptors, feature selection rules, clustering algorithms and using Behmo's optimized NBNN approach. In the final experiment, McCann's Local NBNN was integrated into the detection algorithm (Section \ref{sec:local_nbnn_detection}). Most tests were performed on both the TUDmotorbikes and VOC2007 benchmark detection sets.
 
 \subsection{Features} % (fold)
 \label{sec:features}
@@ -30,15 +30,6 @@ The TUD Motorbikes data set is a selection of motorbikes from different benchmar
 
 % section tudmotorbikes_data_set (end)
 
-% \subsection{Caltech101 Data Set} % (fold)
-% \label{sec:caltech101_data_set}
-% \todo[inline,color=red]{Not sure if used.}
-% % section caltech101_data_set (end)
-% 
-% \subsection{Graz01 Data Set} % (fold)
-% \label{sec:graz01_data_set}
-% \todo[inline,color=red]{Not sure if used.}
-% % section graz01_data_set (end)
 
 % SKIP THIS PART
 % \subsection{NBNN Classification} % (fold)
@@ -49,76 +40,34 @@ The TUD Motorbikes data set is a selection of motorbikes from different benchmar
 
 \subsection{Exemplar-NBNN Detection} % (fold)
 \label{sec:nbnn_detection}
-The detection experiment is more advanced than image classification. In the first place, not only a class should be determined, but a rectangular bounding box that indicates the object's location within the image. For exemplar based detection, these bounding boxes are generated from exemplars, which means that these have to be stored for all descriptors in the training images. Secondly, even though the object's background can supply information about the object's class, it should be viewed separately from the object itself, because it is needed to create a sharp boundary between object and background. Finally, in the detection task it is possible for an image to have multiple objects, of the same or different classes. Furthermore, these objects might overlap. This makes detection a more subtle task than classification, and quite some changes of the classification are needed to get a good detection algorithm.
 
-For exemplar-NBNN detection, the ground-truth bounding boxes of the training images is used to create exemplars of the descriptors. Only descriptors sampled from the object itself can be used for the NN index of the object's class. The bounding box can be used to define this boundary, but when available, a segmentation ground truth can also be used as a basis, because bounding boxes tend to include quite some background area too. \todo{image?}
+The first experiment is used to verify the results of Becker \emph{et al.} \cite{becker2012codebook}. In addition to this, some parameters of this approach were altered to see what effects they have on the overall performance.
 
-An exemplar is defined as a 4D vector of the relative width and height of the object's bounding box with respect to the descriptor's scale, and the relative horizontal and vertical position of this descriptor within the bounding box. In this way a new bounding box (called a hypothesis) can be reconstructed from a new descriptor location and scale.
+This experiment was performed on the TUD Motorbike set in the setup used by Becker (c.f. Section \ref{sec:tudmotorbikes_data_set}). The SIFT descriptors were collected using dense sampling, using a step size of 8 pixels, and patch sizes of $32\times32$, $48\times48$ and $64\times64$. I repeated each test 5 times with a different random selection of background images from the VOC 2007 data set, to avoid possible artifacts. FLANN was used to perform approximate NN, using the kd-tree algorithm with 4 trees and 1000 checks to assure high enough accuracy.
 
-Descriptors in the training images that fall outside the objects are regarded as background, and are added to a separate background class.
-
-For each test image and each class, descriptors are densely sampled, and the distance of each descriptor towards the current class and towards the background class is measured using approximate NN. Now, all descriptors closer to the class than to the background are seen as potential detections of an object. From these descriptors, detection hypotheses are calculated (using their NN-descriptor's exemplar).
-
-This array of hypotheses is clustered to find likely detections. The similarity measure used to find clusters is based on the area of overlap ($AO$) between two hypotheses:
+The similarity measure between hypotheses, used as a basis for the clustering algorithm, was defined as the area of overlap ($AO$) between two hypotheses:
 \begin{equation}
     AO(H_a, H_b)= \frac{|H_a\cap H_b|}{|H_a\cup H_b|}
 \end{equation}
 
-The resulting detections can be ranked by the number of hypotheses that support it, or by the average relative distance between foreground and background NN of the descriptors on which the hypotheses were based.
+Clustering was done using the single-link agglomerative clustering algorithm (Section \ref{sub:agglomerative_clustering}), using 2 parameters: $\theta_m$, which defines the minimal overlap between hypotheses to be clustered together, and the maximal overlap between detections: $\theta_p$. I set the parameters such that $\theta_m = 0.8$ and $\theta_p = 0$, conform to Becker.
 
-\subsubsection{NBNN Detection Using Single Link Clustering} % (fold)
-\label{sub:nbnn_detection_using_single_link_clustering}
+Detections were ranked according to their ``detection quality'', $Q_D$. This measure is defined as the amount of hypotheses being clustered into one detection. Ties being broken by a second ordering, called ``hypothesis quality'', $Q_H$, which is defined as the distance of a hypothesis to the foreground class, relative to its distance to the background class: $\frac{d_{bg} - d_{fg}}{d_{fg}}$. 
 
-\todo[inline]{Write a short piece on single link clustering, the parameters and stuff. Refer to Becker's paper}
+Performance was measured with the average precision (AP) of the ranked detections, and visualized in a precision-recall curve.
 
-% subsection nbnn_detection_using_single_link_clustering (end)
-
-\subsubsection{NBNN Detection Using Quickshift Clustering} % (fold)
+\subsubsection{NBNN Detection Using Quickshift clustering} % (fold)
 \label{sub:nbnn_detection_using_quickshift_clustering}
 
 \todo[inline]{Write a short piece on quick shift clustering, the parameters and stuff}
 
+I compared the results of detection using single link clustering with quickshift clustering. Because quickshift is a mode finding algorithm, it is guaranteed to find local maxima in the hypothesis density space. Therefore, it gives a more theoretically sound basis for clustering hypotheses, perhaps improving results along the way. Quickshift has one parameter, $\tau$. This represents the expected variance within the clustering space, and defines the maximal variance to be clustered, somewhat like $\theta_m$ in single link clustering.
+
+Quickshift has no bound for overlap in detections, which should not be a problem as the test images might have multiple overlapping objects. To make this comparison fair towards single link clustering, I varied the value of $\theta_p$ in the latter algorithm. For quickshift I settled on $\tau = 1.2$, for single link clustering $\theta_p = 0.4$ seemed ideal.
+
 % subsection nbnn_detection_using_quickshift_clustering (end)
-
-\subsubsection{Exemplar-NBNN Results} % (fold)
-\label{sub:exemplar_nbnn_results}
-\todo[inline]{Do results}
-\begin{figure}[hbt]
-    \centering
-    \missingfigure[figwidth=0.8\textwidth]{Result graph}
-\end{figure}
-
-% subsection exemplar_nbnn_results (end)
-
-% section nbnn_detection (end)
-
-\subsection{Local Exemplar-NBNN Detection} % (fold)
-\label{sec:local_nbnn_detection}
-A downside of the exemplar-NBNN method is the descriptor aliasing problem explained in Section \ref{sec:descriptor_aliasing}. This can be solved by taking the $k$ of $k$NN to be greater than 1. This means that the $k$ closest neighbors over all classes (the object class and the background class) are taken into account when constructing detection hypotheses. Within these $k$ nearest neighbors, the ones belonging to the object class that are closer than any neighbor in the background class, are transformed into detection hypotheses, avoiding the risk of disregarding very similar, although not most similar, exemplars when clustering.
-
-\todo[inline]{Previous is implemented, coming part will hopefully be so.}
-
-Another disadvantage of exemplar-NBNN is it returning many false positive detections for images not having any objects of the current object class. The reason for this is obvious, as all descriptors closer to the class than to the background will be regarded as hypotheses, and therefore even images without objects get reasonably well ranked detections. This problem gets larger as the data sets contains more object classes.
-
-A solution for this is to not only compare the current object class with the background class, but to compare it with all other classes, to see what each descriptor in the test image looks most like. This results in a hypothesis selection step that chooses only descriptors that are closer to the current class than to any other.
-
-This however would create another problem not present in the original approach. Some descriptors could be an indication for multiple classes, because certain parts of objects are quite similar. While the original exemplar-NBNN approach allows for this, regarding each class independently, this multi-class approach prevents this. Think of the similarity of a bicycle wheel with that of a motorbike or a car. To disregard all but one of these classes might cause very little evidence for most classes in an image, giving less stable detections. This reminds of Boiman's argument that much evidence is vital for the NBNN method, because the Naive Bayes assumption is only met towards infinity and there is no training phase to compensate for that.\cite{boiman2008defense}
-
-At the same time, the goal to compare all classes simultaneously is similar to McCann's formulation of local NBNN's query.\cite{mccann2012local} (\emph{cf.} Section \ref{sec:local_nbnn}). Merging all class indexes into one, and taking into account not only the first per class, but the $k$ closest neighbors overall prevents having too many false positive results, while keeping the possibility of a descriptor to be used for a hypothesis for multiple classes like in the original problem.
-
-As a bonus, local NBNN for detection also incorporates a way to prevent the aliasing problem. Among the $k$ closest neighbors, there might be multiple ones from the same class. Instead of disregarding these neighbors like local NBNN does, they can be taken into account by creating hypotheses for all non-background nearest neighbors.
-
-\todo[inline]{Some more?? And Results}
-
-\begin{figure}[hbt]
-    \centering
-    \missingfigure[figwidth=0.8\textwidth]{Result graph}
-\end{figure}
-
-% section local_nbnn_detection (end)
-
-\subsection{Training Weighted Distances} % (fold)
-\label{sec:training_weighted_distances}
+\subsubsection{Training Weighted Distances} % (fold)
+\label{ssub:training_weighted_distances}
 
 In image classification, the classes are generally quite well balanced. The amount of images in every class is usually approximately the same and all image are usually of the same size, making the assumption of a uniform prior hold. Therefore the natural distribution of descriptors in feature-space can be assumed to be equally sampled in every class. This makes it acceptable to use a learning method like optimal NBNN\cite{behmo2010towards} or \ldots \todo{put Wang's method here}\cite{wang2011improved} to tune the likelihood of classes to the local density in feature space to be equal for all classes.
 
@@ -130,11 +79,98 @@ This experiment will test this hypothesis using Behmo's optimal NBNN linear prog
 
 \todo[inline]{more detail about implementation of Behmo. Perhaps put the first part either to conclusion, or to theory?}
 
+% subsubsection training_weighted_distances (end)
+
+\subsubsection{Exemplar-NBNN Results} % (fold)
+\label{sub:exemplar_nbnn_results}
+\todo[inline]{Behmo results??}
+
+Figure \ref{fig:tudk1clusteralgos} shows the results of my implementation of Becker's algorithm using Single-link clustering, compared to the quickshift algorithm. Single-link clustering with $theta_p = 0.4$, instead of Becker's $0.0$ was also added. It shows that quickshift performs better than single-link clustering.
+
 \begin{figure}[hbt]
     \centering
-    \missingfigure[figwidth=0.8\textwidth]{Result graph}
+    \includegraphics[width=0.8\textwidth]{TUD_k1_clusteralgs}
+    \label{fig:tudk1clusteralgos}
+    \caption{Precision-Recall curves of the TUD Motorbikes detection task, using Becker's \cite{becker2012codebook} setup as baseline, Single-link clustering with a maximal detection overlap of 0.4 and quickshift clustering with $\tau = 1.2$.}
 \end{figure}
 
-% section training_weighted_distances (end)
+\begin{table}
+    \begin{tabular}{rc|cc>{\bfseries}c}
+        ~&k&no. of detections&total recall&average precision \\
+        baseline&1&---&---&0.83 \\
+        Becker's settings&1&394&0.7760&0.7536\\
+        single-link $\theta_p=0.4$&1&3447&0.9920&0.8342\\
+        quickshift $\tau=1.2$&1&7968&1.0000&0.8680\\
+        quickshift $\tau=1.2$&4&8147&0.9680&0.8940
+    \end{tabular}
+    \label{tab:tudk1clusteralgos}
+    \caption{Comparison of test statistics of TUD Motorbikes tests using various clustering algorithms and settings. \emph{Baseline} represents the result reported by Becker \cite{becker2012codebook}.}
+\end{table}
 
+Table \ref{tab:tudk1clusteralgos} shows some more statistics of the experiments. The results reported by Becker are somewhat higher than my own replication. This might be caused by a fortunate set of random background descriptors. Becker does not report the randomization process involved, so I was not able to replicate the results exactly. It also clearly shows that raising the $\theta_P$ threshold for the maximal overlap between detections should not be 0, because the recall gets much higher when it is set higher.
+
+
+\todo[inline]{Results on VOC07?}
+
+\begin{figure}[hbt]
+    \centering
+    \missingfigure[figwidth=0.8\textwidth]{Result graph VOC07}
+\end{figure}
+
+
+\begin{table}[hbt]
+    \centering
+    \missingfigure[figwidth=0.8\textwidth]{Result table VOC07}
+\end{table}
+% subsection exemplar_nbnn_results (end)
+
+% section nbnn_detection (end)
+
+\subsection{Exemplar-$k$NBNN Detection} % (fold)
+\label{sec:local_nbnn_detection}
+A downside of the exemplar-NBNN method is the descriptor aliasing problem explained in Section \ref{sec:descriptor_aliasing}. This can be solved by taking the $k$ of $k$NN to be greater than 1. This means that the $k$ closest neighbors over all classes (the object class and the background class) are taken into account when constructing detection hypotheses. Within these $k$ nearest neighbors, the ones belonging to the object class that are closer than any neighbor in the background class, are transformed into detection hypotheses. This $k$NBNN approach was tested in the detection algorithm and compared to the previous setup.
+
+\subsubsection{Local NBNN Detection} % (fold)
+\label{ssub:local_nbnn_detection}
+
+Another disadvantage of exemplar-NBNN detection is it returning many false positive detections for images not having any objects of the current object class. The reason for this is obvious, as all descriptors closer to the class than to the background will be regarded as hypotheses, and therefore images without any objects get reasonably well ranked detections. This problem gets larger as the data sets contains more object classes.
+
+A solution for this is to not only compare the current object class with the background class, but to compare it with all other classes, to see what each descriptor in the test image looks most like. This results in a hypothesis selection step that chooses only descriptors that are closer to the current class than to any other.
+
+This however would create another problem not present in the original approach. Some descriptors could be an indication for multiple classes, because certain parts of objects are quite similar. While the original exemplar-NBNN approach allows for this, regarding each class independently, this multi-class approach prevents this. Think of the similarity of a bicycle wheel with that of a motorbike or a car. To disregard all but one of these classes might cause very little evidence for most classes in an image, giving less stable detections. This reminds of Boiman's argument that much evidence is vital for the NBNN method, because the Naive Bayes assumption is only met towards infinity and there is no training phase to compensate for it.\cite{boiman2008defense}
+
+At the same time, the goal to compare all classes simultaneously is similar to McCann's formulation of local NBNN's query.\cite{mccann2012local} (\emph{cf.} Section \ref{sec:local_nbnn}). Merging all class indexes into one, and taking into account not only the first NN per class, but the $k$ NN \emph{overall} prevents having too many false positive results, while keeping the possibility of a descriptor to be used for a hypothesis for multiple classes like in the original problem.
+
+As a bonus, local NBNN for detection also incorporates a way to prevent the aliasing problem. Among the $k$ closest neighbors, there might be multiple ones from the same class. Instead of disregarding these neighbors like local NBNN does, they can be taken into account by creating hypotheses for all non-background nearest neighbors.
+
+% subsubsection local_nbnn_detection (end)
+
+\subsubsection{LNBNN Results} % (fold)
+\label{ssub:lnbnn_results}
+\todo[inline]{Results of kNBNN, localNBNN both TUD motorbike and VOC07}
+
+
+
+\begin{figure}[hbt]
+    \centering
+    \missingfigure[figwidth=0.8\textwidth]{Result graph TUD Motorbike, with kNBNN, localNBNN}
+\end{figure}
+
+\begin{figure}[hbt]
+    \centering
+    \missingfigure[figwidth=0.8\textwidth]{Result graph VOC07, with kNBNN, localNBNN}
+\end{figure}
+
+\begin{table}[hbt]
+    \centering
+    \missingfigure[figwidth=0.8\textwidth]{Result table TUD Motorbikes, kNBNN/localNBNN}
+\end{table}
+
+\begin{table}[hbt]
+    \centering
+    \missingfigure[figwidth=0.8\textwidth]{Result table VOC07, kNBNN/localNBNN}
+\end{table}
+
+% subsubsection lnbnn_results (end)
+% section local_nbnn_detection (end)
 % chapter experimental_setup (end)
