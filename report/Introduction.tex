@@ -1,28 +1,28 @@
 \section{Introduction} % (fold)
 \label{cha:introduction}
-\hl{FIRST PART NOT REWRITTEN YET!!!}
 
 \todo[inline]{At the end, review the introduction to see whether the emphasis is correct: should be on the benefits of NBNN, and exemplar model detection..}
+
+Finding objects in images is a main topic in the research area of computer vision. Most methods for finding objects are designed specifically for certain subtopics, such as retrieving one type of objects only, categorizing the scene of the image, or discerning foreground objects from the background. For each of these subtopics, the object finding task is modeled in a certain way. Three very common models are image classification, image segmentation, and object detection.
+
 \JanTodo{Motiveer buiten CV: Globaler nut van obj.det.}
 
-Finding objects in images is a main topic in the research area of computer vision. Most methods for finding objects are designed specifically for certain subtopics, such as retrieving one type of objects only, categorizing the scene of the image, or discerning foreground objects from the background. For each of these subtopics, the object finding task is modeled in certain way. Three very common models are image classification, image segmentation, and object detection. \JanTodo{vb plaatje?}
-
-In image classification, the object finding task is represented as the task of predicting the class of a whole image. The prediction is some measure of how likely it is for an image to belong to a certain class. This task is useful when the scene of the image has to be found, e.g. when a user is looking for images of a topic\JanTodo{of what?}.
+In image classification, the object finding task is represented as the task of predicting the class of a whole image. The prediction is some measure of how likely it is for an image to belong to a certain class. This task is useful when the image as a whole is of importance, for example when a user is looking for images of a certain topic.
 
 Image segmentation is different from image classification, because for each pixel in the image, a class label has to be found. This task is more complex than classification, because there is less information available for a small patch of the image than for the image as a whole. Therefore, the context of each segment becomes more important for a good classification of objects. Image segmentation might be useful when trying to find the distinction between foreground and background, for example.
 
-Object detection is similar to both image classification and segmentation, and lies somewhere in between these tasks. Detection is the task of pinpointing areas on an image where objects are, and of which class this object is. Detection is more specific than classification, because the objective is not only to give a class label, but also an indication of the object's location. This indication is not as specific however as in the segmentation task, because the goal is not to define a class for all pixels in the images, but only for the foreground objects. the indication of the object's location can be given in a number of ways, but the most common one is to give a rectangular bounding box that envelops the object \cite{pascal-voc-2007}. Object detection is useful when you are interested in only specific parts of the image, for example in tasks like face detection. 
+Object detection is similar to both image classification and segmentation, and lies somewhere in between these tasks. Detection is the task of pinpointing areas on an image where objects are, and of which class this object is. Detection is more specific than classification, because the objective is not only to give a class label, but also an indication of the object's location. This indication is not as specific however as in the segmentation task, because the goal is not to define a class for all pixels in the images, but only for the foreground objects. the indication of the object's location can be given in a number of ways, but the most common one is to give a rectangular bounding box that envelops the object \cite{pascal-voc-2007}. Object detection is useful when you are interested in only specific parts of the image, for example in tasks like face detection.
 
 \begin{figure}[hbt]
     \centering
     \missingfigure[figwidth=0.8\textwidth]{Classification vs. Detection Jan: vs. Segmentation}
+    \label{fig:clsdetseg}
+    \caption{Three models of image annotation: Classification, detection, and segmentation.}
 \end{figure}
 
 % In Computer Vision, object detection is the task of indicating what kinds of objects occur in an image, and where these objects are in the image. It is similar to image classification (saying whether or not an image shows an object of a certain kind) and image segmentation (subdividing the image into segments and say for each segment what is shown). Object detection is useful in many areas of computer vision, for it is often very useful to know where in the image the objects of interest are. Examples of practical use of object detection are \todo[inline]{Add examples \ldots (face detection, surveillance, detection less focused on one class), use references}.
 
-\hl{FROM HERE IT IS REVIEWED}
-
-For image classification, recently the Naive Bayes Nearest Neighbor (NBNN) \cite{boiman2008defense} approach has gained popularity. \JanTodo{give citations to other NBNN papers} Boiman \emph{et al.} apply the simple nature of nearest-neighbor classification to build a state-of-the-art image classification method. They show that a Nearest-Neighbor based approach for image classification has two main advantages.
+For image classification, recently the Naive Bayes Nearest Neighbor (NBNN) \cite{boiman2008defense} approach has gained popularity. \cite{becker2012codebook, behmo2010towards, mccann2012local, timofte2012iterative, tuytelaars2011nbnn, wang2011improved, zhang2010random} Boiman \emph{et al.} apply the simple nature of nearest-neighbor classification to build a state-of-the-art image classification method. They show that a Nearest-Neighbor based approach for image classification has two main advantages.
 
 \todo[inline]{explain about image to class distance and quantization, also add a simple image that shows these things -> only SHORTLY because it is explained in the dedicated section}.
 \JanTodo{Explain Becker}
@@ -35,6 +35,6 @@ The tests are performed on both a composed dataset of motorbike images \cite{bec
 
 \todo[inline]{Make sure all experiments are mentioned and shortly explained in here, and it is made clear what the benefit of the method is, before the next (last) section.}
 
-Section \ref{cha:related_work} gives an overview of related work on the various parts of this task. In Section \ref{cha:naive_bayes_nearest_neighbor} I will discuss the details of the NBNN method, and the assumptions under which it works. In Section \ref{cha:object_detection} the theory behind exemplar-based modeling will be explained. The link between the two methods will be made in Section \ref{cha:linking}. In Section \ref{cha:experimental_setup} the experiments will be elaborated, after which the results are given. Finally, in Section \ref{cha:conclusion} conclusions will be drawn and discussed.
+Section~\ref{cha:related_work} gives an overview of related work on the various parts of this task. In Section~\ref{cha:naive_bayes_nearest_neighbor} I will discuss the details of the NBNN method, and the assumptions under which it works. In Section~\ref{cha:object_detection} the theory behind exemplar-based modeling will be explained. The link between the two methods will be made in Section~\ref{cha:linking}. In Section~\ref{cha:experimental_setup} the experiments will be elaborated, after which the results are given. In Section~\ref{cha:analysis_of_results} these results are discussed and analyzed. Finally, in Section~\ref{cha:conclusion} conclusions will be drawn and discussed.
 
 % section introduction (end)

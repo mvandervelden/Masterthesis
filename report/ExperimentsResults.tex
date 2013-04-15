@@ -4,7 +4,7 @@
 
 ALSO: INCLUDE RESULTS!}
 
-The previously elaborated theory on local NBNN exemplar model detection was tested in a number of experiments. First, the NBNN detection experiments of Becker \cite{becker2012codebook} were replicated to validate the implementation, see Section \ref{sec:nbnn_detection}. These experiments were altered in a number of ways, to see the effects of different descriptors, feature selection rules, clustering algorithms and using Behmo's optimized NBNN approach. In the final experiment, McCann's Local NBNN was integrated into the detection algorithm (Section \ref{sec:local_nbnn_detection}). Most tests were performed on both the TUDmotorbikes and VOC2007 benchmark detection sets.
+The previously elaborated theory on local NBNN exemplar model detection was tested in a number of experiments. First, the NBNN detection experiments of Becker \cite{becker2012codebook} were replicated to validate the implementation, see Section~\ref{sec:nbnn_detection}. These experiments were altered in a number of ways, to see the effects of different descriptors, feature selection rules, clustering algorithms and using Behmo's optimized NBNN approach. In the final experiment, McCann's Local NBNN was integrated into the detection algorithm (Section~\ref{sec:local_nbnn_detection}). Most tests were performed on both the TUDmotorbikes and VOC2007 benchmark detection sets.
 
 \subsection{Features} % (fold)
 \label{sec:features}
@@ -43,14 +43,14 @@ The TUD Motorbikes data set is a selection of motorbikes from different benchmar
 
 The first experiment is used to verify the results of Becker \emph{et al.} \cite{becker2012codebook}. In addition to this, some parameters of this approach were altered to see what effects they have on the overall performance.
 
-This experiment was performed on the TUD Motorbike set in the setup used by Becker (c.f. Section \ref{sec:tudmotorbikes_data_set}). The SIFT descriptors were collected using dense sampling, using a step size of 8 pixels, and patch sizes of $32\times32$, $48\times48$ and $64\times64$. I repeated each test 5 times with a different random selection of background images from the VOC 2007 data set, to avoid possible artifacts. FLANN was used to perform approximate NN, using the kd-tree algorithm with 4 trees and 1000 checks to assure high enough accuracy.
+This experiment was performed on the TUD Motorbike set in the setup used by Becker (c.f. Section~\ref{sec:tudmotorbikes_data_set}). The SIFT descriptors were collected using dense sampling, using a step size of 8 pixels, and patch sizes of $32\times32$, $48\times48$ and $64\times64$. I repeated each test 5 times with a different random selection of background images from the VOC 2007 data set, to avoid possible artifacts. FLANN was used to perform approximate NN, using the kd-tree algorithm with 4 trees and 1000 checks to assure high enough accuracy.
 
 The similarity measure between hypotheses, used as a basis for the clustering algorithm, was defined as the area of overlap ($AO$) between two hypotheses:
 \begin{equation}
     AO(H_a, H_b)= \frac{|H_a\cap H_b|}{|H_a\cup H_b|}
 \end{equation}
 
-Clustering was done using the single-link agglomerative clustering algorithm (Section \ref{sub:agglomerative_clustering}), using 2 parameters: $\theta_m$, which defines the minimal overlap between hypotheses to be clustered together, and the maximal overlap between detections: $\theta_p$. I set the parameters such that $\theta_m = 0.8$ and $\theta_p = 0$, conform to Becker.
+Clustering was done using the single-link agglomerative clustering algorithm (Section~\ref{sub:agglomerative_clustering}), using 2 parameters: $\theta_m$, which defines the minimal overlap between hypotheses to be clustered together, and the maximal overlap between detections: $\theta_p$. I set the parameters such that $\theta_m = 0.8$ and $\theta_p = 0$, conform to Becker.
 
 Detections were ranked according to their ``detection quality'', $Q_D$. This measure is defined as the amount of hypotheses being clustered into one detection. Ties being broken by a second ordering, called ``hypothesis quality'', $Q_H$, which is defined as the distance of a hypothesis to the foreground class, relative to its distance to the background class: $\frac{d_{bg} - d_{fg}}{d_{fg}}$. 
 
@@ -69,7 +69,7 @@ Quickshift has no bound for overlap in detections, which should not be a problem
 \subsubsection{Training Weighted Distances} % (fold)
 \label{ssub:training_weighted_distances}
 
-In image classification, the classes are generally quite well balanced. The amount of images in every class is usually approximately the same and all image are usually of the same size, making the assumption of a uniform prior hold. Therefore the natural distribution of descriptors in feature-space can be assumed to be equally sampled in every class. This makes it acceptable to use a learning method like optimal NBNN\cite{behmo2010towards} or \ldots \todo{put Wang's method here}\cite{wang2011improved} to tune the likelihood of classes to the local density in feature space to be equal for all classes.
+In image classification, the classes are generally quite well balanced. The amount of images in every class is usually approximately the same and all image are usually of the same size, making the assumption of a uniform prior hold. Therefore the natural distribution of descriptors in feature-space can be assumed to be equally sampled in every class. This makes it acceptable to use a learning method like optimal NBNN \cite{behmo2010towards} to tune the likelihood of classes to the local density in feature space to be equal for all classes.
 
 In object detection, the sampling rate will not be equal over classes, especially the background class will have a larger sampling rate, simply because it will occur in virtually all images. The equal priors assumption therefore does not hold. This flaw is mitigated by the fact that a higher number of sampled descriptors also tends to make the feature space for that class more dense, and more likely to be the nearest neighbor.
 
@@ -85,7 +85,7 @@ This experiment will test this hypothesis using Behmo's optimal NBNN linear prog
 \label{sub:exemplar_nbnn_results}
 \todo[inline]{Behmo results??}
 
-Figure \ref{fig:tudk1clusteralgos} shows the results of my implementation of Becker's algorithm using Single-link clustering, compared to the quickshift algorithm. Single-link clustering with $theta_p = 0.4$, instead of Becker's $0.0$ was also added. It shows that quickshift performs better than single-link clustering.
+Figure~\ref{fig:tudk1clusteralgos} shows the results of my implementation of Becker's algorithm using Single-link clustering, compared to the quickshift algorithm. Single-link clustering with $theta_p = 0.4$, instead of Becker's $0.0$ was also added. It shows that quickshift performs better than single-link clustering.
 
 \begin{figure}[hbt]
     \centering
@@ -97,17 +97,19 @@ Figure \ref{fig:tudk1clusteralgos} shows the results of my implementation of Bec
 \begin{table}
     \begin{tabular}{rc|cc>{\bfseries}c}
         ~&k&no. of detections&total recall&average precision \\
-        baseline&1&---&---&0.83 \\
-        Becker's settings&1&394&0.7760&0.7536\\
-        single-link $\theta_p=0.4$&1&3447&0.9920&0.8342\\
-        quickshift $\tau=1.2$&1&7968&1.0000&0.8680\\
-        quickshift $\tau=1.2$&4&8147&0.9680&0.8940
+        baseline & 1 & --- & --- & 0.83 \\
+        Becker's settings & 1 & 394 & 0.7760 & 0.7536\\
+        single-link $\theta_P=0.4$ & 1 & 3447 & 0.9920 & 0.8342\\
+        quickshift $\tau=1.2$ & 1 & 7968 & 1.0000 & 0.8680\\
+        quickshift $\tau=1.2$ & 4 & 8147 & 0.9680 & 0.8940\\
+        single-link $\theta_P=0.4$ & 20 & 3713 & 0.9920 & 0.8491\\
+        quickshift $\tau=1.2$ & local,4 & 12406 & 0.9520 & 0.8169
     \end{tabular}
     \label{tab:tudk1clusteralgos}
     \caption{Comparison of test statistics of TUD Motorbikes tests using various clustering algorithms and settings. \emph{Baseline} represents the result reported by Becker \cite{becker2012codebook}.}
 \end{table}
 
-Table \ref{tab:tudk1clusteralgos} shows some more statistics of the experiments. The results reported by Becker are somewhat higher than my own replication. This might be caused by a fortunate set of random background descriptors. Becker does not report the randomization process involved, so I was not able to replicate the results exactly. It also clearly shows that raising the $\theta_P$ threshold for the maximal overlap between detections should not be 0, because the recall gets much higher when it is set higher.
+Table~\ref{tab:tudk1clusteralgos} shows some more statistics of the experiments. The results reported by Becker are somewhat higher than my own replication. This might be caused by a fortunate set of random background descriptors. Becker does not report the randomization process involved, so I was not able to replicate the results exactly. It also clearly shows that raising the $\theta_P$ threshold for the maximal overlap between detections should not be 0, because the recall gets much higher when it is set higher.
 
 
 \todo[inline]{Results on VOC07?}
@@ -128,7 +130,7 @@ Table \ref{tab:tudk1clusteralgos} shows some more statistics of the experiments.
 
 \subsection{Exemplar-$k$NBNN Detection} % (fold)
 \label{sec:local_nbnn_detection}
-A downside of the exemplar-NBNN method is the descriptor aliasing problem explained in Section \ref{sec:descriptor_aliasing}. This can be solved by taking the $k$ of $k$NN to be greater than 1. This means that the $k$ closest neighbors over all classes (the object class and the background class) are taken into account when constructing detection hypotheses. Within these $k$ nearest neighbors, the ones belonging to the object class that are closer than any neighbor in the background class, are transformed into detection hypotheses. This $k$NBNN approach was tested in the detection algorithm and compared to the previous setup.
+A downside of the exemplar-NBNN method is the descriptor aliasing problem explained in Section~\ref{sec:descriptor_aliasing}. This can be solved by taking the $k$ of $k$NN to be greater than 1. This means that the $k$ closest neighbors over all classes (the object class and the background class) are taken into account when constructing detection hypotheses. Within these $k$ nearest neighbors, the ones belonging to the object class that are closer than any neighbor in the background class, are transformed into detection hypotheses. This $k$NBNN approach was tested in the detection algorithm and compared to the previous setup.
 
 \subsubsection{Local NBNN Detection} % (fold)
 \label{ssub:local_nbnn_detection}
@@ -139,7 +141,7 @@ A solution for this is to not only compare the current object class with the bac
 
 This however would create another problem not present in the original approach. Some descriptors could be an indication for multiple classes, because certain parts of objects are quite similar. While the original exemplar-NBNN approach allows for this, regarding each class independently, this multi-class approach prevents this. Think of the similarity of a bicycle wheel with that of a motorbike or a car. To disregard all but one of these classes might cause very little evidence for most classes in an image, giving less stable detections. This reminds of Boiman's argument that much evidence is vital for the NBNN method, because the Naive Bayes assumption is only met towards infinity and there is no training phase to compensate for it.\cite{boiman2008defense}
 
-At the same time, the goal to compare all classes simultaneously is similar to McCann's formulation of local NBNN's query.\cite{mccann2012local} (\emph{cf.} Section \ref{sec:local_nbnn}). Merging all class indexes into one, and taking into account not only the first NN per class, but the $k$ NN \emph{overall} prevents having too many false positive results, while keeping the possibility of a descriptor to be used for a hypothesis for multiple classes like in the original problem.
+At the same time, the goal to compare all classes simultaneously is similar to McCann's formulation of local NBNN's query.\cite{mccann2012local} (\emph{cf.} Section~\ref{sec:local_nbnn}). Merging all class indexes into one, and taking into account not only the first NN per class, but the $k$ NN \emph{overall} prevents having too many false positive results, while keeping the possibility of a descriptor to be used for a hypothesis for multiple classes like in the original problem.
 
 As a bonus, local NBNN for detection also incorporates a way to prevent the aliasing problem. Among the $k$ closest neighbors, there might be multiple ones from the same class. Instead of disregarding these neighbors like local NBNN does, they can be taken into account by creating hypotheses for all non-background nearest neighbors.
 
@@ -149,27 +151,61 @@ As a bonus, local NBNN for detection also incorporates a way to prevent the alia
 \label{ssub:lnbnn_results}
 \todo[inline]{Results of kNBNN, localNBNN both TUD motorbike and VOC07}
 
+As shown in Figure~\ref{fig:tudlocalprecrec}, Performance on the TUD Motorbikes task improves the results with quickshift even further. The optimum appeared to lie at $k=4$, while the optimum for single-link runs was at $k=20$. Interestingly, LNBNN seems to perform worse than regular $k$NBNN. This might be due to the task, having only one class and all test images containing at least one motorbike.
 
+On VOC 2007 test, performances are much lower overall. This test however shows more of the differences between methods (Figure~\ref{fig:voclocalaps} and Table~\ref{tab:voclocalaps}). It shows that the methods can keep up fairly well with the state of the art results of the VOC 2007 detection challenge \cite{pascal-voc-2007}, but that there is much variance between classes, both in absolute performance and relative to the baseline. Take in mind that I trained on a subset of the available training images only, and I tested on a subset of the test set too. It would be interesting to see results on the full train and test set, even though much of the train set was not segmented and therefore not available for comparison, and the time for detection of a single image was prohibitive for testing the full test set.
+\todo[inline]{In the Analysis, give more explanation on time/memory constraints as a big downside of the method}
+
+Interestingly, using Harris-Laplacian interest point detection instead of dense sampling does not make the performance significantly worse, while speeding up the process significantly.
 
 \begin{figure}[hbt]
     \centering
-    \missingfigure[figwidth=0.8\textwidth]{Result graph TUD Motorbike, with kNBNN, localNBNN}
+    \includegraphics[width=0.8\textwidth]{TUD_local}
+    \label{fig:tudlocalprecrec}
+    \caption{Precision-Recall curves of the TUD Motorbikes detection task for various tasks using $k>1$, with the best performing $k=1$ result as reference.}
 \end{figure}
 
 \begin{figure}[hbt]
     \centering
-    \missingfigure[figwidth=0.8\textwidth]{Result graph VOC07, with kNBNN, localNBNN}
+    \includegraphics[width=0.8\textwidth]{VOC_aps}
+    \label{fig:voclocalaps}
+    \caption{Average precision on the VOC 2007 task, for all classes. Blue: Settings with highest performance on the TUD Motorbikes test. Green: Selection of descriptors using Harris-Laplacian instead of dense sampling. Red: Best scores on the VOC 2007 Detection Challenge \cite{pascal-voc-2007}.}
 \end{figure}
 
 \begin{table}[hbt]
     \centering
-    \missingfigure[figwidth=0.8\textwidth]{Result table TUD Motorbikes, kNBNN/localNBNN}
+    \begin{tabular}{rccc}
+    class & local,k=4,densesift,qs1.2 & local,k=4,hlpsift,qs1.2 & VOC07baseline\\
+    \hline
+    aeroplane &       0.2982 & \underline{0.4399} & 0.2620\\
+    bicycle &         0.3959 & 0.2253 & \underline{0.4090}\\
+    bird &            0.2700 & \underline{0.3368} & 0.0980\\
+    boat &            \underline{0.1258} & 0.0166 & 0.0940\\
+    bottle &          0.0410 & 0.0248 & \underline{0.2140}\\
+    bus &             0.2877 & 0.2007 & \underline{0.3930}\\
+    car &             0.1701 & 0.0614 & \underline{0.4320}\\
+    cat &             0.2787 & \underline{0.4298} & 0.2400\\
+    chair &           0.0120 & 0.0129 & \underline{0.1280}\\
+    cow &             \underline{0.2036} & 0.1689 & 0.1400\\
+    diningtable &     \underline{0.2352} & 0.1844 & 0.0980\\
+    dog &             \underline{0.1677} & 0.0964 & 0.1620\\
+    horse &           0.3167 & \underline{0.3467} & 0.3350\\
+    motorbike &       \underline{0.4284} & 0.2810 & 0.3750\\
+    person &          0.0644 & 0.0622 & \underline{0.2210}\\
+    pottedplant &     0.0408 & 0.0086 & \underline{0.1200}\\
+    sheep &           \underline{0.2031} & 0.1655 & 0.1750\\
+    sofa &            \underline{0.2619} & 0.0681 & 0.1470\\
+    train &           0.5187 & \underline{0.5874} & 0.3340\\
+    tvmonitor &       0.0835 & 0.1230 & \underline{0.2980}
+    \end{tabular}
+    \caption{Comparison of Average Precision on the VOC 2007 test, for local NBNN and a baseline of the best performances achieved in the VOC 2007 challenge.}
+    \label{tab:voclocalaps}
 \end{table}
 
-\begin{table}[hbt]
+\begin{figure}
     \centering
-    \missingfigure[figwidth=0.8\textwidth]{Result table VOC07, kNBNN/localNBNN}
-\end{table}
+    \missingfigure{Comparison of test times}
+\end{figure}
 
 % subsubsection lnbnn_results (end)
 % section local_nbnn_detection (end)

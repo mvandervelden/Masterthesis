@@ -19,10 +19,10 @@ Classification by detection (efficient sub-window search).
 
 For classification this is not very relevant (I rank the images per class, I don't really choose one class), but it might be when using fg/bg per class, perhaps within an image to find bbox.
 
-@article{behmo2010towards,
+@inproceedings{behmo2010towards,
   title={Towards optimal naive bayes nearest neighbor},
   author={Behmo, R. and Marcombes, P. and Dalalyan, A. and Prinet, V.},
-  journal={ECCV 2010},
+  booktitle={ECCV 2010},
   pages={171--184},
   year={2010},
   publisher={Springer}
@@ -112,10 +112,10 @@ Like Wang 2009: metric learning on I2C distance. The basic idea is the same, but
 
 Same as above.
 
-@article{wang2010image,
+@inproceedings{wang2010image,
   title={Image-to-class distance metric learning for image classification},
   author={Wang, Z. and Hu, Y. and Chia, L.T.},
-  journal={ECCV 2010},
+  booktitle={ECCV 2010},
   pages={706--719},
   year={2010},
   publisher={Springer}
@@ -168,10 +168,10 @@ Fernando 2012 (Logistic Regression Feature Fusion)
 Combine multiple cues with logistic regression to consider statistical dependence between the cues. Also, new kind of marginalized kernel, using image to class distance and class similarity. 
 
 Only the part of image to class similarity is equivalent to NBNN, the method is quite different.
-@article{fernando2012discriminative,
+@inproceedings{fernando2012discriminative,
   title={Discriminative Feature Fusion for Image Classification},
   author={Fernando, B. and Fromont, E. and Muselet, D. and Sebban, M. and others},
-  journal={CVPR 2012},
+  booktitle={CVPR 2012},
   year={2012},
   organization={IEEE}
 }
@@ -255,7 +255,7 @@ Downside: in VOC you don't know the required amount of objects in an image. On t
   booktitle={CVPR 2008},
   pages={1--8},
   year={2008},
-  organization={Ieee}
+  organization={IEEE}
 }
 Zhiqi Zhang 2010 (free-shape subwindow search)
 
@@ -275,12 +275,15 @@ Blaschko 2010 (simultaneous detection & ranking)
 Structured output formulation (latent variables) & optimize ranking function to use negative images effectively. Extension of regression on SVM method. Trains to optimize a ranking function in order to increase precision (maximize margin). This improves previous method (Blaschko & Lampert, 2008: Learning to localize...) because it makes a better assumption on negative examples (before it was p(class|image,class_present_in_image), now it is p(class|image)) by training on these too.
 
 Don't know if it's relevant for the thesis. Might give an improvement over the results, but is an extra learning step (costs time).
-
-@article{blaschko2010simultaneous,
-  title={Simultaneous object detection and ranking with weak supervision},
-  author={Blaschko, M. and Vedaldi, A. and Zisserman, A.},
-  year={2010}
+@incollection{blaschko2010simultaneous,
+ title = {Simultaneous Object Detection and Ranking with Weak Supervision},
+ author = {Blaschko, M. and Vedaldi, A. and Zisserman, A.},
+ booktitle = {Advances in Neural Information Processing Systems 23},
+ editor = {J. Lafferty and C. K. I. Williams and J. Shawe-Taylor and R.S. Zemel and A. Culotta},
+ pages = {235--243},
+ year = {2010}
 }
+
 Marques 2011 (context modelling)
 
 Large paper, overview of Context modelling. Interesting background information about kinds of context, why it is important, what kinds of models there are. Priors, applications.
@@ -428,10 +431,10 @@ Based Vision. 2004
   publisher={Elsevier}
 }
 
-@article{graz2001,
+@inproceedings{graz2001,
   title={Weak hypotheses and boosting for generic object detection and recognition},
   author={Opelt, A. and Fussenegger, M. and Pinz, A. and Auer, P.},
-  journal={ECCV 2004},
+  booktitle={ECCV 2004},
   pages={71--84},
   year={2004},
   publisher={Springer}
@@ -440,7 +443,7 @@ Based Vision. 2004
 # TUD motorbikes
 @inproceedings{fritz2005integrating,
   title={Integrating representative and discriminant models for object category detection},
-  author={Fritz, Mario and Leibe, Bastian and Caputo, Barbara and Schiele, Bernt},
+  author={Fritz, M. and Leibe, B. and Caputo, B. and Schiele, B.},
   booktitle={ICCV 2005},
   volume={2},
   pages={1363--1370},
