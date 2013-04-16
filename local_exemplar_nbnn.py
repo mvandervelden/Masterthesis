@@ -299,17 +299,15 @@ def get_knn((image, configfile)):
                 cls_exempl[cl][i].append(sort_exempl[j])
         else:
             NN_cls = sort_cls[0]
-            # Only add test-classes, to avoid useless work
-            if NN_cls in VOCopts.classes:
-                for j,cl in enumerate(sort_cls):
-                    if cl == NN_cls:
-                        cls_dists[cl][i].append(sort_dists[j])
-                        cls_exempl[cl][i].append(sort_exempl[j])
-                    else:
-                        # Nearest only, so break as soon a different class occurs
-                        # But first add the nearest bg_dist:
-                        cls_bg_dists[NN_cls][i] = sort_dists[j]
-                        break
+            for j,cl in enumerate(sort_cls):
+                if cl == NN_cls:
+                    cls_dists[cl][i].append(sort_dists[j])
+                    cls_exempl[cl][i].append(sort_exempl[j])
+                else:
+                    # Nearest only, so break as soon a different class occurs
+                    # But first add the nearest bg_dist:
+                    cls_bg_dists[NN_cls][i] = sort_dists[j]
+                    break
 
 
     log.info('Built lists of cls_dists and cls_exempl')
@@ -539,6 +537,9 @@ def rank_detections((cls, configfile)):
             imids = np.array([im_id for i in range(detections.shape[0])])
             all_det_imids.append(imids)
             log.info("stored imids shape:%s", imids.shape)
+        log.info('Found %d images with detections', len(all_detections))
+        if len(all_detections) == 0:
+            log.warning('Found NO images with detections, skipping this class')
         all_detections = np.vstack(all_detections)
         if len(all_det_vals[0].shape) > 1:
             all_det_vals = np.vstack(all_det_vals)
