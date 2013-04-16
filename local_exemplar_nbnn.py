@@ -288,16 +288,30 @@ def get_knn((image, configfile)):
         # Get their exemplar indexes
         sort_exempl = exemplar_indexes[i,asort[i,:k]]
         # Get nearest bg_dist for each class
-        for j, d in enumerate(sort_dists):
-            for cl in range(no_classes):
-                if (not cl == sort_cls[j]) and cls_bg_dists[cl][i] > d:
-                    cls_bg_dists[cl][i] = d
-        
-        # Get near dists & exemplars for each class
-        for j, cl in enumerate(sort_cls):
-            cls_dists[cl][i].append(sort_dists[j])
-            cls_exempl[cl][i].append(sort_exempl[j])
-        
+        if GLOBopts['local']:
+            for j, d in enumerate(sort_dists):
+                for cl in range(no_classes):
+                    if (not cl == sort_cls[j]) and cls_bg_dists[cl][i] > d:
+                        cls_bg_dists[cl][i] = d
+            # Get near dists & exemplars for each class
+            for j, cl in enumerate(sort_cls):
+                cls_dists[cl][i].append(sort_dists[j])
+                cls_exempl[cl][i].append(sort_exempl[j])
+        else:
+            NN_cls = sort_cls[0]
+            # Only add test-classes, to avoid useless work
+            if NN_cls in VOCopts.classes:
+                for j,cl in enumerate(sort_cls):
+                    if cl == NN_cls:
+                        cls_dists[cl][i].append(sort_dists[j])
+                        cls_exempl[cl][i].append(sort_exempl[j])
+                    else:
+                        # Nearest only, so break as soon a different class occurs
+                        # But first add the nearest bg_dist:
+                        cls_bg_dists[NN_cls][i] = sort_dists[j]
+                        break
+
+
     log.info('Built lists of cls_dists and cls_exempl')
     total_dists = 0
     goal = k*N
@@ -577,6 +591,7 @@ if __name__ == "__main__":
     det_threads = GLOBopts['det_threads']
     rank_threads = GLOBopts['rank_threads']
     set_mode = GLOBopts['setmode']
+    LNBNN = GLOBopts['local']
     if set_mode == 'voc':
         test_classes = VOCopts.classes
         train_classes = ['aeroplane','bicycle','bird','boat','bottle','bus','car','cat',\
@@ -603,12 +618,13 @@ if __name__ == "__main__":
         estimator = init_estimator(GLOBopts['nbnn_path']%'estimator', NBNNopts)
         
         if set_mode == 'voc':
-            train_local(train_classes, descriptor_function, estimator, VOCopts, GLOBopts, NBNNopts, TESTopts, DETopts, log)
+            train_local(train_classes, descriptor_function, estimator, VOCopts, \
+                    GLOBopts, NBNNopts, TESTopts, DETopts, log)
         elif set_mode == 'becker':
             load_becker_estimator(descriptor_function, estimator, VOCopts, \
-                train_set = GLOBopts['train_set'],\
-                descriptor_path = GLOBopts['descriptor_path'],\
-                exemplar_path = DETopts[1]['exemplar_path'])
+                    train_set = GLOBopts['train_set'],\
+                    descriptor_path = GLOBopts['descriptor_path'],\
+                    exemplar_path = DETopts[1]['exemplar_path'])
         
         log.info('==== TRAINING FINISHED ====')
         

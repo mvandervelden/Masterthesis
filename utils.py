@@ -62,6 +62,8 @@ def getopts(configfile):
         GLOBopts['rank_threads'] = int(GLOBopts['rank_threads'])
     if 'randbg' in GLOBopts:
         GLOBopts['randbg'] = int(GLOBopts['randbg'])
+    if 'local' in GLOBopts:
+        GLOBopts['local'] = GLOBopts['local'] == 'True'
     
     # Make sure folders exist:
     assert_dir(GLOBopts['tmp_dir'])
