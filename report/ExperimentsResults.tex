@@ -90,11 +90,13 @@ Figure~\ref{fig:tudk1clusteralgos} shows the results of my implementation of Bec
 \begin{figure}[hbt]
     \centering
     \includegraphics[width=0.8\textwidth]{TUD_k1_clusteralgs}
-    \label{fig:tudk1clusteralgos}
     \caption{Precision-Recall curves of the TUD Motorbikes detection task, using Becker's \cite{becker2012codebook} setup as baseline, Single-link clustering with a maximal detection overlap of 0.4 and quickshift clustering with $\tau = 1.2$.}
+    \label{fig:tudk1clusteralgos}
 \end{figure}
 
 \begin{table}
+    \caption{Comparison of test statistics of TUD Motorbikes tests using various clustering algorithms and settings. \emph{Baseline} represents the result reported by Becker \cite{becker2012codebook}.}
+    \label{tab:tudk1clusteralgos}
     \begin{tabular}{rc|cc>{\bfseries}c}
         ~&k&no. of detections&total recall&average precision \\
         baseline & 1 & --- & --- & 0.83 \\
@@ -105,8 +107,7 @@ Figure~\ref{fig:tudk1clusteralgos} shows the results of my implementation of Bec
         single-link $\theta_P=0.4$ & 20 & 3713 & 0.9920 & 0.8491\\
         quickshift $\tau=1.2$ & local,4 & 12406 & 0.9520 & 0.8169
     \end{tabular}
-    \label{tab:tudk1clusteralgos}
-    \caption{Comparison of test statistics of TUD Motorbikes tests using various clustering algorithms and settings. \emph{Baseline} represents the result reported by Becker \cite{becker2012codebook}.}
+
 \end{table}
 
 Table~\ref{tab:tudk1clusteralgos} shows some more statistics of the experiments. The results reported by Becker are somewhat higher than my own replication. This might be caused by a fortunate set of random background descriptors. Becker does not report the randomization process involved, so I was not able to replicate the results exactly. It also clearly shows that raising the $\theta_P$ threshold for the maximal overlap between detections should not be 0, because the recall gets much higher when it is set higher.
@@ -161,19 +162,21 @@ Interestingly, using Harris-Laplacian interest point detection instead of dense 
 \begin{figure}[hbt]
     \centering
     \includegraphics[width=0.8\textwidth]{TUD_local}
-    \label{fig:tudlocalprecrec}
     \caption{Precision-Recall curves of the TUD Motorbikes detection task for various tasks using $k>1$, with the best performing $k=1$ result as reference.}
+    \label{fig:tudlocalprecrec}
 \end{figure}
 
 \begin{figure}[hbt]
     \centering
     \includegraphics[width=0.8\textwidth]{VOC_aps}
-    \label{fig:voclocalaps}
     \caption{Average precision on the VOC 2007 task, for all classes. Blue: Settings with highest performance on the TUD Motorbikes test. Green: Selection of descriptors using Harris-Laplacian instead of dense sampling. Red: Best scores on the VOC 2007 Detection Challenge \cite{pascal-voc-2007}.}
+    \label{fig:voclocalaps}
 \end{figure}
 
 \begin{table}[hbt]
     \centering
+    \caption{Comparison of Average Precision on the VOC 2007 test, for local NBNN and a baseline of the best performances achieved in the VOC 2007 challenge.}
+    \label{tab:voclocalaps}
     \begin{tabular}{rccc}
     class & local,k=4,densesift,qs1.2 & local,k=4,hlpsift,qs1.2 & VOC07baseline\\
     \hline
@@ -198,8 +201,7 @@ Interestingly, using Harris-Laplacian interest point detection instead of dense 
     train &           0.5187 & \underline{0.5874} & 0.3340\\
     tvmonitor &       0.0835 & 0.1230 & \underline{0.2980}
     \end{tabular}
-    \caption{Comparison of Average Precision on the VOC 2007 test, for local NBNN and a baseline of the best performances achieved in the VOC 2007 challenge.}
-    \label{tab:voclocalaps}
+
 \end{table}
 
 \begin{figure}

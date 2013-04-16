@@ -7,20 +7,39 @@ Finding objects in images is a main topic in the research area of computer visio
 
 \JanTodo{Motiveer buiten CV: Globaler nut van obj.det.}
 
-In image classification, the object finding task is represented as the task of predicting the class of a whole image. The prediction is some measure of how likely it is for an image to belong to a certain class. This task is useful when the image as a whole is of importance, for example when a user is looking for images of a certain topic.
+In image classification (Figure~\ref{fig:classification}), the object finding task is represented as the task of predicting the class of a whole image. The prediction is some measure of how likely it is for an image to belong to a certain class. This task is useful when the image as a whole is of importance, for example when a user is looking for images of a certain topic.
 
-Image segmentation is different from image classification, because for each pixel in the image, a class label has to be found. This task is more complex than classification, because there is less information available for a small patch of the image than for the image as a whole. Therefore, the context of each segment becomes more important for a good classification of objects. Image segmentation might be useful when trying to find the distinction between foreground and background, for example.
+Image segmentation is different from image classification, because for each pixel in the image, a class label has to be found.(Figure~\ref{fig:segmentation}) This task is more complex than classification, because there is less information available for a small patch of the image than for the image as a whole. Therefore, the context of each segment becomes more important for a good classification of objects. Image segmentation might be useful when trying to find the distinction between foreground and background, for example.
 
-Object detection is similar to both image classification and segmentation, and lies somewhere in between these tasks. Detection is the task of pinpointing areas on an image where objects are, and of which class this object is. Detection is more specific than classification, because the objective is not only to give a class label, but also an indication of the object's location. This indication is not as specific however as in the segmentation task, because the goal is not to define a class for all pixels in the images, but only for the foreground objects. the indication of the object's location can be given in a number of ways, but the most common one is to give a rectangular bounding box that envelops the object \cite{pascal-voc-2007}. Object detection is useful when you are interested in only specific parts of the image, for example in tasks like face detection.
+Object detection (Figure~\ref{fig:detection}) is similar to both image classification and segmentation, and lies somewhere in between these tasks. Detection is the task of pinpointing areas on an image where objects are, and of which class this object is. Detection is more specific than classification, because the objective is not only to give a class label, but also an indication of the object's location. This indication is not as specific however as in the segmentation task, because the goal is not to define a class for all pixels in the images, but only for the foreground objects. the indication of the object's location can be given in a number of ways, but the most common one is to give a rectangular bounding box that envelops the object \cite{pascal-voc-2007}. Object detection is useful when you are interested in only specific parts of the image, for example in tasks like face detection.
 
 \begin{figure}[hbt]
     \centering
-    \missingfigure[figwidth=0.8\textwidth]{Classification vs. Detection Jan: vs. Segmentation}
+    \begin{subfigure}[b]{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{000032}
+        \caption{Classification}
+        \label{fig:classification}
+    \end{subfigure}%
+    ~ %add desired spacing between images, e. g. ~, \quad, \qquad etc.
+      %(or a blank line to force the subfigure onto a new line)
+    \begin{subfigure}[b]{0.3\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{000032-det}
+            \caption{Detection}
+            \label{fig:detection}
+    \end{subfigure}
+    ~ %add desired spacing between images, e. g. ~, \quad, \qquad etc.
+      %(or a blank line to force the subfigure onto a new line)
+    \begin{subfigure}[b]{0.3\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{000032-clsseg}
+            \caption{Class-segmentation}
+            \label{fig:segmentation}
+            \end{subfigure}
+    \caption{Three Computer Vision tasks for the same image. If the question is to find persons and airplanes, in a classification task \textbf{(a)} it would be enough to classify the image as a whole as containing both classes. In a detection task \textbf{(b)} bounding boxes need to be given that neatly envelop the objects and have the correct class label. In a class-segmentation task \textbf{(c)}, every pixel should be labeled correctly ``airplane'', ``person'' or ``background'' (transparent in this case). Note that this segmentation image has a blank label for areas that are either on the boundary between different classes, or difficult to classify (at the left side of the image). \cite{pascal-voc-2007}}
     \label{fig:clsdetseg}
-    \caption{Three models of image annotation: Classification, detection, and segmentation.}
 \end{figure}
-
-% In Computer Vision, object detection is the task of indicating what kinds of objects occur in an image, and where these objects are in the image. It is similar to image classification (saying whether or not an image shows an object of a certain kind) and image segmentation (subdividing the image into segments and say for each segment what is shown). Object detection is useful in many areas of computer vision, for it is often very useful to know where in the image the objects of interest are. Examples of practical use of object detection are \todo[inline]{Add examples \ldots (face detection, surveillance, detection less focused on one class), use references}.
 
 For image classification, recently the Naive Bayes Nearest Neighbor (NBNN) \cite{boiman2008defense} approach has gained popularity. \cite{becker2012codebook, behmo2010towards, mccann2012local, timofte2012iterative, tuytelaars2011nbnn, wang2011improved, zhang2010random} Boiman \emph{et al.} apply the simple nature of nearest-neighbor classification to build a state-of-the-art image classification method. They show that a Nearest-Neighbor based approach for image classification has two main advantages.
 
