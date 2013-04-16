@@ -50,7 +50,7 @@ McCann \& Lowe \cite{mccann2012local} have come up with an adaptation of NBNN wh
 
 In this thesis I will explore the possibilities of extending the NBNN method from image classification to object detection. I combine McCann \& Lowe's local-NBNN based object-to-class distance estimation with exemplar-based object detection \cite{becker2012codebook, chum2007exemplar}. To do this, each object descriptor taken during training is regarded as an exemplar: it refers to a certain part of the object it was sampled from. In this way, bounding box hypotheses can be made from descriptors in a test image and their nearest neighbor exemplars. These hypotheses can be clustered to form detections. Single link agglomerative clustering is compared in this regard with quickshift mode finding clustering.
 
-The tests are performed on both a composed dataset of motorbike images \cite{becker2012codebook}, and on the challenging VOC2007 object detection task \cite{pascal-voc-2007}.
+The tests are performed on both a composed dataset of motorbike images \cite{becker2012codebook, fritz2005integrating}, and on the challenging VOC2007 object detection task \cite{pascal-voc-2007}.
 
 \todo[inline]{Make sure all experiments are mentioned and shortly explained in here, and it is made clear what the benefit of the method is, before the next (last) section.}
 

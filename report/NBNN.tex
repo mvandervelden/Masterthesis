@@ -48,11 +48,11 @@ which is called a maximum a-posteriori (MAP) classifier. In this formulation of 
 \subsection{Boiman's NBNN} % (fold)
 \label{sub:boiman_s_nbnn}
 Boiman \emph{et al.} \cite{boiman2008defense} coined the term Naive Bayes Nearest Neighbor (NBNN) for their image classification algorithm, that used a combination of Nearest-Neighbor (NN) and Naive Bayes to classify images in a multi-class setting. The approach works well because of the non-parametric character of the approach, which means no parameter learning is required. This makes it easy to use the method on a problem with a large number of classes (parametric methods typically model multi-class problems as multiple 2-class problems), and that the risk of overfitting is small because there are no parameters\JanTodo{NRK?} to be overfit. The authors achieved results competitive to the state of the art Bag of Features (BoF) methods because the method benefits from two requirements it meets: (\emph{i}) Avoiding feature quantization and (\emph{ii}) the use of image-to-class distance instead of image-to-image distances. They theorize that earlier attempts to use NN \todo[fancyline]{references} for image classification failed because these do not meet both requirements.
-\JanTodo{Explain image}
+
 \begin{figure}[hbt]
     \centering
     \includegraphics[width=0.8\textwidth]{QuantizationError}
-    \caption{Quantization Error.}
+    \caption{Visualization of the quantization error. (a) An image from the Face class in Caltech101. \cite{caltech101} (b) ``Quantization error of densely sampled SIFT descriptors using a large codebook of Caltech101. Red = high error; Blue = low error. The most informative descriptors (eye, nose, etc.) have the highest quantization error.'' (c) ``Green marks the 8\% of the descriptors in the image that are most frequent in the database (simple edges).'' (d) ``Magenta marks the 8\% of the descriptors in the image that are least frequent in the database (mostly facial features)''. From \cite{boiman2008defense}}
     \label{fig:quantization_error}
 \end{figure}
 
@@ -61,17 +61,16 @@ Feature quantization is a means of creating compact image descriptions, such as 
 In learning-based methods, like SVM, this quantization error is outweighed by the benefit of dimensionality reduction which allows training on a large data set. Furthermore, the problem itself is mitigated in BoF methods. The learning phase in these methods makes sure that only descriptors that are good predictors, regardless of their quantization error, are considered in the test phase. Because NBNN does not have a training phase nor dimensionality reduction, it has to use every single descriptor of each image to perform NN on, to avoid the quantization error.
 
 Kernel methods such as SVM are based on image-to-image distances to create decision boundaries. For each image in the training set, a histogram of visual words is built, based on the features that appear in the image, and are matched with the visual words that resulted from quantizing all training features. 
-In a nearest neighbor approach, image-to-image distances do not enable much generalization, as no inference is done from the training images and their features. This would mean only test images close to known images will be classified correctly. Therefore, image-to-class distances should be used. While an image might be far removed from all others of a certain class, the individual features might all be close to features of different images of this class, making the image-to-image distances to a class large, but the image-to-class distance short. \cite{wang2009learning} Figure~\ref{fig:im2im_vs_im2cl} shows the difference between image-to-image distance and image-to-class distance.\todo{Make a better embedding of the image in the text.}
+In a nearest neighbor approach, image-to-image distances do not enable much generalization, as no inference is done from the training images and their features. This would mean only test images close to known images will be classified correctly. Therefore, image-to-class distances should be used. While an image might be far removed from all others of a certain class, the individual features might all be close to features of different images of this class, making the image-to-image distances to a class large, but the image-to-class distance short. \cite{wang2009learning} Figure~\ref{fig:im2im_vs_im2cl} shows the difference between image-to-image distance and image-to-class distance.
 
 \begin{figure}[hbt]
     \centering
     \includegraphics[width=0.8\textwidth]{Im2imVsIm2cl}
-    \caption{Image to class distance vs image to image}
+    \caption{Image-to-class distance versus image-to-image distance. Given three labeled images of the ``ballet''-class (bottom row), and a query image (top left). Even though the ``Query-to-image'' distance is large to each individual labeled image, represented by the KL-divergences, the ``Query-to-class'' distance is small. The top right image shows the query image, with each descriptor having the color of the labeled image which gave it the highest descriptor likelihood. It shows that this query configuration is more likely given the three images, than each individual image separately. \cite{boiman2008defense, irani2006similarity}}
     \label{fig:im2im_vs_im2cl}
 \end{figure}
-\JanTodo{Explanation.}
 
-Using the main points of no quantization and image-to-class distances, $k$-nearest neighbor can be performed for individual features, per class. Note that in this way, it is impossible to use $k$NN as a classifier, because no discrimination can be made between the classes\JanTodo{Explain, or remove because it is possible}. It is however useful to be able to compare the distances of a feature to the nearest neighbors in each class. this is used as the input of a Naive Bayes classifier.
+Using the main points of no quantization and image-to-class distances, $k$-nearest neighbor can be performed for individual features, per class. Note that in this way, it is impossible to use $k$NN as a classifier, because no discrimination can be made between the classes \JanTodo{Explain, or remove because it is possible}. It is however useful to be able to compare the distances of a feature to the nearest neighbors in each class. this is used as the input of a Naive Bayes classifier.
 
 
 The NBNN decision rule is defined under the Naive Bayes assumption of Section~\ref{sub:NB}. The MAP classifier from \eqref{eq:map}, when assuming uniform priors $p(c)$ over all classes, simplifies to Maximum Likelihood (ML) classifier 
@@ -152,7 +151,7 @@ Wang \emph{et al.} take a slightly different approach to solve the same problem.
 \subsection{Local NBNN} % (fold)
 \label{sec:local_nbnn}
 
-An adaptation of NBNN by McCann \& Lowe called local NBNN (LNBNN)\cite{mccann2012local} has another approach to solve some of the limitations of the original algorithm. Their main idea is that it is not necessary to find a descriptor's nearest neighbor in each class, but that is sufficient to find the $k$ nearest neighbors over all classes. It is better, in fact. In the words of the authors: ``The question becomes, `What does this descriptor look like?', instead of `Does this descriptor look like one from a car? a duck? a face? a plane? \ldots' ''. 
+An adaptation of NBNN by McCann \& Lowe called local NBNN (LNBNN)\cite{mccann2012local} has another approach to solve some of the limitations of the original algorithm. Their main idea is that it is not necessary to find a descriptor's nearest neighbor in each class, but that is sufficient to find the $k$ nearest neighbors over all classes. It will perform better, in fact. See Figure~\ref{fig:lnbnn} for a visualization of the conceptual difference.
 \todo[inline]{Revise this sentence:
 
 This simplification of the query includes less time to find the NN of each class, because it is much more efficient to $k$ nearest neighbors in one collection, than to find the 1-NN in $n$ collections, even when $k>n$.}
@@ -163,8 +162,24 @@ LNBNN will be used as a basis for the object detection algorithm, because it is 
 
 \begin{figure}[hbt]
     \centering
-    \missingfigure[figwidth=0.8\textwidth]{Image showing the idea of LNBNN}
+    \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{LNBNNa}
+        \caption{The original NBNN asks, ``Does this descriptor look like a keyboard? a car? \ldots a dog''}
+        \label{fig:lnbnna}
+    \end{subfigure}%
+    ~ %add desired spacing between images, e. g. ~, \quad, \qquad etc.
+      %(or a blank line to force the subfigure onto a new line)
+    \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{LNBNNb}
+        \caption{Local NBNN asks, ``What does this descriptor look like?''}
+        \label{fig:lnbnnb}
+    \end{subfigure}%
+    \caption(Difference in conceptual approach of regular NBNN and Local NBNN. From \cite{mccann2012local}.)
+    \label{fig:lnbnn}
 \end{figure}
+
 % subsection local_nbnn (end)
 
 
