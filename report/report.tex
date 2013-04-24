@@ -1,0 +1,126 @@
+\documentclass[a4paper,10pt]{article}
+\usepackage{amsmath}
+\usepackage[table,usenames,dvipsnames]{xcolor}
+\usepackage{url}
+\usepackage[shadow]{todonotes}
+\usepackage{soul}
+\usepackage[font=small,format=plain,labelfont=bf,up,textfont=it,up]{caption}
+\usepackage{array}
+\usepackage[english]{babel}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{rotating}
+\usepackage{hyperref}
+
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\argmin}{arg\,min}
+
+\definecolor{gold}{HTML}{FFD700}
+\definecolor{silver}{HTML}{C0C0C0}
+\definecolor{bronze}{HTML}{CD7F32}
+\newcommand{\cellGold}{\cellcolor{gold}}
+\newcommand{\cellSilver}{\cellcolor{silver}}
+\newcommand{\cellBronze}{\cellcolor{bronze}}
+
+\newcommand{\JanTodo}{\todo[fancyline, color=magenta]}
+
+
+%opening
+
+\begin{document}
+
+\begin{titlepage}
+
+\newcommand{\HRule}{\rule{\linewidth}{0.5mm}} % Defines a new command for the horizontal lines, change thickness here
+\center % Center everything on the page
+ 
+%-------------------------------------------------------------------------------
+%	HEADING SECTIONS
+%-------------------------------------------------------------------------------
+
+\textsc{\LARGE University of Amsterdam}\\[1.0cm] % Name of your university/college
+\textsc{\Large Artificial Intelligence}\\[0.5cm] % Major heading such as course name
+\textsc{\large Master Thesis}\\[0.5cm] % Minor heading such as course title
+
+%-------------------------------------------------------------------------------
+%	TITLE SECTION
+%-------------------------------------------------------------------------------
+
+\HRule \\[0.4cm]
+% Title of your document
+{ \huge \bfseries Naive Bayes Nearest-Neighbor Object Detection}\\[0.1cm]
+{ \large Using Local NBNN and Exemplar Models to Perform Object Detection in Web Images}\\[0.2cm]
+\HRule \\[1.5cm]
+ 
+%-------------------------------------------------------------------------------
+%	AUTHOR SECTION
+%-------------------------------------------------------------------------------
+
+\begin{minipage}{0.4\textwidth}
+\begin{flushleft} \large
+\emph{Author:}\\
+% Maarten \textsc{van der Velden} % Your name
+Maarten van der Velden\\
+Student ID: 5743087\\
+maarten.vandervelden@\\student.uva.nl
+\end{flushleft}
+\end{minipage}
+~
+\begin{minipage}{0.4\textwidth}
+\begin{flushright} \large
+\emph{Supervisor:} \\
+% dr. Jan \textsc{van Gemert} % Supervisor's Name
+dr. Jan van Gemert\\
+j.c.vangemert@uva.nl
+\end{flushright}
+\end{minipage}\\[2cm]
+
+% If you don't want a supervisor, uncomment the two lines below and remove the section above
+%\Large \emph{Author:}\\
+%John \textsc{Smith}\\[3cm] % Your name
+
+%-------------------------------------------------------------------------------
+%	DATE SECTION
+%-------------------------------------------------------------------------------
+
+{\large \today}\\[3cm] % Date, change the \today to a set date if you want to be precise
+
+%-------------------------------------------------------------------------------
+%	LOGO SECTION
+%-------------------------------------------------------------------------------
+
+\includegraphics[width=30mm]{Logo}\\[1cm] % Include a department/university logo - this will require the graphicx package
+ 
+%-------------------------------------------------------------------------------
+
+\vfill % Fill the rest of the page with whitespace
+
+\end{titlepage}
+
+\begin{abstract}
+    This thesis explores the possibilities of using the Naive Bayes Nearest-Neighbor (NBNN) image classification method as a detection algorithm to find objects in digital photos. It improves and elaborates on similar earlier attempts by combining several related theories and methods. NBNN has been proven to be a good parameter-free image classification algorithm, that works without a learning phase. Extensions into the field of object detection have been involving the clustering of exemplar-models (exemplar-NBNN), whereas others improved NBNN by investigating the local nearest-neighbor search space (LNBNN).
+    
+    Exemplar-NBNN's agglomerative clustering approach was evaluated and exchanged with the theoretically more appealing mode finding algorithm called quickshift. The result was combined with LNBNN to involve multiple nearest neighbors.
+    
+    Tests on the TUD Motorbikes and Pascal VOC 2007 benchmark sets show an improved object detection algorithm, that performs reasonably compared with different approaches. More research is needed to explore its possibilities more fully, not only with respect to performance, but also to its efficiency, as time and memory complexity appear to be prohibitive for large data sets at the moment.
+\end{abstract}
+
+% \tableofcontents
+
+% \pagenumbering{arabic}
+
+\input{Introduction}
+\input{RelatedWork}
+\input{NBNN}
+\input{Detection}
+
+\input{NBNN-Detection}
+\input{ExperimentsResults}
+
+\input{AnalysisOfResults}
+\input{Conclusion}
+
+\bibliographystyle{is-plain}
+\bibliography{ref}
+
+\end{document}

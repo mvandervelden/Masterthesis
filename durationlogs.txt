@@ -1,0 +1,218 @@
+RESFOLDER: scratchdisk/localdet5_VOC07_sift_qs120_res
+RESFOLDER: scratchdisk/localdet5_VOC07_harlapsift_qs120_res
+FINISHED ALL IN 0:57:8
+RESFOLDER: scratchdisk/localdet5_VOC07_harlapsift_bbox_qs120_res
+FINISHED ALL IN 0:1:14
+RESFOLDER: scratchdisk/localdet5_VOC07_harlapsift_bbox_qs120_res
+FINISHED ALL IN 1:25:52
+RESFOLDER: scratchdisk/localdet20_VOC07_harlapsift_bbox_qs120_res
+RESFOLDER: scratchdisk/localdet5_VOC07_harlapsift_bbox_sl04_res
+FINISHED ALL IN 1:10:33
+RESFOLDER: scratchdisk/localdet20_VOC07_harlapsift_bbox_sl04_res
+FINISHED ALL IN 31:58:29
+RESFOLDER: scratchdisk/localdet5_VOC07_harlapsift_qs120_res
+FINISHED ALL IN 0:0:0
+RESFOLDER: scratchdisk/localdet5_VOC07_harlapsift_qs120_res
+FINISHED ALL IN 0:51:7
+RESFOLDER: scratchdisk/localdet5_VOC07_harlapsift_bbox_qs120_res
+FINISHED ALL IN 0:49:37
+RESFOLDER: scratchdisk/localdet20_VOC07_harlapsift_bbox_qs120_res
+FINISHED ALL IN 0:51:28
+RESFOLDER: scratchdisk/localdet5_VOC07_harlapsift_bbox_sl04_res
+FINISHED ALL IN 0:49:29
+RESFOLDER: scratchdisk/localdet20_VOC07_harlapsift_bbox_sl04_res
+FINISHED ALL IN 0:51:21
+RESFOLDER: scratchdisk/localdet5_VOC07_harlapsift_seg_qs120_res
+FINISHED ALL IN 0:51:15
+RESFOLDER: scratchdisk/localdet5_VOC07_harlapsift_bbox_qs120_res
+FINISHED ALL IN 0:50:0
+RESFOLDER: scratchdisk/localdet20_VOC07_harlapsift_bbox_qs120_res
+RESFOLDER: scratchdisk/localdet20_VOC07_harlapsift_bbox_sl04_res_2
+FINISHED ALL IN 0:51:26
+RESFOLDER: scratchdisk/localdet20_VOC07_harlapsift_bbox_qs120_res_2
+FINISHED ALL IN 0:52:5
+RESFOLDER: scratchdisk/localdet5_VOC07_harlapsift_segment_qs120_res
+FINISHED ALL IN 1:27:45
+RESFOLDER: scratchdisk/localdet5_VOC07_harlapsift_bbox_qs120_res
+FINISHED ALL IN 18:22:14
+RESFOLDER: scratchdisk/localdet20_VOC07_harlapsift_bbox_qs120_res
+RESFOLDER: scratchdisk/localdet5_VOC07_harlapsift_bbox_sl04_res
+FINISHED ALL IN 16:46:33
+RESFOLDER: scratchdisk/localdet20_VOC07_harlapsift_bbox_qs120_res_2
+RESFOLDER: /local/vdvelden/localdet5_VOC07_harlapsift_seg_qs120_res_NEW
+FINISHED ALL IN 0:49:35
+RESFOLDER: /local/vdvelden/localdet5_VOC07_harlapsift_bbox_qs120_res_NEW
+FINISHED ALL IN 0:49:2
+RESFOLDER: /local/vdvelden/localdet20_VOC07_harlapsift_bbox_qs120_res_NEW
+FINISHED ALL IN 0:49:48
+RESFOLDER: /local/vdvelden/localdet5_VOC07_harlapsift_bbox_sl04_res_NEW
+FINISHED ALL IN 0:48:53
+RESFOLDER: /local/vdvelden/localdet5_VOC07_harlapsift_seg_qs120_res_NEW
+FINISHED ALL IN 2:11:52
+RESFOLDER: /local/vdvelden/localdet5_VOC07_harlapsift_bbox_qs120_res_NEW
+FINISHED ALL IN 24:15:7
+RESFOLDER: /local/vdvelden/localdet20_VOC07_harlapsift_bbox_qs120_res_NEW
+RESFOLDER: /local/vdvelden/localdet5_VOC07_harlapsift_bbox_sl04_res_NEW
+FINISHED ALL IN 13:37:16
+RESFOLDER: /local/vdvelden/localdet20_VOC07_harlapsift_segment_qs120_res
+FINISHED ALL IN 0:0:16
+RESFOLDER: /local/vdvelden/localdet20_VOC07_harlapsift_segment_qs120_res
+FINISHED ALL IN 0:19:43
+RESFOLDER: /local/vdvelden/localdet20_VOC07_harlapsift_segment_qs120_res
+RESFOLDER: /local/vdvelden/localdet20_VOC07_harlapsift_bbox_qs120_res
+FINISHED ALL IN 0:19:40
+RESFOLDER: /local/vdvelden/localdet20_VOC07_sift_segment_qs120_res
+RESFOLDER: /local/vdvelden/localdet20_VOC07_harlapsift_segment_qs100_res
+FINISHED ALL IN 0:19:47
+RESFOLDER: /local/vdvelden/localdet20_VOC07_harlapsift_segment_sl8_res
+FINISHED ALL IN 0:16:27
+RESFOLDER: /local/vdvelden/localdet20_VOC07_sift_segment_qs120_res
+FINISHED ALL IN 0:59:19
+RESFOLDER: /local/vdvelden/localdet20_VOC07_harlapsift_segment_qs120_res
+FINISHED ALL IN 0:0:2
+RESFOLDER: /local/vdvelden/localdet20_VOC07_harlapsift_segment_qs120_res
+FINISHED ALL IN 27:30:4
+RESFOLDER: /local/vdvelden/localdet20_VOC07_harlapsift_bbox_qs120_res
+RESFOLDER: /local/vdvelden/localdet20_VOC07_harlapsift_segment_qs100_res
+FINISHED ALL IN 27:43:56
+RESFOLDER: /local/vdvelden/localdet20_VOC07_sift_segment_qs120_res
+RESFOLDER: /local/vdvelden/localdet20_VOC07_harlapsift_segment_sl8_res
+RESFOLDER: /local/vdvelden/localdet20_VOC07_harlapsift_segment_sl8_res
+FINISHED ALL IN 0:34:6
+RESFOLDER: /local/vdvelden/localdet20_VOC07_harlapsift_segment_sl8_res
+FINISHED ALL IN 0:56:41
+RESFOLDER: /local/vdvelden/localdet20_VOC07_harlapsift_bbox_qs120_res
+FINISHED ALL IN 0:55:40
+RESFOLDER: /local/vdvelden/localdet20_VOC07_harlapsift_segment_qs150_res
+FINISHED ALL IN 0:56:38
+RESFOLDER: /local/vdvelden/localdet20_VOC07_dsift_segment_qs120_res
+FINISHED ALL IN 2:38:19
+RESFOLDER: /local/vdvelden/localdet20_VOC07_dsift_segment_qs120_res
+RESFOLDER: /local/vdvelden/localdet20_VOC07_hlpsift_bbox_qs120_res
+RESFOLDER: /local/vdvelden/localdet20_VOC07_hlpsift_segment_qs175_res
+FINISHED ALL IN 28:3:36
+RESFOLDER: /local/vdvelden/localdet20_VOC07_hlpsift_segment_sl8_res
+FINISHED ALL IN 16:0:14
+RESFOLDER: /local/vdvelden/localdet4_TUD_harlapsift_qs120_res
+FINISHED ALL IN 0:42:32
+RESFOLDER: /local/vdvelden/localdet20_TUD_harlapsift_sl4_res
+FINISHED ALL IN 6:31:44
+RESFOLDER: /local/vdvelden/localdet4_TUD_dsift_qs120_res
+FINISHED ALL IN 4:23:56
+RESFOLDER: /local/vdvelden/localdet20_VOC07_hlpsift_segment_sl8_res
+FINISHED ALL IN 16:9:41
+RESFOLDER: /local/vdvelden/localdet20_VOC07_dsift_segment_sl4_res
+FINISHED ALL IN 62:7:25
+RESFOLDER: /local/vdvelden/localdet4_TUD_dsift_qs120_res_05
+FINISHED ALL IN 4:28:35
+RESFOLDER: /local/vdvelden/localdet4_TUD_dsift_qs120_res_04
+FINISHED ALL IN 4:32:4
+RESFOLDER: /local/vdvelden/localdet20_VOC07_hlpsift_segment_sl4_res_full
+FINISHED ALL IN 4:21:24
+RESFOLDER: /local/vdvelden/localdet20_TUD_hlpsift_sl4_res_full
+FINISHED ALL IN 6:27:57
+RESFOLDER: /local/vdvelden/localdet4_VOC07_dsift_segment_qs12_res_full
+FINISHED ALL IN 80:2:51
+RESFOLDER: /local/vdvelden/localdet20_VOC07_hlpsift_bbox_sl4_res
+FINISHED ALL IN 76:44:50
+RESFOLDER: /local/vdvelden/localdet4_VOC07_hlpsift_segment_qs12_res_fulltest
+FINISHED ALL IN 43:29:7
+RESFOLDER: /local/vdvelden/det1_TUD_dsift_sl0_nonlocal_res
+FINISHED ALL IN 0:15:21
+RESFOLDER: /local/vdvelden/det1_TUD_dsift_sl0_nonlocal_res
+RESFOLDER: /local/vdvelden/det1_TUD_dsift_sl0_nonlocal_res
+RESFOLDER: /local/vdvelden/det1_TUD_dsift_sl0_nonlocal_res_1
+FINISHED ALL IN 0:15:22
+RESFOLDER: /local/vdvelden/det1_TUD_dsift_sl0_nonlocal_res_2
+FINISHED ALL IN 0:15:13
+RESFOLDER: /local/vdvelden/det1_TUD_dsift_sl0_nonlocal_res_3
+FINISHED ALL IN 0:15:27
+RESFOLDER: /local/vdvelden/det1_TUD_dsift_sl0_nonlocal_res_4
+FINISHED ALL IN 0:14:56
+RESFOLDER: /local/vdvelden/det1_TUD_dsift_sl0_nonlocal_res_5
+FINISHED ALL IN 0:15:27
+RESFOLDER: /local/vdvelden/det1_TUD_dsift_sl0_nonlocal_res_4
+FINISHED ALL IN 0:22:15
+RESFOLDER: /local/vdvelden/det1_TUD_dsift_sl0_nonlocal_res_3
+FINISHED ALL IN 0:21:47
+RESFOLDER: /local/vdvelden/det1_TUD_dsift_sl0_nonlocal_res_2
+FINISHED ALL IN 0:21:33
+RESFOLDER: /local/vdvelden/det1_TUD_dsift_sl0_nonlocal_res_1
+FINISHED ALL IN 0:22:7
+RESFOLDER: /local/vdvelden/det1_TUD_dsift_sl4_nonlocal_res_1
+FINISHED ALL IN 0:23:22
+RESFOLDER: /local/vdvelden/det1_TUD_dsift_sl4_nonlocal_res_2
+FINISHED ALL IN 0:23:27
+RESFOLDER: /local/vdvelden/det1_TUD_dsift_sl4_nonlocal_res_3
+FINISHED ALL IN 0:22:58
+RESFOLDER: /local/vdvelden/det1_TUD_dsift_sl4_nonlocal_res_4
+FINISHED ALL IN 0:23:28
+RESFOLDER: /local/vdvelden/det1_TUD_dsift_sl4_nonlocal_res_5
+FINISHED ALL IN 0:23:17
+RESFOLDER: /local/vdvelden/det1_TUD_dsift_qs12_nonlocal_res_5
+FINISHED ALL IN 0:27:10
+RESFOLDER: /local/vdvelden/det1_TUD_dsift_qs12_nonlocal_res_4
+FINISHED ALL IN 0:28:29
+RESFOLDER: /local/vdvelden/det1_TUD_dsift_qs12_nonlocal_res_3
+FINISHED ALL IN 0:27:21
+RESFOLDER: /local/vdvelden/det1_TUD_dsift_qs12_nonlocal_res_2
+FINISHED ALL IN 0:27:21
+RESFOLDER: /local/vdvelden/det1_TUD_dsift_qs12_nonlocal_res_1
+FINISHED ALL IN 0:28:26
+RESFOLDER: /local/vdvelden/det4_TUD_dsift_qs12_nonlocal_res_1
+FINISHED ALL IN 1:4:44
+RESFOLDER: /local/vdvelden/det4_TUD_dsift_qs12_nonlocal_res_2
+FINISHED ALL IN 1:5:6
+RESFOLDER: /local/vdvelden/det4_TUD_dsift_qs12_nonlocal_res_3
+FINISHED ALL IN 1:4:53
+RESFOLDER: /local/vdvelden/det4_TUD_dsift_qs12_nonlocal_res_4
+FINISHED ALL IN 1:6:0
+RESFOLDER: /local/vdvelden/det4_TUD_dsift_qs12_nonlocal_res_5
+FINISHED ALL IN 1:4:51
+RESFOLDER: /local/vdvelden/det20_TUD_dsift_sl4_nonlocal_res_1
+FINISHED ALL IN 2:14:40
+RESFOLDER: /local/vdvelden/det20_TUD_dsift_sl4_nonlocal_res_2
+FINISHED ALL IN 2:16:39
+RESFOLDER: /local/vdvelden/det20_TUD_dsift_sl4_nonlocal_res_3
+FINISHED ALL IN 2:18:50
+RESFOLDER: /local/vdvelden/det20_TUD_dsift_sl4_nonlocal_res_4
+FINISHED ALL IN 2:18:36
+RESFOLDER: /local/vdvelden/det20_TUD_dsift_sl4_nonlocal_res_5
+FINISHED ALL IN 2:21:43
+RESFOLDER: /local/vdvelden/det20_TUD_dsift_sl4_local_res_5
+FINISHED ALL IN 88:52:23
+RESFOLDER: /local/vdvelden/det20_TUD_dsift_sl4_local_res_4
+FINISHED ALL IN 89:22:14
+RESFOLDER: /local/vdvelden/det20_TUD_dsift_sl4_local_res_3
+FINISHED ALL IN 87:47:49
+RESFOLDER: /local/vdvelden/det20_TUD_dsift_sl4_local_res_2
+FINISHED ALL IN 85:14:36
+RESFOLDER: /local/vdvelden/det20_TUD_dsift_sl4_local_res_1
+FINISHED ALL IN 85:4:51
+RESFOLDER: /local/vdvelden/det4_TUD_hlpsift_qs12_local_res_5
+FINISHED ALL IN 0:41:29
+RESFOLDER: /local/vdvelden/det4_TUD_hlpsift_qs12_nonlocal_res_5
+FINISHED ALL IN 0:25:33
+RESFOLDER: /local/vdvelden/det1_TUD_hlpsift_qs12_nonlocal_res_5
+FINISHED ALL IN 0:23:29
+RESFOLDER: /local/vdvelden/det1_VOC07_dsift_segment_qs12_res_fulltest
+FINISHED ALL IN 4:18:2
+RESFOLDER: /local/vdvelden/det4_VOC07_dsift_segment_qs12_res_full
+FINISHED ALL IN 6:23:27
+RESFOLDER: /local/vdvelden/det1_VOC07_dsift_segment_local_sl0_res_fulltest
+FINISHED ALL IN 72:4:50
+RESFOLDER: /local/vdvelden/det1_VOC07_dsift_segment_local_sl0_res_full
+FINISHED ALL IN 3:16:27
+RESFOLDER: /local/vdvelden/det1_VOC07_dsift_segment_local_sl4_res_full
+FINISHED ALL IN 3:23:40
+RESFOLDER: /local/vdvelden/det1_VOC07_dsift_segment_local_qs12_res_full
+RESFOLDER: /local/vdvelden/det4_VOC07_hlpsift_segment_nonlocal_qs12_res_full
+FINISHED ALL IN 1:0:8
+RESFOLDER: /local/vdvelden/det4_TUD_dsift_qs12_local_res_5
+FINISHED ALL IN 7:35:24
+RESFOLDER: /local/vdvelden/det1_VOC07_hlpsift_segment_local_qs12_res_full
+FINISHED ALL IN 0:57:6
+RESFOLDER: /local/vdvelden/det4_VOC07_hlpsift_segment_local_qs12_res_full
+FINISHED ALL IN 2:13:56
+RESFOLDER: /local/vdvelden/det20_VOC07_hlpsift_segment_local_sl4_res_fulltest
+RESFOLDER: /local/vdvelden/det4_VOC07_hlpsift_segment_nonlocal_qs12_res_fulltest

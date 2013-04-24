@@ -1,14 +1,12 @@
 \section{Analysis of Results} % (fold)
 \label{cha:analysis_of_results}
 
-\todo[inline]{Add analysis of results: Why does it work on TUD and not on VOC, show visualized graphs and examples.}
-
-The experiments and their results show a number of things: the approach of exemplar-NBNN detection works not only on the TUD dataset, but also fairly well on the VOC2007 set. Furthermore, the substitution of of the agglomerative clustering algorithm with a mode finding algorithm seems to have a positive effect, just like taking a value of $k>1$. The effects of the local-NBNN variant are less profound, and it is unclear what causes this. In this section I will give a deeper analysis of the results, to find out how they can be interpreted.
+The experiments and their results show a number of things: the approach of exemplar-NBNN detection works not only on the TUD dataset, but also fairly well on the VOC2007 set. Furthermore, the substitution of of the agglomerative clustering algorithm with a mode finding algorithm seems to have a positive effect, just like taking a value of $k>1$ and using LNBNN. Nevertheless there is much variance within the results, and therefore it is necessary to give a deeper analysis of the results, to find out how they can be interpreted.
 
 \subsection{The Datasets} % (fold)
 \label{sec:the_dataset}
 
-The differences between the datasets are striking. The TUD Motorbikes set has a single class, and the test set contains only positive images (i.e. images with at least one motorbike). The training set has a clear-cut segmentation, which improves the feature quality. The VOC2007 dataset is much harder. Every class appears in only 5\% of the test images, excluding the \emph{person} class, which occurs in 40\% of the images. To put it another way, in the TUD Motorbike test the task is for every image to locate the motorbike object(s), while in de VOC2007 test the task is for every image and every class to assess the possibility of this class having an object in the image, and if yes, to locate it.
+The differences between the datasets are striking. The TUD Motorbikes set has a single class, and the test set contains only positive images (i.e. images with at least one motorbike). The training set has a clear-cut segmentation, which improves the feature quality. The VOC07 dataset is much harder. Every class appears in only 5\% of the test images, excluding the \emph{person} class, which occurs in 40\% of the images. To put it another way, in the TUD Motorbike test the task is for every image to locate the motorbike object(s), while in de VOC2007 test the task is for every image and every class to assess the possibility of this class having an object in the image, and if yes, to locate it.
 
 Of course, in practice these tasks are modeled in the same way. The detections within a single class are all compared to one another in terms of their value (cluster size), across all images, both class and non-class images (\emph{Cf.} the PASCAL VOC evaluation method \cite{pascal-voc-2007}.)
 
@@ -49,4 +47,4 @@ Not mentioned before, detection algorithms can be compared not only for their qu
 % subsection time_and_memory_constraints (end)
 
 
-% section analisys_of_results (end)
+% section analysis_of_results (end)
