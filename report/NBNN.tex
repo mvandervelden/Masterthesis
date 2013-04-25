@@ -12,7 +12,7 @@ The $k$-Nearest-Neighbor algorithm is one of the earliest approaches for classif
 \end{align}
 being the class of which the most items are within the $k$ nearest neighbors of $q$.
 
-In contrast to other classification algorithms, $k$NN is relatively simple. It does not require any training to make a model from the labeled images. The algorithm only estimates the probability density of the classes locally, within $k$, which means it does not assume a global probability density distribution underneath the data, which makes it non-parametric, and a cheap\JanTodo{in what sense (or remove)?} way of making a non-linear classifier.
+In contrast to other classification algorithms, $k$NN is relatively simple. It does not require any training to make a model from the labeled images. The algorithm only estimates the probability density of the classes locally, within $k$, which means it does not assume a global probability density distribution underneath the data, which makes it a non-parametric way of making a non-linear classifier.
 
 \subsection{Naive Bayes Classification} % (fold)
 \label{sub:NB}
@@ -66,7 +66,7 @@ In a nearest neighbor approach, image-to-image distances do not enable much gene
 \begin{figure}[hbt]
     \centering
     \includegraphics[width=0.8\textwidth]{Im2imVsIm2cl}
-    \caption{Image-to-class distance versus image-to-image distance. Given three labeled images of the ``ballet''-class (bottom row), and a query image (top left). Even though the ``Query-to-image'' distance is large to each individual labeled image, represented by the KL-divergences, the ``Query-to-class'' distance is small. The top right image shows the query image, with each descriptor having the color of the labeled image which gave it the highest descriptor likelihood. It shows that this query configuration is more likely given the three images, than each individual image separately. \cite{boiman2008defense, irani2006similarity}}
+    \caption{Image-to-class distance versus image-to-image distance. Given three labeled images of the ``ballet''-class (bottom row), and a query image (top left). Even though the ``Query-to-image'' distance is large to each individual labeled image, represented by the KL-divergences, the ``Query-to-class'' distance is small. The top right image shows the query image, with each descriptor having the color of the labeled image which gave it the highest descriptor likelihood. It shows that this query configuration is more likely given the three images, than each individual image separately. (Image taken from \cite{boiman2008defense, irani2006similarity}.)}
     \label{fig:im2im_vs_im2cl}
 \end{figure}
 
@@ -118,7 +118,7 @@ LNBNN will be used as a basis for the object detection algorithm, because it is 
 
 \begin{figure}[hbt]
     \centering
-    \begin{subfigure}[b]{0.45\textwidth}
+    \begin{subfigure}[b]{0.60\textwidth}
         \centering
         \includegraphics[width=\textwidth]{LNBNNa}
         \caption{The original NBNN asks, ``Does this descriptor look like a keyboard? a car? \ldots a dog''}
@@ -126,13 +126,13 @@ LNBNN will be used as a basis for the object detection algorithm, because it is 
     \end{subfigure}%
     ~ %add desired spacing between images, e. g. ~, \quad, \qquad etc.
       %(or a blank line to force the subfigure onto a new line)
-    \begin{subfigure}[b]{0.45\textwidth}
+    \begin{subfigure}[b]{0.30\textwidth}
         \centering
         \includegraphics[width=\textwidth]{LNBNNb}
         \caption{Local NBNN asks, ``What does this descriptor look like?''}
         \label{fig:lnbnnb}
     \end{subfigure}%
-    \caption(Difference in conceptual approach of regular NBNN and Local NBNN. From \cite{mccann2012local}.)
+    \caption{Difference in conceptual approach of regular NBNN and Local NBNN. From \cite{mccann2012local}.}
     \label{fig:lnbnn}
 \end{figure}
 

@@ -92,7 +92,7 @@ Mode finding is the search for local density maxima in the clustering space. The
     \label{fig:ms_qs}
 \end{figure}
 
-Quickshift clustering takes a slightly different approach, mainly used to speed up the clustering process. \cite{vedaldiquick} This approach does not model a global density estimate, but calculates the density for each data point. Next, for each point its neighbor with the highest density estimate (higher than its own) within a certain window is found. This results in a tree-like structure, where the data points at local density maxima become the head nodes, and define cluster and also its detection, the difference between mean-shift and quickshift is shown in Figure~\ref{fig:ms_qs}.
+Quickshift clustering takes a slightly different approach, mainly used to speed up the clustering process. \cite{vedaldi2008quick} This approach does not model a global density estimate, but calculates the density for each data point. Next, for each point its neighbor with the highest density estimate (higher than its own) within a certain window is found. This results in a tree-like structure, where the data points at local density maxima become the head nodes, and define cluster and also its detection, the difference between mean-shift and quickshift is shown in Figure~\ref{fig:ms_qs}.
 
 The window parameter $\tau$ in quickshift defines what range around each data point is used both to calculate its density estimate, and to look for data points available for clustering.
 
