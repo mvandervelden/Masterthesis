@@ -1,6 +1,5 @@
 \section{Experiments} % (fold)
 \label{cha:experimental_setup}
-\todo[inline]{Don't forget to cover details like sampling method, features (separate subsection?), difference in settings for each test and data set, etc.}
 
 The theory on local exemplar-NBNN detection was tested in a number of experiments. First, the NBNN detection experiments of Becker \cite{becker2012codebook} were replicated to validate the implementation, see Section~\ref{sec:nbnn_detection}. These experiments were altered in a number of ways, to see the effects of different descriptors, feature selection rules, clustering algorithms and using Behmo's optimized NBNN approach. Next to this, exemplar-$k$NBNN was tested, both with and without McCann's Local NBNN approach (Section~\ref{sec:local_nbnn_detection}). Most tests were performed on both the TUD motorbikes and VOC2007 benchmark detection sets.
 
@@ -142,7 +141,6 @@ Quickshift has no bound for overlap in detections, which should not be a problem
 
 Figure~\ref{fig:tudk1prc} and Table~\ref{tab:tudallstats} show the results on the TUD set, of the implementation of Becker's algorithm using Single-link clustering compared to the results reported by Becker \cite{becker2012codebook}. It also shows the results using the quickshift algorithm and using single-link clustering with $\theta_p = 0.4$, instead of Becker's $\theta_p = 0.0$. It shows that quickshift performs slightly better than single-link clustering on the TUD test, and that dense sampling is indeed crucial, seeing the major decline in performance when harris-laplacian feature selection was used.
 
-\todo[fancyline]{Get new figure with higher PR curves (set5 instead of set1)}
 \begin{figure}[hbt]
     \centering
     \includegraphics[width=0.8\textwidth]{TUDk1prc}
@@ -208,7 +206,6 @@ As a bonus, LNBNN detection also incorporates a way to prevent the aliasing prob
 \subsubsection{Exemplar $k$NBNN \& LNBNN Results} % (fold)
 \label{ssub:lnbnn_results}
 
-\todo[fancyline]{Get new figure with higher PR curves (set5 instead of set1)}
 \begin{figure}[hbt]
     \centering
     \includegraphics[width=0.8\textwidth]{TUDklocprc}

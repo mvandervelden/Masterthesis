@@ -1,7 +1,7 @@
 \section{Naive Bayes Nearest Neighbor} % (fold)
 \label{cha:naive_bayes_nearest_neighbor}
 
-\todo[inline]{short introduction of a paragraph or so? SEEMS TO BE OK, PERHAPS CUT SOME OF THE WORK ON BEHMO A LITTLE, MAKE A SUBSEC ON ..?(forgot what)}
+The focus of this thesis is on the Naive Bayes Nearest Neighbor (NBNN) image classification method, first presented by Boiman \emph{et al.} \cite{boiman2008defense} In this section the theory behind the method, its sources and its later adaptations will be discussed.
 
 \subsection{$k$-Nearest Neighbor Classification} % (fold)
 \label{sub:_k_nearest_neighbor}
@@ -47,7 +47,7 @@ which is called a maximum a-posteriori (MAP) classifier. In this formulation of 
 
 \subsection{Boiman's NBNN} % (fold)
 \label{sub:boiman_s_nbnn}
-Boiman \emph{et al.} \cite{boiman2008defense} coined the term Naive Bayes Nearest Neighbor (NBNN) for their image classification algorithm, that used a combination of Nearest-Neighbor (NN) and Naive Bayes to classify images in a multi-class setting. The approach works well because of the non-parametric character of the approach, which means no parameter learning is required. This makes it easy to use the method on a problem with a large number of classes (parametric methods typically model multi-class problems as multiple 2-class problems), and that the risk of overfitting is small because there are no parameters\JanTodo{NRK?} to be overfit. The authors achieved results competitive to the state of the art Bag of Features (BoF) methods because the method benefits from two requirements it meets: (\emph{i}) Avoiding feature quantization and (\emph{ii}) the use of image-to-class distance instead of image-to-image distances. They theorize that earlier attempts to use NN \todo[fancyline]{references} for image classification failed because these do not meet both requirements.
+Boiman \emph{et al.} \cite{boiman2008defense} coined the term Naive Bayes Nearest Neighbor (NBNN) for their image classification algorithm, that used a combination of Nearest-Neighbor (NN) and Naive Bayes to classify images in a multi-class setting. The approach works well because of the non-parametric character of the approach, which means no parameter learning is required. This makes it easy to use the method on a problem with a large number of classes, while parametric methods typically model multi-class problems as multiple 2-class problems. It also means that the risk of overfitting is smaller because there are no model parameters to be tuned. The only parameters are in the (type and amount of) features, which is the same for other classification methods. The authors achieved results competitive to the state of the art Bag of Features (BoF) methods because the method benefits from two requirements it meets: (\emph{i}) Avoiding feature quantization and (\emph{ii}) the use of image-to-class distance instead of image-to-image distances. They theorize that earlier attempts to use NN \cite{berg2005shape, zhang2006svm} for image classification failed because these do not meet both requirements.
 
 \begin{figure}[hbt]
     \centering
@@ -70,8 +70,7 @@ In a nearest neighbor approach, image-to-image distances do not enable much gene
     \label{fig:im2im_vs_im2cl}
 \end{figure}
 
-Using the main points of no quantization and image-to-class distances, $k$-nearest neighbor can be performed for individual features, per class. Note that in this way, it is impossible to use $k$NN as a classifier, because no discrimination can be made between the classes \JanTodo{Explain, or remove because it is possible}. It is however useful to be able to compare the distances of a feature to the nearest neighbors in each class. this is used as the input of a Naive Bayes classifier.
-
+Using the main points of no quantization and image-to-class distances, $k$-nearest neighbor can be performed for individual features, per class. Note that in this way, each individual feature could be classified as its NN, but a second step is required to classify images as a whole. Therefore the set of individual distances is used as the input of a Naive Bayes classifier.
 
 The NBNN decision rule is defined under the Naive Bayes assumption of Section~\ref{sub:NB}. The MAP classifier from \eqref{eq:map}, when assuming uniform priors $p(c)$ over all classes, simplifies to Maximum Likelihood (ML) classifier 
 \begin{align}
@@ -102,59 +101,16 @@ Now, classification boils down to calculating descriptors for all images in each
 \subsection{Limitations and Extensions} % (fold)
 \label{sub:limitations_and_extensions}
 
-Even though the algorithm of Boiman \emph{et al.} \cite{boiman2008defense} is very simple and requires no training phase, it does have scalability issues because of its dependence on as many individual descriptors as possible. Because all densely computed descriptors for each image in the training set have to be stored, and the nearest neighbor for each descriptor of each query image on each class has to be found, the memory usage is much higher than for example BoF methods, which use a more compact representation of images. Calculating NN can be sped up by using sophisticated approximations of the Nearest Neighbor algorithm, such as \JanTodo{cite FLANN, ANN, add some brief details about FLANN in a separate paragraph, perhaps better in the Experiments section}. The memory issue remains however.
-
-\JanTodo{Behmo is less important now, so less detail!}
-Other limitations have been shown by various authors.\cite{behmo2010towards, mccann2012local,timofte2012iterative,tuytelaars2011nbnn,wang2011improved} Some authors \cite{behmo2010towards,wang2011improved} stress that NBNN is highly sensitive to differences in descriptor density over classes. Behmo \emph{et al.} for example state that this is caused by dropping the factor $\frac{1}{Z}$ from the classification rule, which normalizes for the descriptor density in the train set for a given class; compare Equations \eqref{eq:parzen} and \eqref{eq:nbnnloglikelihood}. This term is dropped because an equal kernel estimation is assumed, which does not hold for large differences in descriptor density over classes.\cite{behmo2010towards} Therefore, they propose to learn the density estimation parameters per class, variance $\sigma_c$ and normalization factor $Z_c$, as a linear problem. Rephrasing the general Parzen-based likelihood \eqref{eq:parzen} gives
-\begin{align}
-    - \log\big(p(d_q|c)\big) &= -\log\Bigg(\frac{1}{ Z_c}\exp\left( -\frac{ \|d_q - \text{NN}_c(d_q)\|^2}{2(\sigma_c)^2}\right)\!\Bigg) \\
-    &= \frac{ \|d_q - \text{NN}_c(d_q)\|^2}{2(\sigma_c)^2} + \log(Z_c),
-\end{align}
-and subsequently rephrasing and re-parametrizing the Naive Bayes rule \eqref{eq:nbnnclass} gives
-\begin{align}
-    \hat c_q &= \argmin_c \sum_{i=1}^{m_q} \left(\frac{ \|d_q - \text{NN}_c(d_q)\|^2}{2(\sigma_c)^2} + \log(Z_c)\right)\\
-    &= \argmin_c \alpha_c \sum_{i=1}^{m_q} \|d_q - \text{NN}_c(d_q)\|^2 + m_q\beta_c,
-\end{align}
-using $\alpha_c = \frac{1}{2(\sigma_c)^2}$ and $\beta_c = \log(Z_c)$. This new formulation models an affine transformation on the distance measure used in NBNN. These two parameters can be seen as corrections for each class on the bias that arises when classes with the same priors are not equally sampled.
-
-$\alpha_c$ and $\beta_c$ can be estimated in a training phase, where the outcome of the vanilla NBNN distances are used as input for a linear energy optimization problem:
-
-\begin{align}\begin{split} \label{eq:energy}
-    E(W) = \sum_{j=1}^{K} \max_{c:c\neq c_j} \Big(1\,&+\,\alpha_{c_j} \sum_d \|d - \text{NN}_{c_j}(d)\|^2 + m\beta_{c_j}\\
-    &-\,\alpha_{c} \sum_d \|d - \text{NN}_{c}(d)\|^2 + m\beta_{c}\Big)_{+},
-\end{split}\end{align}
-
-where $E(W)$ is the energy of the current parameter set $W$, containing all $\alpha$ and $\beta$, and the equation represents the difference between the distance of all images in $K$ to its true class $c_j$ and to the nearest other class $max_{c:c\neq c_j}$. If this distance is minimized for all images, the hinge loss of the NBNN classifier is minimized, meaning that the decision boundary between the classes is optimized and that a suitable correction is found for the differences in sampling density over the classes.
-
-Equation \eqref{eq:energy} can be minimized when viewed as a linear program, equivalent to $\sum_i \xi_i$, with constraints:
-\begin{align}
-    \xi_i &\geq 1 +\alpha_{c_j} \sum_d \|d - \text{NN}_{c_j}(d)\|^2 + m\beta_{c_j}&\notag\\
-    \label{eq:linprog1}
-    &\quad-\alpha_{c} \sum_d \|d - \text{NN}_{c}(d)\|^2 + m\beta_{c}, &\forall i \in K, \forall c \neq c_i\\
-    \label{eq:linprog2}
-    \xi_i &\geq 0, &\forall i \in K\\
-    \label{eq:linprog3}
-    \alpha_c &\geq 0, &\forall c \in \mathcal{C}
-\end{align}
-A basic NBNN classifier is built with a labeled image set, on which a separate training set is used with the linear program, to learn the $\alpha_c$ and $\beta_c$ parameters for each class. For the test set, all resulting distances of the NBNN classifier are transformed using the trained parameters, and classified using these weighed distances.
-
-Wang \emph{et al.} take a slightly different approach to solve the same problem. They try to correct the distances found by replacing the euclidean distance of NN by a learned Mahalonobis distance for each class \todo[inline]{each descriptor? Check the paper. Put in some more details: Perhaps send to Related Work???}.
-
-\begin{figure}[hbt]
-    \centering
-    \missingfigure[figwidth=0.8\textwidth]{NBNN vs. optimal NBNN}
-    \caption(Insert illustration of the idea here)
-\end{figure}
+Even though the algorithm of Boiman \emph{et al.} \cite{boiman2008defense} is very simple and requires no learning phase, it does have scalability issues because of its dependence on as many individual descriptors as possible. Because all densely computed descriptors for each image in the training set have to be stored, and the nearest neighbor for each descriptor of each query image on each class has to be found, the time and memory usage is much higher than for example BoF methods, which use a more compact representation of images. Calculating NN can be sped up by using sophisticated approximations of the Nearest Neighbor algorithm, such as FLANN \cite{muja2009fast}, which uses randomized kd-trees to provide a quick search in a k-dimensional search space. This relieves some time issue, but is not a remedy for the memory issues.
 
 % section limitations_and_extensions (end)
 
-\subsection{Local NBNN} % (fold)
+\subsubsection{Local NBNN} % (fold)
 \label{sec:local_nbnn}
 
 An adaptation of NBNN by McCann \& Lowe called local NBNN (LNBNN)\cite{mccann2012local} has another approach to solve some of the limitations of the original algorithm. Their main idea is that it is not necessary to find a descriptor's nearest neighbor in each class, but that is sufficient to find the $k$ nearest neighbors over all classes. It will perform better, in fact. See Figure~\ref{fig:lnbnn} for a visualization of the conceptual difference.
-\todo[inline]{Revise this sentence:
 
-This simplification of the query includes less time to find the NN of each class, because it is much more efficient to $k$ nearest neighbors in one collection, than to find the 1-NN in $n$ collections, even when $k>n$.}
+The simplification of the basic query implies a more efficient algorithm, because it is much faster to search for $k$ nearest neighbors in one collection, than to search for 1 NN for each class, even when $k$ is much larger than the number of classes.
 
 Besides the time-complexity benefit, LNBNN also enhances the results of NBNN. Because only the $k$NN are taken into account, it might well be that not all classes will be involved for each descriptor in an image. In the original NBNN, these distances would still be taken into account, lowering the chance of the class to get the highest probability for the image by a possibly large amount. LNBNN takes the $k+1$-th distance for these classes, making this effect much less significant. Liu \emph{et al.}\cite{liu2011defense} have hypothesized that in a sparse manifold space, such as the descriptor space, larger distance give a much worse estimate of membership to a class. This might be the cause for the improved results LNBNN gets compared to Boiman's NBNN. Another argument is that each descriptor should at most add a bit evidence to the probability of an object's class. It should not lower this probability. Otherwise the influence of background clutter could be too large.
 

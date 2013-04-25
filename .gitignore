@@ -20,7 +20,6 @@ TUDmotorbikes
 *.blg
 *.dvi
 *.out
-*.pdf
 *.ps
 *.synctex.gz
 comp*

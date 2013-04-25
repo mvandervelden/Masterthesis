@@ -23,12 +23,46 @@ In exemplar-model detection, hypotheses of bounding boxes need to be clustered i
 K-means clustering is a well known clustering algorithm. It divides all objects in a pre-defined number of $k$ clusters, minimizing the sum of squared distances of all objects within each separate cluster. An important reason why it is not appropriate for this task, is that we do not have an indication of the number of clusters we want. Therefore, other algorithms have to be considered.
 
 \begin{figure}[hbt]
-    \label{fig:sl_vs_qs_clustering}
-    \centering
-    \missingfigure[figwidth=0.8\textwidth]{Single Link clustering vs Quickshift clustering.}
-\end{figure}
+    % \centering
+    \begin{subfigure}[b]{0.32\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{visSL020}
+            \caption{}
+            \label{fig:slvqs_qs1}
+    \end{subfigure}
+    ~ %add desired spacing between images, e. g. ~, \quad, \qquad etc.
+      %(or a blank line to force the subfigure onto a new line)
+    \begin{subfigure}[b]{0.32\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{visSL018}
+            \caption{}
+            \label{fig:slvqs_qs2}
+    \end{subfigure}
+    ~ %add desired spacing between images, e. g. ~, \quad, \qquad etc.
+      %(or a blank line to force the subfigure onto a new line)
+    \begin{subfigure}[b]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{visBB}
+        \caption{The set of hypotheses.}
+        \label{fig:slvqs_bb}
+    \end{subfigure}%
 
-\todo[inline]{Include an image comparing the clustering algorithms mentioned: see diff between aggl. clustering and quickshift}
+    \begin{subfigure}[b]{0.32\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{visQS23}
+            \caption{}
+            \label{fig:slvqs_sl1}
+    \end{subfigure}
+    ~
+    \begin{subfigure}[b]{0.32\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{visQS24}
+            \caption{}
+            \label{fig:slvqs_sl2}
+    \end{subfigure}
+    \caption{The main difference between agglomerative clustering as used by Becker, and quickshift clustering is the way the detection is determined from the cluster. In single-link clustering, the inclusion of a single hypothesis into a cluster can have a large effect on the detection formed from this cluster: The blue hypothesis in (a) is included in the red cluster (b), making the red detection (bold line) almost twice as big. Using quickshift (d,e) this inclusion does not have any effect on the detection itself, because the local maximum of the red cluster is unchanged.}
+    \label{fig:sl_vs_qs_clustering}
+\end{figure}
 
 \subsubsection{Agglomerative Clustering} % (fold)
 \label{sub:agglomerative_clustering}
