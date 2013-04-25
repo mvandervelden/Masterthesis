@@ -1,18 +1,22 @@
 \section{Object Detection Using Exemplar Models} % (fold)
 \label{cha:object_detection}
 
-\todo[inline]{Write short introduction, making the bridge between related work and Exemplar models}
+As mentioned before (Section~\ref{sec:object_detection}), there is a broad range of object detection approaches. Because NBNN classification uses individual descriptors, it seems natural to look for a detection method that uses these descriptors directly, when you want to adapt NBNN to detection. Exemplar models do just that, and have been used in similar attempts before \cite{becker2012codebook}.
 
 \subsection{Exemplar Models} % (fold)
 \label{sub:exemplar_models}
 
 Exemplar models are related to part-based models.\cite{leibe2004combined, chum2007exemplar} In this approach, for each object feature found during training, an exemplar is stored. The exemplar represents the size and location of the bounding box relative to the feature. The exemplars are aggregated into part models \cite{leibe2004combined} or visual words \cite{chum2007exemplar}. In this way a class is modeled by a set of exemplars that have a high probability of occurring in a certain location and at a certain scale of the image.
 
-At test time, each feature found in the test image is matched with the exemplars stored, and from this combination of the location and scale of the feature found, and the exemplar it is matched with, a hypothesis can be formed for the object's location in the test image. This means that each feature in the test image gets a vote, weighted by the quality of its match, for a bounding box. These hypotheses can be clustered into detection windows. Experiments \cite{vedaldi2009multiple} show that this method performs well too as a first step in a cascade setting.
+At test time, each feature found in the test image is matched with the exemplars stored, and from this combination of the location and scale of the feature found, and the exemplar it is matched with, a hypothesis can be formed for the object's location in the test image. This means that each feature in the test image gets a vote, weighted by the quality of its match, for a bounding box. These hypotheses can be clustered into detection windows (See Figure~\ref{fig:exemplar_model}). Experiments \cite{vedaldi2009multiple} show that this method performs well too as a first step in a cascade setting.
 
-In more detail, \JanTodo{Overview Image}
+\begin{figure}[hbt]
+    \centering
+    \includegraphics[width=0.8\textwidth]{ExemplarModel}
+    \caption{Given four images of car sides, their bounding boxes (yellow) and 8 features of a car wheel (above), for each feature an exemplar is made, where its position and size relative to the bounding box is used. So when a feature is found during test time, that is similar to a car wheel, a number of hypotheses is formed by applying the exemplars to the new feature (below left, in black). These hypotheses can be clustered into a small amount of highly likely detections. (Image taken from Chum and Zisserman \cite{chum2007exemplar}.)}
+    \label{fig:exemplar_model}
+\end{figure}
 
-\todo[inline,color=green]{part on why I choose exemplar models, little more explanation of theory of Chum to link it to the next section}
 % subsection exemplar_models (end)
 
 \subsection{Clustering Algorithms} % (fold)
@@ -66,25 +70,31 @@ K-means clustering is a well known clustering algorithm. It divides all objects 
 
 \subsubsection{Agglomerative Clustering} % (fold)
 \label{sub:agglomerative_clustering}
-It is possible to view a clustering clustering algorithm as a tree, where the leaves represent the objects to be clustered. If the pairwise distances between all objects are known, the leaves can be joined into clusters iteratively, each time merging the two closest objects into a cluster. When these clusters are again clustered based on distance, merging will continue until there is only one single cluster left. Afterwards, this tree could be split into clusters by cutting branches that exceed a certain threshold distance. This clustering algorithm is called Agglomerative clustering. It is a subtype of hierarchical clustering, other hierarchical algorithms not being agglomerative, but divisive, starting with one single cluster.
+It is possible to view a clustering clustering algorithm as a tree, where the leaves represent the objects to be clustered. If the pairwise distances between all objects are known, the leaves can be joined into clusters iteratively, each time merging the two closest objects into a cluster. When these clusters are again clustered based on distance, merging will continue until there is only one single cluster left. Afterwards, this tree could be split into clusters by cutting branches that exceed a certain threshold distance, $\theta_m$. This clustering algorithm is called Agglomerative clustering. It is a subtype of hierarchical clustering, other hierarchical algorithms not being agglomerative, but divisive, starting with one single cluster.
 
 There is some variety in the ways to merge leaves into clusters. Single link clustering means that the minimum distance between members of each cluster is the basis of further clustering, complete linkage and mean linkage clustering take the maximum distance and the mean distance, respectively.
 
-\todo[inline]{More explanation and some image}
+When clustering hypotheses, a substantial part of clustering consists of defining a detection from a cluster of hypotheses. In agglomerative this is not clearly defined, because, even though there is a hierarchy in clustering, it does not follow from the algorithm where the cluster center is located. Therefore, for this thesis, the values of cluster members are averaged to find a detection. \cite{becker2012codebook} In a Euclidean clustering space, this is a reasonable approach, even there is no theoretical reason to do it this way.
 
 % subsubsection agglomerative_clustering (end)
 
 \subsubsection{Mode-seeking Algorithms} % (fold)
 \label{sub:mode_finding_algorithms}
-\todo[inline]{mean-shift,Quickshift, difference with hierarchical clustering, benefits, image. Finding local maxima of a density function (pdf) = mode-seeking. Mean-shift clustering finds these local maxima and assigns the data points to it (sort of gradient ascent)}
 
+Mainly because of the arbitrary definition of a cluster center in agglomerative algorithms, it is useful to look for other clustering algorithms that have a better founded way of determining their center. Good candidates are mode finding algorithms, like mean-shift clustering and its variants. \cite{cheng1995mean,vedaldi2008quick}
+
+Mode finding is the search for local density maxima in the clustering space. The mean-shift algorithm \cite{cheng1995mean} Uses a Parzen density estimate to calculate this, and, starting at each data point, ascends the gradient of this estimate to find its maximum, shown in Figure~\ref{fig:ms_qs}. In this way, each data point's mode is found, and all data points can be clustered into these modes, the local maxima being the final detections.
 
 \begin{figure}[hbt]
     \centering
     \includegraphics[width=0.8\textwidth]{MeanshiftMedianshiftQuickshift}
-    \caption{Mean shift clustering (left) vs. Median Shift clustering (center) vs. Quickshift clustering (right)}
-    \label{fig:meanshift_median_shift_quickshift}
+    \caption{Mean shift clustering (left) vs. Median Shift clustering (center) vs. Quickshift clustering (right) (Image taken from \cite{vedaldi2008quick})}
+    \label{fig:ms_qs}
 \end{figure}
+
+Quickshift clustering takes a slightly different approach, mainly used to speed up the clustering process. \cite{vedaldiquick} This approach does not model a global density estimate, but calculates the density for each data point. Next, for each point its neighbor with the highest density estimate (higher than its own) within a certain window is found. This results in a tree-like structure, where the data points at local density maxima become the head nodes, and define cluster and also its detection, the difference between mean-shift and quickshift is shown in Figure~\ref{fig:ms_qs}.
+
+The window parameter $\tau$ in quickshift defines what range around each data point is used both to calculate its density estimate, and to look for data points available for clustering.
 
 % subsubsection mode_finding_algorithms (end)
 
