@@ -216,3 +216,4 @@ RESFOLDER: /local/vdvelden/det4_VOC07_hlpsift_segment_local_qs12_res_full
 FINISHED ALL IN 2:13:56
 RESFOLDER: /local/vdvelden/det20_VOC07_hlpsift_segment_local_sl4_res_fulltest
 RESFOLDER: /local/vdvelden/det4_VOC07_hlpsift_segment_nonlocal_qs12_res_fulltest
+FINISHED ALL IN 15:32:35
