@@ -21,26 +21,49 @@ This makes it obvious that the scores overall are higher on the TUD Motorbikes t
 \subsection{Clustering Algorithms} % (fold)
 \label{sub:anal_clustering_algorithms}
 
+Overall, the suspicion seems to be correct that quickshift should perform better than agglomerative clustering because of the more natural way of selecting a cluster center, i.e. a detection out of a cluster of hypotheses. The results however depend a lot on class, and are not always very obvious.
 
-\todo[inline]{Show some comparison with and without clustering}
+To see whether the clustering of hypotheses is needed at all, for some tests a comparison was made between the performance of the ranked detections versus ranking the hpyotheses. As a ranking method, Becker's $Q_H$ measure was used (Equation~\ref{eq:qh}). Figure~\ref{fig:hyprank}
+
+\begin{figure}{hbt}
+    \centering
+    \missingfigure{Duration graph}
+    % \includegraphics[width=0.8\textwidth]{hyprank}
+    \caption{Comparison of Average Precision using the clustered detections versus the hypotheses before clustering, on a test with \ldots}
+    \label{fig:hyprank}
+\end{figure}
+\todo{Make a figure with this.}
+
+The recall of the detections will usually be lower than the recall when using hypotheses, because the detections are more or less a subset of hypotheses. However, ranking the hypotheses appears to be much harder than ranking detections, resulting in a much lower AP. This shows the main benefit of clustering.
 
 % subsection clustering_algorithms (end)
 
 \subsection{The Influence of $k$} % (fold)
 \label{sub:the_influence_of_k_}
 
+The experiments show that performance increases when multiple neighbors are taken into account, confirming the theory of descriptor aliasing in Section \ref{sec:descriptor_aliasing}. There is however a quite narrow sweet spot: setting $k$ too high hurts performance and, to an even larger extend, efficiency. \todo{write a small section on this sweet spot, and how k in LNBNN might ideally be higher, albeit time constraints}.
+
+
 % subsection the_influence_of_k_ (end)
 
 \subsection{Time and Memory} % (fold)
 \label{sub:time_and_memory_constraints}
 
-Not mentioned before, detection algorithms can be compared not only for their qualitative performance, but also in terms of complexity and efficiency. Exemplar-NBNN is quite heavy in both terms. Given $t$ training images, $s$ test images, $d$ descriptors per image, on average, $c$ classes, and $k$ nearest neighbors, this is the time complexity breakdown of the main stages of the pipeline:
+Detection algorithms can be compared not only for their qualitative performance, but also in terms of complexity and efficiency. Exemplar-NBNN is quite heavy in both terms. Given $t$ training images, $s$ test images, $d$ descriptors per image, on average, $c$ classes, and $k$ nearest neighbors, this is the time complexity breakdown of the main stages of the pipeline:
 \begin{enumerate}
     \item Extracting features from the training images, splitting them into the classes, adding them to their respective NN indexes and saving their exemplars: $\frac{td}{c} \log \frac{td}{c}$, using FLANN kd-trees for building NN indexes.
     \item Extracting features from the test images: $s\times d$
     \item Finding $k$ nearest neighbors from each class, for each descriptor of each test image: $d s c \log \frac{td}{c} $, using kd-trees.
     \item Performing detection. For each test image and each class, get its hypotheses, calculated their pairwise overlap, and cluster them: $s c x\big((d k)^2\big)$, factor $x>1$ depending on the clustering algorithm, but at least once for the pairwise overlap.
 \end{enumerate}
+
+\begin{figure}{hbt}
+    \centering
+    \missingfigure{Duration graph}
+    % \includegraphics[width=0.8\textwidth]{duration}
+    \caption{Duration of various tests.}
+    \label{fig:duration}
+\end{figure}
 
 \todo[inline]{explain and indicate what's important. Say something on memory complexity. Add something about no of descriptors in dsampling, compared with hlp.}
 

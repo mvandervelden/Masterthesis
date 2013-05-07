@@ -5,15 +5,60 @@ There has been a lot of research into image classification and object detection 
 \subsection{Image Classification} % (fold)
 \label{sec:image_classification}
 
+A lot of different approaches to image classification exist, and achieve competitive results. Most of these algorithms are somewhat related to NBNN, but most of them involve a learning phase where a model of the data is constructed, which is unnecessary in NBNN.
 
-\todo[inline]{Talk of related non-NBNN classification methods}
-\JanTodo{codebook/BoW, Fisher kernel, Devil in the Details, BMVL, Chatfield}
+Most state-of-the-art image classification methods are based somehow on an approach known as visual codebook, Bag of Words (BoW) or Bag of Features (BoF). \cite{chatfield2011devil, lazebnik2006beyond, liu2011defense, van2010visual, van2011exploiting, wang2010locality}  In this approach, local image features are regarded as visual words, which are stored in a dictionary, or visual codebook. The visual words in the codebook usually are a representation of a local cluster of features. In this way, each feature in an image is mapped onto a certain visual word, and the image as a whole can be seen as an unordered collection (or bag) of visual words. In this way, images can be represented as histograms of visual words, binning each image feature into a visual word, and counting the numbers of visual words.
+
+Now, the task of classification is to compare these histograms between labeled training images and unlabeled test images. Often \cite{chatfield2011devil}, support vector machines are used to learn a discriminative model of how to classify images into classes.
+
+BoW has achieved many good results in image classification, and many adaptations of the method have been proposed. An example is the use of a spatial pyramids to keep the spatial relation between features intact \cite{lazebnik2006beyond}, instead of discarding all relations between features. Much effort has been put in encoding the visual words into image descriptors. \cite{chatfield2011devil} Instead of making histograms, methods such as soft-assignment kernel codebooks \cite{liu2011defense, van2010visual}, Fisher kernels and locality-contrained linear encoding (LLC) \cite{wang2010locality} have been proposed. see Figure~\ref{fig:bowencoding}.
+
+\begin{figure}
+    \centering
+    \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{EncHist}
+        \caption{Histogram Encoding}
+        \label{fig:enchist}
+    \end{subfigure}
+    ~
+    \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{EncKern}
+        \caption{Kernel Encoding}
+        \label{fig:enckern}
+    \end{subfigure}
+    
+    \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{EncFK}
+        \caption{Fisher Kernel Encoding}
+        \label{fig:encfk}
+    \end{subfigure}
+    ~
+    \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{EncLLC}
+        \caption{Locality-constrained Linear Encoding}
+        \label{fig:encllc}
+    \end{subfigure}
+    
+    \caption{Various encoding formalizations of visual words into a codebook.}
+    \label{fig:bowencoding}
+\end{figure}
+
+Kernel codebooks and soft-assignment codebooks improve results by taking into account the ambiguity of some features \cite{liu2011defense, van2010visual}. Instead of assigning each feature to a single visual word, this approach assigns the features to visual words weighted by their distance to each other (usually through a kernel), see Figure~\ref{fig:enckern}
+
+A different encoding of BoW is with the use of Fisher kernels. \cite{perronnin2010improving} This method replaces the discriminative SVM learning phase by learning a Fisher kernel based on a Gaussian Mixture Model. The Fisher kernel does not only take into account the distance between feature and visual word for binning purposes, but encodes the feature distribution explicitly, as can be seen in Figure~\ref{fig:encfk}.
+
+A fourth alternative used is Locality-constrained Linear Coding (LLC), \cite{wang2010locality} which represents each feature as a linear combination of a number of nearby visual words, pooling these into an image representation. This approach is somewhat similar to soft-assignment.\\
+
+A main difference between BoW and NBNN is that the former method compares images to images comparing image histograms, whereas NBNN compares images to all features of a certain class. Furthermore, BoW is a model-learning method, while NBNN is model-free.
+
 % section image_classification (end)
 
 \subsection{Object Detection} % (fold)
 \label{sec:object_detection}
-
-\todo[inline]{Talk of related non-NBNN detection methods (Get part based models and the like in here \ldots, and exemplar models )}
 
 The most intuitive way of thinking about object detection is probably to apply image classification at various windows within the image instead of on the image as a whole. This involves iterating over possible window locations, sizes and aspect ratios for the whole image, and determining the likelihood of each window of representing an object. This so called sliding window approach marks early detection methods \cite{viola2004robust}. The applicability of this approach however is fairly limited, because of the large number of possible windows to check. Therefore, many methods find a way to make this window search more efficient. Viola \& Jones \cite{viola2004robust} propose a cascade approach, where a very simple classification method is used on the full set of hypotheses for bounding boxes in order to cast most of them away early. For difficult hypotheses a more sophisticated classification is done to narrow down the search, each step using a better, and much slower classification algorithm. In contrast, Efficient Sub-window Search methods \cite{behmo2010towards, lampert2008beyond, pedersoli2011coarse, yeh2009fast} model the problem into a branch-and-bound search method. They recursively split the window in two, find the response for the class on the current scale, and continue with the most promising leaf. When the response of both windows after a split is lower than the one above, the correct window is assumed to be on the above level.
 
@@ -40,8 +85,22 @@ Part-based models form a different approach on effectively finding hypothesis wi
 
 \subsection{NBNN Based Methods} % (fold)
 \label{sec:nbnn_based_methods}
-\todo[inline]{Talk of Boiman shortly, and of methods related to it, up till the most recent ones, so include Tuytelaars, Becker, McCann, etc.\ldots}
 
-Other limitations have been shown by various authors.\cite{behmo2010towards, mccann2012local,timofte2012iterative,tuytelaars2011nbnn,wang2011improved} Some authors \cite{behmo2010towards,wang2011improved} stress that NBNN is highly sensitive to differences in descriptor density over classes. Behmo \emph{et al.} for example state that this is caused by dropping the factor from the classification rule which normalizes for the descriptor density in the train set for a given class. This term is dropped because an equal kernel estimation is assumed, which does not hold for large differences in descriptor density over classes. \cite{behmo2010towards} Therefore, they propose to learn the density estimation parameters per class as a linear problem. This new formulation models an affine transformation on the distance measure used in NBNN. These two parameters can be seen as corrections for each class on the bias that arises when classes with the same priors are not equally sampled. Wang \emph{et al.} take a slightly different approach to solve the same problem. They try to correct the distances found by replacing the euclidean distance of NN by a learned Mahalonobis distance for each class 
+Naive Bayes Nearest Neighbor (NBNN) was introduced as an image classification algorithm by Boiman \emph{et al.} \cite{boiman2008defense} Its details will be explained in Section~\ref{cha:naive_bayes_nearest_neighbor} In recent years, it has gained recognition as an alternative approach to BoW classifications, and many adaptations have been made since. \cite{becker2012codebook, behmo2010towards, mccann2012local, timofte2012iterative, tuytelaars2011nbnn, wang2011improved}
+
+Some of these authors have been pointing out shortcomings of the NBNN method, and have come up with solutions. \cite{behmo2010towards, mccann2012local,timofte2012iterative,wang2011improved} Some authors \cite{behmo2010towards,wang2011improved} stress that NBNN is highly sensitive to differences in descriptor density over classes. Behmo \emph{et al.} for example state that this is caused by dropping the factor from the classification rule which normalizes for the descriptor density in the train set for a given class. This term is dropped because an equal kernel estimation is assumed, which does not hold for large differences in descriptor density over classes. \cite{behmo2010towards} Therefore, they propose to learn the density estimation parameters per class as a linear problem. This new formulation models an affine transformation on the distance measure used in NBNN. These two parameters can be seen as corrections for each class on the bias that arises when classes with the same priors are not equally sampled. Wang \emph{et al.} \cite{wang2011improved} take a slightly different approach to solve the same problem. They try to correct the distances found by replacing the euclidean distance of NN by a learned Mahalonobis distance for each class.
+
+McCann \emph{et al.} \cite{mccann2012local} have been focusing on the meaning of retrieving the nearest neighbor of each class involved. They improved performance of NBNN by looking at the local neighborhood of each descriptor over all classes, taking into account not only a single NN per class, but the $k$NN overall. They show that this gives a better estimate of the local surroundings of each descriptor. This approach is also used in the thesis, see Section~\ref{sec:local_nbnn}.
+
+Other research has focused on using NBNN as input for existing methods \cite{tuytelaars2011nbnn} or to apply it to different tasks \cite{becker2012codebook}. Tuytelaars has been modifying NBNN into a kernelized version, using it as input for SVM classification. To this end, each image (a set of features) is represented as a vector with, for each class, the sum of each feature's NN distances (Eq.~\eqref{eq:nbnnker1} -- \eqref{eq:nbnnker3}). The kernel is defined as the the dot product of two image vectors (Eq.~\eqref{eq:nbnnker4}).
+
+\begin{align}
+    \forall x \in X, \forall c \in C, d_x^c &= ||\mathbf{x} - NN^c(\mathbf{x})||^2 \label{eq:nbnnker1}\\
+    \Phi^c(X) &= \sum_x\in X d_x^c \label{eq:nbnnker2}\\
+    \Phi(X) &= [\Phi^1(X) \ldots \Phi^{|C|}(X)]^T \label{eq:nbnnker3}\\
+    K(X,Y) &= \Phi(X)^T \Phi(Y) \label{eq:nbnnker4}
+\end{align}
+
+This kernel can be used as input of any kernel based classification method, such as SVM. Using this approach, even though image-to-image distance is used in the kernel, the images themselves are represented using image-to-class distances, fulfilling Boiman's constraint. Tuytelaars shows the NBNN kernel can also be a useful complementary kernel next to BoW kernels.
 
 % section nbnn_based_methods (end)

@@ -211,6 +211,16 @@ Compaired with in Becker 2012
 }
 Mickolajczyk 2005 [to print]
 
+@article{mikolajczyk2005performance,
+  title={A performance evaluation of local descriptors},
+  author={Mikolajczyk, K. and Schmid, C.},
+  journal={PAMI 2005},
+  volume={27},
+  number={10},
+  pages={1615--1630},
+  year={2005},
+  publisher={IEEE}
+}
 
 Felzenszwalb 2010 (Discriminatively trained part based models)
 
@@ -325,28 +335,9 @@ Pedersoli 2011 (Coarse-to-fine object deformable detection)
   organization={IEEE}
 }
 
-Other
+### Other ########
 
-Lazebnik 2006 (BoF spatial pyramid)
-@inproceedings{lazebnik2006beyond,
-  title={Beyond bags of features: Spatial pyramid matching for recognizing natural scene categories},
-  author={Lazebnik, S. and Schmid, C. and Ponce, J.},
-  booktitle={CVPR 2006},
-  volume={2},
-  pages={2169--2178},
-  year={2006},
-  organization={IEEE}
-}
-van Gemert 2011 (generalizing spatial pyramid)
-
-@inproceedings{van2011exploiting,
-  title={Exploiting photographic style for category-level image classification by generalizing the spatial pyramid},
-  author={van Gemert, J.C.},
-  booktitle={Proceedings of the 1st ACM International Conference on Multimedia Retrieval},
-  pages={14},
-  year={2011},
-  organization={ACM}
-}
+###### DETECTION #######
 
 Galleguillos 2010 (combining local contextual interactions)
 
@@ -401,6 +392,8 @@ Use context on 3 levels: pixel, region, object interactions, and 3 types: semant
   publisher={IEEE}
 }
 
+###### CLASSIFICATION ######
+
 @inproceedings{liu2011defense,
   title={In defense of soft-assignment coding},
   author={Liu, L. and Wang, L. and Liu, X.},
@@ -408,6 +401,83 @@ Use context on 3 levels: pixel, region, object interactions, and 3 types: semant
   pages={2486--2493},
   year={2011},
   organization={IEEE}
+}
+
+Lazebnik 2006 (BoF spatial pyramid)
+@inproceedings{lazebnik2006beyond,
+  title={Beyond bags of features: Spatial pyramid matching for recognizing natural scene categories},
+  author={Lazebnik, S. and Schmid, C. and Ponce, J.},
+  booktitle={CVPR 2006},
+  volume={2},
+  pages={2169--2178},
+  year={2006},
+  organization={IEEE}
+}
+
+
+LLC:
+@inproceedings{wang2010locality,
+  title={Locality-constrained linear coding for image classification},
+  author={Wang, J, and Yang, J. and Yu, K. and Lv, F. and Huang, T. and Gong, Y.},
+  booktitle={CVPR 2010},
+  pages={3360--3367},
+  year={2010},
+  organization={IEEE}
+}
+
+van Gemert 2011 (generalizing spatial pyramid)
+
+@inproceedings{van2011exploiting,
+  title={Exploiting photographic style for category-level image classification by generalizing the spatial pyramid},
+  author={Van~Gemert, J.C.},
+  booktitle={Proceedings of the 1st ACM International Conference on Multimedia Retrieval},
+  pages={14},
+  year={2011},
+  organization={ACM}
+}
+
+Van Gemert: Visual Word Ambiguity
+
+@article{van2010visual,
+  title={Visual word ambiguity},
+  author={van~Gemert, J.C. and Veenman, C.J. and Smeulders, A.W.M. and Geusebroek, J.-M.},
+  journal={PAMI 2010},
+  volume={32},
+  number={7},
+  pages={1271--1283},
+  year={2010},
+  publisher={IEEE}
+}
+
+FISHER KERNELS
+
+@inproceedings{perronnin2007fisher,
+  title={Fisher kernels on visual vocabularies for image categorization},
+  author={Perronnin, F. and Dance, C.},
+  booktitle={CVPR 07},
+  pages={1--8},
+  year={2007},
+  organization={IEEE}
+}
+
+@incollection{perronnin2010improving,
+  title={Improving the fisher kernel for large-scale image classification},
+  author={Perronnin, F. and S{\'a}nchez, J. and Mensink, T.},
+  booktitle={Computer Vision--ECCV 2010},
+  pages={143--156},
+  year={2010},
+  publisher={Springer}
+}
+
+Overview paper Chatfield
+@inproceedings{chatfield2011devil,
+      title = {The devil is in the details: an evaluation of recent feature encoding methods},
+      author = {Chatfield, K. and Lempitsky, V. and Vedaldi, A. and Zisserman, A.},
+      year={2011},
+      pages={76.1--76.12},
+      booktitle={Proc. BMVC},
+      isbn={1-901725-43-X},
+      note = {http://dx.doi.org/10.5244/C.25.76}
 }
 
 ########## DATASETS ###########
@@ -477,8 +547,8 @@ SIFT features:
 Harris-Laplace
 @article{mikolajczyk2005comparison,
   title={A comparison of affine region detectors},
-  author={Mikolajczyk, Krystian and Tuytelaars, Tinne and Schmid, Cordelia and Zisserman, Andrew and Matas, Jiri and Schaffalitzky, Frederik and Kadir, Timor and Van Gool, Luc},
-  journal={International journal of computer vision},
+  author={Mikolajczyk, K. and Tuytelaars, T. and Schmid, C. and Zisserman, A. and Matas, J. and Schaffalitzky, F. and Kadir, T. and Van~Gool, L.},
+  journal={International journal of Computer Vision},
   volume={65},
   number={1-2},
   pages={43--72},
@@ -519,7 +589,7 @@ Applications
 
 @article{ekin2003automatic,
   title={Automatic soccer video analysis and summarization},
-  author={Ekin, A and Tekalp, A.M. and Mehrotra, R.},
+  author={Ekin, A. and Tekalp, A.M. and Mehrotra, R.},
   journal={IEEE Transactions on Image Processing},
   volume={12},
   number={7},

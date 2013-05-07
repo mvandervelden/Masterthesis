@@ -53,7 +53,12 @@ The similarity measure between hypotheses, used as a basis for the clustering al
 
 Clustering was done using the single-link agglomerative clustering algorithm (Section~\ref{sub:agglomerative_clustering}), using 2 parameters: $\theta_m$, which defines the minimal overlap between hypotheses to be clustered together, and the maximal overlap between detections: $\theta_p$. I set the parameters such that $\theta_m = 0.8$ and $\theta_p = 0$, conform to Becker.
 
-Detections were ranked according to their ``detection quality'', $Q_D$. This measure is defined as the amount of hypotheses being clustered into one detection. Ties being broken by a second ordering, called ``hypothesis quality'', $Q_H$, which is defined as the distance of a hypothesis to the foreground class, relative to its distance to the background class: $\frac{d_{bg} - d_{fg}}{d_{fg}}$. 
+Detections were ranked according to their ``detection quality'', $Q_D$. This measure is defined as the amount of hypotheses being clustered into one detection. Ties being broken by a second ordering, called ``hypothesis quality'', $Q_H$, which is defined as the distance of a hypothesis to the foreground class, relative to its distance to the background class: 
+
+\begin{equation}
+    Q_H = \frac{d_{bg} - d_{fg}}{d_{fg}}
+    \label{eq:qh}
+\end{equation}
 
 Performance was measured with the average precision (AP) of the ranked detections, and visualized in a precision-recall curve.
 
