@@ -22,24 +22,29 @@ An issue that arises using exemplar-NBNN detection is that certain descriptors m
 
 \begin{figure}[hbt]
     \centering
-    \begin{subfigure}[b]{0.45\textwidth}
+    \begin{subfigure}[b]{0.3\textwidth}
         \centering
         \includegraphics[width=\textwidth]{aliasing}
         \caption{Training image}
         \label{fig:aliastrainim}
     \end{subfigure}
     ~
-    \begin{subfigure}[b]{0.45\textwidth}
+    \begin{subfigure}[b]{0.3\textwidth}
         \centering
         \includegraphics[width=\textwidth]{aliasing2}
-        \caption{Test image}
+        \caption{Test image with hypotheses\ldots}
         \label{fig:aliastestim}
     \end{subfigure}
-    \caption{During training (a), each descriptor gets an exemplar from ground truth, in this case the descriptors for the car's wheels. During detection (b), each descriptor found (again car wheels), gets hypotheses based on its neighbors for each class. Here, the wheel's two neighbors are those of (a), and their hypotheses are given in blue and red respectively (ground truth is given in yellow). When only one neighbor is taken into account, there is a risk of not favoring the two more or less correct bounding boxes because of repetition of descriptors in the training images.}
+    ~
+    \begin{subfigure}[b]{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{aliasing3}
+        \caption{\ldots and with resulting detections (Single-link)}
+        \label{fig:aliasdet}
+    \end{subfigure}
+    \caption{During training (a), each descriptor gets an exemplar from ground truth, in this case the descriptors for the car's wheels. During the test phase (b), each descriptor found (car wheels again), gets hypotheses based on its neighbors for each class. Here, the wheel's two neighbors are those of (a), and their hypotheses are given in blue and red respectively (ground truth is given in yellow). When only one neighbor is taken into account, there is a risk of not favoring the two more or less correct bounding boxes because of repetition of descriptors in the training images. With $k=2$ and using single-link clustering, the resulting detections would look something like (c), with the green detection getting a higher rank because of its larger cluster size.}
     \label{fig:aliasing}
 \end{figure}
-
-\todo{Insert a third image after clustering, with cluster sizes, perhaps exchange it for a real result?}
 
 This problem can be avoided by taking more than one neighbor into account, which translates to setting $k>1$ in the $k$NN phase of exemplar-NBNN. This would mean that all $n\leq k$ neighbors that are closer to the foreground than the nearest background descriptor will be used to make detection hypotheses. This is not only an argument for introducing LNBNN detection, but also in general, for taking into account more neighbors in regular NBNN detection. This phenomenon explains some of the results obtained in the experiments.
 
