@@ -1,17 +1,17 @@
 
-\section{Conclusion} % (fold)
+\chapter{Conclusion} % (fold)
 \label{cha:conclusion}
 
-Since the introduction of NBNN in 2008, much efforts are made improving the method for image classification, and to a lesser extend, object detection. Other approaches have been developing too, while NBNN still has the attention of a number of researchers, it has not (yet?) become a major approach in object recognition. This thesis explores the possibilities of NBNN into the domain of object detection, and confirms the appealing traits of the method also stated by others: training is quick, the pipeline is relatively straightforward and intuitive, with a number of theoretical benefits.
+Since the introduction of NBNN in 2008, much efforts have been made improving the method for image classification, and to a lesser extend, object detection. Other approaches have been developing too, while NBNN still has the attention of a number of researchers, it has not (yet?) become a major approach in object recognition. This thesis explores the possibilities of NBNN into the domain of object detection, and confirms the appealing traits of the method also stated by others: training is quick, the pipeline is relatively straightforward and intuitive, with a number of theoretical benefits.
 
-This thesis extends NBNN while keeping these traits intact. In the training phase, the only extension is keeping track of exemplars, which can be calculated easily. The pipeline is still intuitive, forming bounding-box hypotheses from NN features, clustering the hypotheses into detections, and ranking these. Introducing quickshift, a sound way of defining detections from clusters of hypotheses is devised. The theoretical basis of Local NBNN, in asking the question ``What do the features look like?'' instead of iteratively asking ``Does this feature look like class A? Like class B? \ldots'' is also in line with the simplicity of the NBNN approach, and at the same time it is theoretically more sound to look at the local neighborhood of features, instead of a per-class basis.
+This thesis extends NBNN while keeping these traits intact. In the training phase, the only extension is keeping track of exemplars, which can be calculated easily. The pipeline is still intuitive, forming bounding-box hypotheses from NN features, clustering the hypotheses into detections, and ranking these. Introducing quickshift, a sound way of defining detections from clusters of hypotheses is devised. The theoretical basis of Local NBNN, in asking the question ``What do the features look like?'' instead of iteratively asking ``Does this feature look like class A? Like class B? \ldots'' is also in line with the simplicity of the NBNN approach, and at the same time it is theoretically more sound to look at the local neighborhood of features, instead of doing this on a per-class basis.
 
 The resulting method improves over earlier NBNN-like methods for detection, and is capable of achieving good results on the popular benchmark image set of Pascal VOC 2007.
 
 Having said this, the main disadvantage of this method, and earlier NBNN-based methods, is the slow test phase. Because no model is being learned, test images have to be compared with more or less raw training features, which is both complex in time and memory. Optimizations like FLANN relieve this complexity a bit, but the test phase remains a bottleneck. In detection, this disadvantage becomes even larger than in classification, because of the more extensive test phase. More research is needed to discover the practical boundaries of LNBNN detection and see what efficiency and performance improvements can be made.\\
 
 
-% \subsection{Future Work} % (fold)
+% \section{Future Work} % (fold)
 % \label{sec:future_work}
 
 The focus on further research should be on finding efficient ways of performing object detection using NBNN. There might be ways of improving the clustering algorithm without hurting performance. For example, it would improve efficiency greatly if not every hypothesis would have to be compared to every single other one, by exploiting certain structural properties of bounding boxes.
