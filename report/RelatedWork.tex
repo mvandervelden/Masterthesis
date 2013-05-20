@@ -13,37 +13,49 @@ BoW has achieved many good results in image classification, and many adaptations
     \centering
     \begin{subfigure}[b]{0.45\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{EncHist}
-        \caption{Histogram Encoding}
+        \includegraphics[width=\textwidth]{EncHistNT3}
+        \caption{Histogram Encoding.\\
+        $q_{ki} = \argmin_k || \mathbf{x}_i - \mu_k||^2$\\
+        $[\mathbf{f}_{hist}]_k =|\{i:q_{ki} = k\}|$\\
+        \emph{Each feature maps to the single nearest word $q_{ki}$ in a $k$-means trained vocabulary.}}
         \label{fig:enchist}
     \end{subfigure}
     ~
     \begin{subfigure}[b]{0.45\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{EncKern}
-        \caption{Kernel Encoding}
+        \includegraphics[width=\textwidth]{EncKernNT3}
+        \caption{Kernel Encoding.\\
+        $[\mathbf{f}_{kcb}]_{ki} = \frac{ K(\mathbf{x}_i, \mu_k) }{ \sum_{ j=1 }^{ K } K(\mathbf{x}_i, \mu_j)}$\\
+        \emph{Features mapped in a soft manner based on Gaussian weighted distances $K(\cdot,\cdot)$}.}
         \label{fig:enckern}
     \end{subfigure}
     
     \begin{subfigure}[b]{0.45\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{EncFK}
-        \caption{Fisher Kernel Encoding}
+        \includegraphics[width=\textwidth]{EncFKNT3}
+        \caption{Fisher Kernel Encoding.\\
+        $\mathbf{f}_{fk} = [\mathbf{u}_1^\top, \mathbf{v}_1^\top, \ldots, \mathbf{u}_K^\top, \mathbf{v}_K^\top]\top$\\
+        $\mathbf{u}_k \propto$ \emph{derivative w.r.t.} $\mu_k$\\
+        $\mathbf{v}_k \propto$ \emph{grad. of covars.}\\
+        \emph{Captures average first and second order differences using $\nabla$ operator to GMM centres.}}
         \label{fig:encfk}
     \end{subfigure}
     ~
     \begin{subfigure}[b]{0.45\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{EncLLC}
-        \caption{Locality-constrained Linear Encoding}
+        \includegraphics[width=\textwidth]{EncLLCNT3}
+        \caption{Locality-constrained Linear Encoding.\\
+        $[\mathbf{f}_{llc}]_i \approx \argmin_{[\mathbf{f}_{llc}]_i} ||\mathbf{x}_i - B[\mathbf{f}_{llc}]_i||^2$\\
+        \emph{where} $B_i = [[\mu_{\mbox{\emph{nn}}1}]_i \cdots [\mu_{\mbox{\emph{nn}}M}]_i]$\\
+        \emph{Features mapped in a soft manner based on minimized reconstruction error.}}
         \label{fig:encllc}
     \end{subfigure}
     
-    \caption{Various encoding formalizations of visual words into a codebook. Taken from \cite{chatfield2011devil}.}
+    \caption{Various encoding formalizations of visual words into a codebook, including the calculation of their values and the resulting models. Set $\mathbf{x}_1 \ldots \mathbf{x}_N \in \mathbb{R}^D$ is a set of $N$ training descriptors, $\mu_1 \ldots \mu_K \in \mathbb{R}^D$ is a set of $K$ cluster centers, and $\mathbf{f}_x \in \mathbb{R}^K$ is the histogram encoding of an image in method $x$. Taken from Chatfield \emph{et al.} \cite{chatfield2011devil}.}
     \label{fig:bowencoding}
 \end{figure}
 
-Kernel codebooks and soft-assignment codebooks improve results by taking into account the ambiguity of some features \cite{liu2011defense, van2010visual}. Instead of assigning each feature to a single visual word, this approach assigns the features to visual words weighted by their distance to each other (usually through a kernel), see Figure~\ref{fig:enckern}
+Kernel codebooks and soft-assignment codebooks improve results by taking into account the ambiguity of some features \cite{liu2011defense, van2010visual}. Instead of assigning each feature to a single visual word, this approach assigns the features to visual words weighted by their distance to each other (usually through a kernel), see Figure~\ref{fig:enckern}.
 
 Fisher kernel methods \cite{perronnin2010improving} replace the discriminative SVM learning phase by learning a Fisher kernel based on a Gaussian Mixture Model. The Fisher kernel does not only take into account the distance between feature and visual word for binning purposes, but encodes the feature distribution explicitly, as can be seen in Figure~\ref{fig:encfk}.
 
@@ -66,14 +78,14 @@ Part-based models form a different approach on effectively finding hypothesis wi
 \begin{figure}[hbt]
     \centering
     \includegraphics[width=0.9\textwidth]{PartBasedDet}
-    \caption{Taken from \cite{felzenszwalb2010object}.}
+    \caption{Part-based detection: Various parts of an object are detected separately, (in this case, six bike parts, in blue) and the detection bounding box in red is determined from the configuration of these parts in the image. Taken from Felzenszwalb \emph{et al.} \cite{felzenszwalb2010object}. }
     \label{fig:partbaseddet}
 \end{figure}
 
 \begin{figure}[hbt]
     \centering
     \includegraphics[width=0.9\textwidth]{LocByDet}
-    \caption{``Given an image (a) our aim is to find its objects for which the ground truth is shown in (b). To achieve this, we adapt segmentation as a selective search strategy: We aim for high recall by generating locations at all scales and account for many different scene conditions by employing multiple invariant color spaces. Example object hypotheses are visualized in (d).'' Taken from \cite{van2011segmentation}.}
+    \caption{``Given an image (a) our aim is to find its objects for which the ground truth is shown in (b). To achieve this, we adapt segmentation as a selective search strategy: We aim for high recall by generating locations at all scales and account for many different scene conditions by employing multiple invariant color spaces. Example object hypotheses are visualized in (d).'' Taken from Van de Sande \emph{et al.} \cite{van2011segmentation}.}
     \label{fig:locbydet}
 \end{figure}
 
@@ -93,8 +105,8 @@ Tuytelaars \cite{tuytelaars2011nbnn} has been modifying NBNN into a kernelized v
 \begin{align}
     \forall x \in X, \forall c \in C, d_x^c &= ||\mathbf{x} - NN^c(\mathbf{x})||^2 \label{eq:nbnnker1}\\
     \Phi^c(X) &= \sum_{x\in X} d_x^c \label{eq:nbnnker2}\\
-    \Phi(X) &= [\Phi^1(X) \ldots \Phi^{|C|}(X)]^T \label{eq:nbnnker3}\\
-    K(X,Y) &= \Phi(X)^T \Phi(Y) \label{eq:nbnnker4}
+    \Phi(X) &= [\Phi^1(X) \ldots \Phi^{|C|}(X)]^\top \label{eq:nbnnker3}\\
+    K(X,Y) &= \Phi(X)^\top \Phi(Y) \label{eq:nbnnker4}
 \end{align}
 
 This kernel can be used as input of any kernel based classification method, such as SVM. Using this approach, even though image-to-image distance is used in the kernel, the images themselves are represented using image-to-class distances, fulfilling Boiman's constraint. Tuytelaars shows the NBNN kernel can also be a useful complementary kernel next to BoW kernels.

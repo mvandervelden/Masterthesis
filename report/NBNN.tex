@@ -55,7 +55,7 @@ Boiman \emph{et al.} \cite{boiman2008defense} coined the term Naive Bayes Neares
 \begin{figure}[hbt]
     \centering
     \includegraphics[width=0.9\textwidth]{QuantizationError}
-    \caption{Visualization of the quantization error. (a) An image from the Face class in Caltech101. \cite{caltech101} (b) ``Quantization error of densely sampled SIFT descriptors using a large codebook of Caltech101. Red = high error; Blue = low error. The most informative descriptors (eye, nose, etc.) have the highest quantization error.'' (c) ``Green marks the 8\% of the descriptors in the image that are most frequent in the database (simple edges).'' (d) ``Magenta marks the 8\% of the descriptors in the image that are least frequent in the database (mostly facial features)''. Taken from \cite{boiman2008defense}.}
+    \caption{Visualization of the quantization error. (a) An image from the ``face'' class in Caltech101. \cite{caltech101} (b) ``Quantization error of densely sampled SIFT descriptors using a large codebook of Caltech101. Red = high error; Blue = low error. The most informative descriptors (eye, nose, etc.) have the highest quantization error.'' (c) ``Green marks the 8\% of the descriptors in the image that are most frequent in the database (simple edges).'' (d) ``Magenta marks the 8\% of the descriptors in the image that are least frequent in the database (mostly facial features)''. Taken from Boiman \emph{et al.} \cite{boiman2008defense}.}
     \label{fig:quantization_error}
 \end{figure}
 
@@ -69,7 +69,7 @@ In a nearest neighbor approach, image-to-image distances do not enable much gene
 \begin{figure}[hbt]
     \centering
     \includegraphics[width=0.9\textwidth]{Im2imVsIm2cl}
-    \caption{Image-to-class distance versus image-to-image distance. Given three labeled images of the ``ballet''-class (bottom row), and a query image (top left). Even though the ``Query-to-image'' distance is large to each individual labeled image, represented by the KL-divergences, the ``Query-to-class'' distance is small. The top right image shows the query image, with each descriptor having the color of the labeled image which gave it the highest descriptor likelihood. It shows that this query configuration is more likely given the three images, than each individual image separately. (Image taken from \cite{boiman2008defense, irani2006similarity}.)}
+    \caption{Image-to-class distance versus image-to-image distance. Given three labeled images of the ``ballet''-class (bottom row), and a query image (top left). Even though the ``Query-to-image'' distance is large to each individual labeled image, represented by the KL-divergences, the ``Query-to-class'' distance is small. The top right image shows the query image, with each descriptor having the color of the labeled image which gave it the highest descriptor likelihood. It shows that this query configuration is more likely given the three images, than each individual image separately. Taken from Boiman \emph{et al.} \cite{boiman2008defense}, original images from Irani \& Boiman \cite{irani2006similarity}.}
     \label{fig:im2im_vs_im2cl}
 \end{figure}
 
@@ -135,7 +135,7 @@ LNBNN will be used as a basis for the object detection algorithm, because it is 
         \caption{Local NBNN asks, ``What does this descriptor look like?''}
         \label{fig:lnbnnb}
     \end{subfigure}%
-    \caption{Difference in conceptual approach of regular NBNN and Local NBNN. From \cite{mccann2012local}.}
+    \caption{Difference in conceptual approach of regular NBNN and Local NBNN. Taken from McCann \& Lowe \cite{mccann2012local}.}
     \label{fig:lnbnn}
 \end{figure}
 

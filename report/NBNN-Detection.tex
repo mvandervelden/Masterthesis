@@ -4,7 +4,7 @@
 
 NBNN classification and Chum's exemplar model detection \cite{chum2007exemplar} can be combined into a new detection method, because the exemplar model has more in common with the NBNN approach than most other detection methods. Exemplar models are based on image-to-class distance, like NBNN. This provides a natural way of linking both methods.
 
-Chum \emph{et al.}\cite{chum2007exemplar} uses interest point detectors and a codebook approach for their exemplars. The descriptor space is quantized like regular codebook classification methods do, even though they take the location of the object relative to the descriptor as basis for clustering the visual words, and not the descriptors themselves.
+Chum \emph{et al.} \cite{chum2007exemplar} uses interest point detectors and a codebook approach for their exemplars. The descriptor space is quantized like regular codebook classification methods do, even though they take the location of the object relative to the descriptor as basis for clustering the visual words, and not the descriptors themselves.
 
 In contrast to codebook methods however, in Exemplar-NBNN the exemplar models use image-to-class distance when testing. Like explained in Section~\ref{sub:boiman_s_nbnn}, while most codebook methods compare images to each other, in exemplar model detection the individual features are compared to the quantized exemplars. Because these exemplars have a designated class, the distance of a query image to each class forms the basis for classification, and not the distance between images.
 
@@ -46,7 +46,7 @@ An issue that arises using exemplar-NBNN detection is that certain descriptors m
         \caption{\ldots and with resulting detections (Single-link)}
         \label{fig:aliasdet}
     \end{subfigure}
-    \caption{During training (a), each descriptor gets an exemplar from ground truth, in this case the descriptors for the car's wheels. During the test phase (b), each descriptor found (car wheels again), gets hypotheses based on its neighbors for each class. Here, the wheel's two neighbors are those of (a), and their hypotheses are given in blue and red respectively (ground truth is given in yellow). When only one neighbor is taken into account, there is a risk of not favoring the two more or less correct bounding boxes because of repetition of descriptors in the training images. With $k=2$ and using single-link clustering, the resulting detections would look something like (c), with the green detection getting a higher rank because of its larger cluster size.}
+    \caption{During training (a), each descriptor gets an exemplar from ground truth, in this case the descriptors for the car's wheels. During the test phase (b), each descriptor found (car wheels again), gets hypotheses based on its neighbors for each class. Here, the wheel's two neighbors are those of (a), and their hypotheses are given in cyan and magenta. When only one neighbor is taken into account, there is a risk of not favoring the two more or less correct bounding boxes because of repetition of descriptors in the training images. With $k=2$ and using single-link clustering, the resulting detections would look something like (c), with the green detection getting a higher rank because of its larger cluster size (ground truth is given in yellow). Images taken from VOC 2007 \cite{pascal-voc-2007}.}
     \label{fig:aliasing}
 \end{figure}
 

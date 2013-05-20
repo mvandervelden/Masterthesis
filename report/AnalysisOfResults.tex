@@ -7,34 +7,34 @@ A first glance at the results might show which objects are relatively easy to de
 
 \begin{figure}[hbt]
     \centering
-    \begin{subfigure}[b]{0.45\textwidth}
+    \begin{subfigure}[b]{0.37\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{TP34}
+        \includegraphics[width=0.5\textwidth]{TP34}
         \caption{}
         \label{fig:dettp1}
     \end{subfigure}
     ~
-    \begin{subfigure}[b]{0.45\textwidth}
+    \begin{subfigure}[b]{0.37\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{TP43}
+        \includegraphics[width=0.8\textwidth]{TP43}
         \caption{}
         \label{fig:dettp2}
     \end{subfigure}
     
-    \begin{subfigure}[b]{0.45\textwidth}
+    \begin{subfigure}[b]{0.37\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{TP48}
+        \includegraphics[width=0.5\textwidth]{TP48}
         \caption{}
         \label{fig:dettp3}
     \end{subfigure}
     ~
-    \begin{subfigure}[b]{0.45\textwidth}
+    \begin{subfigure}[b]{0.37\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{TP63}
+        \includegraphics[width=0.8\textwidth]{TP63}
         \caption{}
         \label{fig:dettp4}
     \end{subfigure}
-    \caption{``True Positives'', correct detections with the highest rank, using LNBNN, $k=4$, interest point detection and quickshift ($\tau=1.2$) on the VOC 2007 person class.}
+    \caption{``True Positives'', correct detections with the highest rank, using LNBNN, $k=4$, interest point detection and quickshift ($\tau=1.2$) on the VOC 2007 person class \cite{pascal-voc-2007}.}
     \label{fig:dettp}
 \end{figure}
 
@@ -44,73 +44,73 @@ On the other end of the detection ranking are hard-to-guess persons, that have n
 
 \begin{figure}[hbt]
     \centering
-    \begin{subfigure}[b]{0.45\textwidth}
+    \begin{subfigure}[b]{0.37\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{FP1}
+        \includegraphics[width=0.8\textwidth]{FP1}
         \caption{}
         \label{fig:detfp1}
     \end{subfigure}
     ~
-    \begin{subfigure}[b]{0.45\textwidth}
+    \begin{subfigure}[b]{0.37\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{FP2}
+        \includegraphics[width=0.8\textwidth]{FP2}
         \caption{}
         \label{fig:detfp2}
     \end{subfigure}
     
-    \begin{subfigure}[b]{0.45\textwidth}
+    \begin{subfigure}[b]{0.37\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{FP3}
+        \includegraphics[width=0.8\textwidth]{FP3}
         \caption{}
         \label{fig:detfp3}
     \end{subfigure}
     ~
-    \begin{subfigure}[b]{0.45\textwidth}
+    \begin{subfigure}[b]{0.37\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{FP4}
+        \includegraphics[width=0.8\textwidth]{FP4}
         \caption{}
         \label{fig:detfp4}
     \end{subfigure}
-    \caption{``False Positives'', incorrect detections with the highest rank, using LNBNN, $k=4$, interest point detection and quickshift ($\tau=1.2$) on the VOC 2007 person class. Note that all bounding boxes envelop the whole image.}
+    \caption{``False Positives'', incorrect detections with the highest rank, using LNBNN, $k=4$, interest point detection and quickshift ($\tau=1.2$) on the VOC 2007 person class \cite{pascal-voc-2007}. Note that all bounding boxes envelop the whole image.}
     \label{fig:detfp}
 \end{figure}
 
 \begin{figure}[hbt]
     \centering
-    \begin{subfigure}[b]{0.45\textwidth}
+    \begin{subfigure}[b]{0.37\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{TP31116}
+        \includegraphics[width=0.8\textwidth]{TP31116}
         \caption{}
         \label{fig:dettn1}
     \end{subfigure}
     ~
-    \begin{subfigure}[b]{0.45\textwidth}
+    \begin{subfigure}[b]{0.37\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{TP30971}
+        \includegraphics[width=0.8\textwidth]{TP30971}
         \caption{}
         \label{fig:dettn2}
     \end{subfigure}
     
-    \begin{subfigure}[b]{0.45\textwidth}
+    \begin{subfigure}[b]{0.37\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{TP30932}
+        \includegraphics[width=0.8\textwidth]{TP30932}
         \caption{}
         \label{fig:dettn3}
     \end{subfigure}
     ~
-    \begin{subfigure}[b]{0.45\textwidth}
+    \begin{subfigure}[b]{0.37\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{TP30705}
+        \includegraphics[width=0.8\textwidth]{TP30705}
         \caption{}
         \label{fig:dettn4}
     \end{subfigure}
-    \caption{``Difficult'', correct detections with the lowest ranks, using LNBNN, $k=4$, interest point detection and quickshift ($\tau=1.2$) on the VOC 2007 person class.}
+    \caption{``Difficult'', correct detections with the lowest ranks, using LNBNN, $k=4$, interest point detection and quickshift ($\tau=1.2$) on the VOC 2007 person class \cite{pascal-voc-2007}.}
     \label{fig:dettn}
 \end{figure}
 
 \begin{figure}[hbt]
     \centering
-    \includegraphics[width=0.9\textwidth]{BBSizeVsRank}
+    \includegraphics[width=0.7\textwidth]{BBSizeVsRank}
     \caption{The experiments show that the detections with a higher rank (from a larger cluster), also have a tendency to generate larger bounding boxes. This graph comes from the TUD motorbike experiment using $k=4$, quickshift ($\tau=1.2$) and dense sampling.}
     \label{fig:bbsizevsrank}
 \end{figure}
@@ -140,7 +140,7 @@ To see whether the clustering of hypotheses is needed at all, for some tests a c
 
 \begin{figure}[hbt]
     \centering
-    \includegraphics[width=0.9\textwidth]{APcomparehypdet}
+    \includegraphics[width=0.7\textwidth]{APcomparehypdet}
     \caption{Comparison of Average Precision using the clustered detections versus the hypotheses before clustering, for a small test on 5 VOC 2007 classes, using LNBNN with $k=5$, quickshift clustering, and interest point detection. It clearly shows the effect of clustering.}
     \label{fig:hyprank}
 \end{figure}
@@ -171,14 +171,14 @@ Detection algorithms can be compared not only for their qualitative performance,
 
 \begin{figure}[hbt]
     \centering
-    \includegraphics[width=0.9\textwidth]{DurTUD}
+    \includegraphics[width=0.7\textwidth]{DurTUD}
     \caption{Obviously duration increases as the experiments get more complex. LNBNN takes much more time, while the use of interest points causes a significant time reduction on tests with $k>1$.}
     \label{fig:durationTUD}
 \end{figure}
 
 \begin{figure}[hbt]
     \centering
-    \includegraphics[width=0.9\textwidth]{DurVOC}
+    \includegraphics[width=0.7\textwidth]{DurVOC}
     \caption{The same trend is visible when testing on the VOC 2007 set. Especially the combination of dense sampling and Local NBNN is prohibitive. The three rightmost columns show tests run on the full VOC test set ($\sim$ 5000 images), whereas the other experiments were run on the segmentation test set of 210 images}
     \label{fig:durationVOC}
 \end{figure}

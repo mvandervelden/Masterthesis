@@ -13,7 +13,7 @@ At test time, each feature found in the test image is matched with the exemplars
 \begin{figure}[hbt]
     \centering
     \includegraphics[width=0.9\textwidth]{ExemplarModel}
-    \caption{Given four images of car sides, their bounding boxes (yellow) and 8 features of a car wheel (above), for each feature an exemplar is made, where its position and size relative to the bounding box is used. So when a feature is found during test time, that is similar to a car wheel, a number of hypotheses is formed by applying the exemplars to the new feature (below left, in black). These hypotheses can be clustered into a small amount of highly likely detections. (Taken from Chum and Zisserman \cite{chum2007exemplar}.)}
+    \caption{Given four images of car sides, their bounding boxes (yellow) and 8 features of a car wheel (above), for each feature an exemplar is made, where its position and size relative to the bounding box is used. So when a feature is found during test time, that is similar to a car wheel, a number of hypotheses is formed by applying the exemplars to the new feature (below left, in black). These hypotheses can be clustered into a small amount of highly likely detections. Taken from Chum \& Zisserman \cite{chum2007exemplar}.}
     \label{fig:exemplar_model}
 \end{figure}
 
@@ -28,43 +28,44 @@ K-means clustering is a well known clustering algorithm. It divides all objects 
 
 \begin{figure}[hbt]
     % \centering
-    \begin{subfigure}[b]{0.32\textwidth}
+    
+    \begin{subfigure}[b]{0.30\textwidth}
             \centering
-            \includegraphics[width=\textwidth]{visSL020}
-            \caption{}
-            \label{fig:slvqs_qs1}
-    \end{subfigure}
-    ~ %add desired spacing between images, e. g. ~, \quad, \qquad etc.
-      %(or a blank line to force the subfigure onto a new line)
-    \begin{subfigure}[b]{0.32\textwidth}
-            \centering
-            \includegraphics[width=\textwidth]{visSL018}
-            \caption{}
-            \label{fig:slvqs_qs2}
-    \end{subfigure}
-    ~ %add desired spacing between images, e. g. ~, \quad, \qquad etc.
-      %(or a blank line to force the subfigure onto a new line)
-    \begin{subfigure}[b]{0.32\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{visBB}
-        \caption{The set of hypotheses.}
-        \label{fig:slvqs_bb}
-    \end{subfigure}%
-
-    \begin{subfigure}[b]{0.32\textwidth}
-            \centering
-            \includegraphics[width=\textwidth]{visQS23}
+            \includegraphics[width=\textwidth]{visSL021_2}
             \caption{}
             \label{fig:slvqs_sl1}
     \end{subfigure}
-    ~
-    \begin{subfigure}[b]{0.32\textwidth}
+    ~ %add desired spacing between images, e. g. ~, \quad, \qquad etc.
+      %(or a blank line to force the subfigure onto a new line)
+    \begin{subfigure}[b]{0.30\textwidth}
             \centering
-            \includegraphics[width=\textwidth]{visQS24}
+            \includegraphics[width=\textwidth]{visSL018_2}
             \caption{}
             \label{fig:slvqs_sl2}
     \end{subfigure}
-    \caption{The main difference between agglomerative clustering as used by Becker, and quickshift clustering is the way the detection is determined from the cluster. In single-link clustering, the inclusion of a single hypothesis into a cluster can have a large effect on the detection formed from this cluster: The blue hypothesis in (a) is included in the red cluster (b), making the red detection (bold line) almost twice as big. Using quickshift (d,e) this inclusion does not have any effect on the detection itself, because the local maximum of the red cluster is unchanged.}
+    ~ %add desired spacing between images, e. g. ~, \quad, \qquad etc.
+      %(or a blank line to force the subfigure onto a new line)
+    \begin{subfigure}[b]{0.30\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{visBB}
+        \caption{}
+        \label{fig:slvqs_bb}
+    \end{subfigure}%
+    
+    \begin{subfigure}[b]{0.30\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{visQS23_2}
+            \caption{}
+            \label{fig:slvqs_qs1}
+    \end{subfigure}
+    ~
+    \begin{subfigure}[b]{0.30\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{visQS24_2}
+            \caption{}
+            \label{fig:slvqs_qs2}
+    \end{subfigure}
+    \caption{The main difference between agglomerative clustering as used by Becker, and quickshift clustering is the way the detection is determined from the cluster. In single-link clustering, the inclusion of a single hypothesis into a cluster can have a large effect on the detection formed from this cluster: The blue hypothesis in (\subref{fig:slvqs_sl1}) is included in the red cluster in (\subref{fig:slvqs_sl2}), making the red detection (bold line) almost twice as big. Using quickshift, in (\subref{fig:slvqs_qs1}) and (\subref{fig:slvqs_qs2}), this inclusion does not have any effect on the detection itself, because the local maximum of the red cluster is unchanged.}
     \label{fig:sl_vs_qs_clustering}
 \end{figure}
 
@@ -75,7 +76,7 @@ It is possible to view a clustering clustering algorithm as a tree, where the le
 
 There is some variety in the ways to merge leaves into clusters. Single link clustering means that the minimum distance between members of each cluster is the basis of further clustering, complete linkage and mean linkage clustering take the maximum distance and the mean distance, respectively.
 
-When clustering hypotheses, a substantial part of clustering consists of defining a detection from a cluster of hypotheses. In agglomerative clustering this is not clearly defined, because, even though there is a hierarchy in clustering, it does not follow from the algorithm where the cluster center is located. Therefore, the values of cluster members are averaged to find a detection. \cite{becker2012codebook} In a Euclidean clustering space, this is a reasonable approach, even though there is no theoretical reason to do it this way.
+When clustering hypotheses, a substantial part of clustering consists of defining a detection from a cluster of hypotheses. In agglomerative clustering this is not clearly defined, because, even though there is a hierarchy in clustering, it does not follow from the algorithm where the cluster center is located. Therefore, the values of cluster members are averaged to find a detection \cite{becker2012codebook}. The top half of Figure~\ref{fig:sl_vs_qs_clustering} shows the effect of this, using various values for $\theta_m$. In a Euclidean clustering space, this is a reasonable approach, even though there is no theoretical reason to do it this way.
 
 % subsubsection agglomerative_clustering (end)
 
@@ -88,14 +89,27 @@ Mode finding is the search for local density maxima in the clustering space. The
 
 \begin{figure}[hbt]
     \centering
-    \includegraphics[width=0.9\textwidth]{MeanshiftMedianshiftQuickshift}
-    \caption{Mean shift clustering (left) versus Median Shift clustering (center) versus Quickshift clustering (right) (Taken from Vedaldi \cite{vedaldi2008quick}.)}
+    \begin{subfigure}[b]{0.45\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{MeanShift}
+            \caption{Mean Shift Clustering}
+            \label{fig:ms}
+    \end{subfigure}
+    ~ %add desired spacing between images, e. g. ~, \quad, \qquad etc.
+      %(or a blank line to force the subfigure onto a new line)
+    \begin{subfigure}[b]{0.45\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{QuickShift}
+            \caption{Quickshift Clustering.}
+            \label{fig:qs}
+    \end{subfigure}
+    \caption{Given a data set (visualized by the black dots) and a Parzen density estimation in grayscale, Mean shift (a) moves points uphill approximately following the gradient, while quickshift connects each point to its NN with a higher energy level. Taken from Vedaldi \& Soatto \cite{vedaldi2008quick}.}
     \label{fig:ms_qs}
 \end{figure}
 
 Quickshift clustering takes a slightly different approach, mainly used to speed up the clustering process \cite{vedaldi2008quick}. It does not model a global density estimate, but calculates the density for each data point. Next, for each point its neighbor with the highest density estimate (higher than its own) within a certain window is found. This results in a tree-like structure, where the data points at local density maxima become the head nodes, and define cluster and also its detection, the difference between mean-shift and quickshift is shown in Figure~\ref{fig:ms_qs}.
 
-The window parameter $\tau$ in quickshift defines what range around each data point is used both to calculate its density estimate, and to look for data points available for clustering.
+The window parameter $\tau$ in quickshift defines what range around each data point is used both to calculate its density estimate, and to look for data points available for clustering. Figure~\ref{fig:sl_vs_qs_clustering} shows the difference between agglomerative clustering and quickshift when it comes to defining a detection from a cluster of bounding boxes. It shows that quickshift clustering is more robust for outliers.
 
 % subsubsection mode_finding_algorithms (end)
 
